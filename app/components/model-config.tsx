@@ -57,7 +57,7 @@ export function ModelConfigList(props: {
           aria={Locale.Settings.Temperature.Title}
           value={props.modelConfig.temperature?.toFixed(1)}
           min="0"
-          max="1" // lets limit it to 0-1
+          max="2" // lets limit it to 0-1
           step="0.1"
           onChange={(e) => {
             props.updateConfig(
@@ -97,7 +97,7 @@ export function ModelConfigList(props: {
           aria-label={Locale.Settings.MaxTokens.Title}
           type="number"
           min={1024}
-          max={512000}
+          max={1048576}
           value={props.modelConfig.max_tokens}
           onChange={(e) =>
             props.updateConfig(
@@ -200,8 +200,8 @@ export function ModelConfigList(props: {
           title={props.modelConfig.historyMessageCount.toString()}
           value={props.modelConfig.historyMessageCount}
           min="0"
-          max="64"
-          step="1"
+          max="100"
+          step="5"
           onChange={(e) =>
             props.updateConfig(
               (config) => (config.historyMessageCount = e.target.valueAsNumber),
@@ -218,7 +218,7 @@ export function ModelConfigList(props: {
           aria-label={Locale.Settings.CompressThreshold.Title}
           type="number"
           min={500}
-          max={4000}
+          max={1048576}
           value={props.modelConfig.compressMessageLengthThreshold}
           onChange={(e) =>
             props.updateConfig(

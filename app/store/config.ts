@@ -64,16 +64,16 @@ export const DEFAULT_CONFIG = {
   models: DEFAULT_MODELS as any as LLMModel[],
 
   modelConfig: {
-    model: "gpt-4o-mini" as ModelType,
-    providerName: "OpenAI" as ServiceProvider,
-    temperature: 0.5,
+    model: "gemini-2.0-flash" as ModelType,
+    providerName: "Google" as ServiceProvider,
+    temperature: 1,
     top_p: 1,
-    max_tokens: 4000,
+    max_tokens: 1048576,
     presence_penalty: 0,
     frequency_penalty: 0,
     sendMemory: true,
-    historyMessageCount: 4,
-    compressMessageLengthThreshold: 1000,
+    historyMessageCount: 100,
+    compressMessageLengthThreshold: 1048576,
     compressModel: "",
     compressProviderName: "",
     enableInjectSystemPrompts: true,
@@ -145,7 +145,7 @@ export const ModalConfigValidator = {
     return x as ModelType;
   },
   max_tokens(x: number) {
-    return limitNumber(x, 0, 512000, 1024);
+    return limitNumber(x, 0, 1048576, 1024);
   },
   presence_penalty(x: number) {
     return limitNumber(x, -2, 2, 0);
