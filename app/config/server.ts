@@ -273,6 +273,6 @@ export const getServerSideConfig = () => {
     defaultModel,
     visionModels,
     allowedWebDavEndpoints,
-    enableMcp: process.env.ENABLE_MCP === "true",
+    enableMcp: process.env.ENABLE_MCP === "false",
   };
 };
