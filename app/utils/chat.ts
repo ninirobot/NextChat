@@ -535,14 +535,14 @@ export function streamWithThink(
               thinkingStartTime = Date.now();
             }
             reasoningText += chunk.content;
-            const duration = Math.floor((Date.now() - thinkingStartTime) / 1000);
-            options.onUpdateThinking?.(reasoningText, duration);
+            const duration = ((Date.now() - thinkingStartTime) / 1000).toFixed(1);
+            options.onUpdateThinking?.(reasoningText, parseFloat(duration));
           } else {
             if (isInThinkingMode) {
               isInThinkingMode = false;
               // thinking finished, finalize duration
-              const duration = Math.floor((Date.now() - thinkingStartTime) / 1000);
-              options.onUpdateThinking?.(reasoningText, duration);
+              const duration = ((Date.now() - thinkingStartTime) / 1000).toFixed(1);
+              options.onUpdateThinking?.(reasoningText, parseFloat(duration));
             }
             remainText += chunk.content;
           }

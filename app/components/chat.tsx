@@ -102,12 +102,27 @@ import {
 } from "./ui-lib";
 
 function ThinkingBlock(props: {
+  model?: string;
   thinking: string;
   duration?: number;
   streaming?: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(true);
 
+  // Users can easily add more models here
+  const isReasoningModel = useCallback((model?: string) => {
+    if (!model) return false;
+    const m = model.toLowerCase();
+    return (
+      m.includes("deepseek-r1") ||
+      m.includes("o1-") ||
+      m.includes("o3-") ||
+      m === "o1" ||
+      m === "o3"
+    );
+  }, []);
+
+  if (!isReasoningModel(props.model)) return null;
   if (!props.thinking && !props.streaming) return null;
 
   return (
@@ -118,12 +133,19 @@ function ThinkingBlock(props: {
         })}
         onClick={() => setCollapsed(!collapsed)}
       >
-        <div className={styles["thinking-title"]}>
-          {props.streaming ? Locale.Chat.Thinking : Locale.Chat.Thought}
-          {props.duration !== undefined && (
-            <span className={styles["thinking-duration"]}>
-              ({Locale.Chat.ThinkingDuration(props.duration)})
-            </span>
+        <div className={styles["thinking-title-container"]}>
+          <div className={styles["thinking-title"]}>
+            {props.streaming ? Locale.Chat.Thinking : Locale.Chat.Thought}
+            {props.duration !== undefined && (
+              <span className={styles["thinking-duration"]}>
+                ({Locale.Chat.ThinkingDuration(props.duration)})
+              </span>
+            )}
+          </div>
+          {collapsed && props.thinking && (
+            <div className={styles["thinking-peek"]}>
+              {props.thinking.replace(/\n/g, " ").trim()}
+            </div>
           )}
         </div>
         <div className={styles["thinking-tag"]}>
@@ -2054,6 +2076,7 @@ function _Chat() {
                           )}
                           <div className={styles["chat-message-item"]}>
                             <ThinkingBlock
+                              model={message.model}
                               thinking={message.reasoning_content ?? ""}
                               duration={message.reasoning_duration}
                               streaming={message.streaming}
