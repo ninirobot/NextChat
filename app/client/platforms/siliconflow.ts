@@ -134,12 +134,6 @@ export class SiliconflowApi implements LLMApi {
 
       // console.log(chatPayload);
 
-      // Use extended timeout for thinking models as they typically require more processing time
-      const requestTimeoutId = setTimeout(
-        () => controller.abort(),
-        getTimeoutMSByModel(options.config.model),
-      );
-
       if (shouldStream) {
         const [tools, funcs] = usePluginStore
           .getState()
@@ -232,6 +226,10 @@ export class SiliconflowApi implements LLMApi {
           options,
         );
       } else {
+        const requestTimeoutId = setTimeout(
+          () => controller.abort(),
+          getTimeoutMSByModel(options.config.model),
+        );
         const res = await fetch(chatPath, chatPayload);
         clearTimeout(requestTimeoutId);
 
