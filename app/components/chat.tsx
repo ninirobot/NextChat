@@ -2133,7 +2133,7 @@ function _Chat() {
               <label
                 className={clsx(styles["chat-input-panel-inner"], {
                   [styles["chat-input-panel-inner-attach"]]:
-                    attachImages.length !== 0,
+                    attachImages.length !== 0 || attachFiles.length !== 0,
                 })}
                 htmlFor="chat-input"
               >
@@ -2155,16 +2155,16 @@ function _Chat() {
                     fontFamily: config.fontFamily,
                   }}
                 />
-                {attachImages.length != 0 && (
-                  <div className={styles["attach-images"]}>
+                {(attachImages.length !== 0 || attachFiles.length !== 0) && (
+                  <div className={styles["attach-items"]}>
                     {attachImages.map((image, index) => {
                       return (
                         <div
                           key={index}
-                          className={styles["attach-image"]}
+                          className={styles["attach-item"]}
                           style={{ backgroundImage: `url("${image}")` }}
                         >
-                          <div className={styles["attach-image-mask"]}>
+                          <div className={styles["attach-item-mask"]}>
                             <DeleteImageButton
                               deleteImage={() => {
                                 setAttachImages(
@@ -2176,21 +2176,20 @@ function _Chat() {
                         </div>
                       );
                     })}
-                  </div>
-                )}
-                {attachFiles.length != 0 && (
-                  <div className={styles["attach-files"]}>
                     {attachFiles.map((file, index) => {
                       return (
-                        <div key={index} className={styles["attach-file"]}>
-                          <span>{file.name}</span>
-                          <DeleteImageButton
-                            deleteImage={() => {
-                              setAttachFiles(
-                                attachFiles.filter((_, i) => i !== index),
-                              );
-                            }}
-                          />
+                        <div key={index} className={styles["attach-item"]}>
+                          <div className={styles["attach-item-mask"]}>
+                            <DeleteImageButton
+                              deleteImage={() => {
+                                setAttachFiles(
+                                  attachFiles.filter((_, i) => i !== index),
+                                );
+                              }}
+                            />
+                          </div>
+                          <FileIcon name={file.name} />
+                          <div className={styles["file-name"]}>{file.name}</div>
                         </div>
                       );
                     })}
