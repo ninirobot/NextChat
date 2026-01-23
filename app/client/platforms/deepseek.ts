@@ -56,7 +56,12 @@ export class DeepSeekApi implements LLMApi {
   }
 
   extractMessage(res: any) {
-    return res.choices?.at(0)?.message?.content ?? "";
+    const reasoning = res.choices?.at(0)?.message?.reasoning;
+    const content = res.choices?.at(0)?.message?.content ?? "";
+    if (reasoning) {
+      return `<think>\n${reasoning}\n</think>\n${content}`;
+    }
+    return content;
   }
 
   speech(options: SpeechOptions): Promise<ArrayBuffer> {
@@ -111,6 +116,7 @@ export class DeepSeekApi implements LLMApi {
       presence_penalty: modelConfig.presence_penalty,
       frequency_penalty: modelConfig.frequency_penalty,
       top_p: modelConfig.top_p,
+      include_reasoning: true,
       // max_tokens: Math.max(modelConfig.max_tokens, 1024),
       // Please do not ask me why not send max_tokens, no reason, this param is just shit, I dont want to explain anymore.
     };
@@ -158,6 +164,7 @@ export class DeepSeekApi implements LLMApi {
                 content: string | null;
                 tool_calls: ChatMessageTool[];
                 reasoning_content: string | null;
+                reasoning: string | null;
               };
             }>;
             const tool_calls = choices[0]?.delta?.tool_calls;
@@ -179,10 +186,12 @@ export class DeepSeekApi implements LLMApi {
                 runTools[index]["function"]["arguments"] += args;
               }
             }
-            const reasoning = choices[0]?.delta?.reasoning_content;
+            const reasoning =
+              choices[0]?.delta?.reasoning_content ??
+              choices[0]?.delta?.reasoning;
             const content = choices[0]?.delta?.content;
 
-            // Skip if both content and reasoning_content are empty or null
+            // Skip if both content and reasoning are empty or null
             if (
               (!reasoning || reasoning.length === 0) &&
               (!content || content.length === 0)
