@@ -63,6 +63,7 @@ export type ChatMessage = RequestMessage & {
   tools?: ChatMessageTool[];
   audio_url?: string;
   isMcpResponse?: boolean;
+  attachFiles?: { name: string; content: string }[];
 };
 
 export function createMessage(override: Partial<ChatMessage>): ChatMessage {
@@ -408,6 +409,7 @@ export const useChatStore = createPersistStore(
         content: string,
         attachImages?: string[],
         isMcpResponse?: boolean,
+        attachFiles?: { name: string; content: string }[],
       ) {
         const session = get().currentSession();
         const modelConfig = session.mask.modelConfig;
@@ -427,10 +429,18 @@ export const useChatStore = createPersistStore(
           ];
         }
 
+        const fileContent = attachFiles
+          ?.map((f) => `File: ${f.name}\nContent:\n${f.content}`)
+          .join("\n\n");
+        const finalContentForLLM = fileContent
+          ? `${content}\n\nProcessed files:\n${fileContent}`
+          : content;
+
         let userMessage: ChatMessage = createMessage({
           role: "user",
           content: mContent,
           isMcpResponse,
+          attachFiles,
         });
 
         const botMessage: ChatMessage = createMessage({
@@ -441,7 +451,10 @@ export const useChatStore = createPersistStore(
 
         // get recent messages
         const recentMessages = await get().getMessagesWithMemory();
-        const sendMessages = recentMessages.concat(userMessage);
+        const sendMessages = recentMessages.concat({
+          ...userMessage,
+          content: finalContentForLLM,
+        });
         const messageIndex = session.messages.length + 1;
 
         // save user's and bot's message
@@ -674,9 +687,9 @@ export const useChatStore = createPersistStore(
         const [model, providerName] = modelConfig.compressModel
           ? [modelConfig.compressModel, modelConfig.compressProviderName]
           : getSummarizeModel(
-              session.mask.modelConfig.model,
-              session.mask.modelConfig.providerName,
-            );
+            session.mask.modelConfig.model,
+            session.mask.modelConfig.providerName,
+          );
         const api: ClientApi = getClientApi(providerName as ServiceProvider);
 
         // remove error messages if any
@@ -717,8 +730,8 @@ export const useChatStore = createPersistStore(
                 get().updateTargetSession(
                   session,
                   (session) =>
-                    (session.topic =
-                      message.length > 0 ? trimTopic(message) : DEFAULT_TOPIC),
+                  (session.topic =
+                    message.length > 0 ? trimTopic(message) : DEFAULT_TOPIC),
                 );
               }
             },
