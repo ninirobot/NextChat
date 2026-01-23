@@ -4,7 +4,7 @@ import * as XLSX from "xlsx";
 import JSZip from "jszip";
 
 // Set up PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 export async function readTextFile(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -95,24 +95,20 @@ export async function parseFile(file: File): Promise<string> {
     switch (extension) {
         case "txt":
         case "md":
-        case "js":
-        case "ts":
-        case "tsx":
-        case "c":
-        case "cpp":
-        case "py":
             return await readTextFile(file);
         case "pdf":
             return await readPdfFile(file);
         case "docx":
+        case "doc":
             return await readDocxFile(file);
         case "xlsx":
         case "xls":
             return await readXlsxFile(file);
         case "pptx":
+        case "ppt":
             return await readPptxFile(file);
         default:
-            // Try reading as text by default for unknown types
+            // Try reading as text by default for common text-based office files
             try {
                 return await readTextFile(file);
             } catch {

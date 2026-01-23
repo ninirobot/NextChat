@@ -993,6 +993,15 @@ export function ShortcutKeyModal(props: { onClose: () => void }) {
   );
 }
 
+function FileIcon(props: { name: string }) {
+  const extension = props.name.split(".").pop()?.toLowerCase() || "";
+  return (
+    <div className={clsx(styles["file-icon"], styles[extension])}>
+      {extension}
+    </div>
+  );
+}
+
 function _Chat() {
   type RenderMessage = ChatMessage & { preview?: boolean };
 
@@ -1113,7 +1122,8 @@ function _Chat() {
   };
 
   const doSubmit = (userInput: string) => {
-    if (userInput.trim() === "" && isEmpty(attachImages)) return;
+    if (userInput.trim() === "" && isEmpty(attachImages) && isEmpty(attachFiles))
+      return;
     const matchCommand = chatCommands.match(userInput);
     if (matchCommand.matched) {
       setUserInput("");
@@ -1121,16 +1131,10 @@ function _Chat() {
       matchCommand.invoke();
       return;
     }
-    const fileContent = attachFiles
-      .map((f) => `File: ${f.name}\nContent:\n${f.content}`)
-      .join("\n\n");
-    const finalUserInput = fileContent
-      ? `${userInput}\n\nProcessed files:\n${fileContent}`
-      : userInput;
 
     setIsLoading(true);
     chatStore
-      .onUserInput(finalUserInput, attachImages)
+      .onUserInput(userInput, attachImages, false, attachFiles)
       .then(() => setIsLoading(false));
     setAttachImages([]);
     setAttachFiles([]);
@@ -1618,7 +1622,8 @@ function _Chat() {
   async function uploadFile() {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
-    fileInput.accept = ".txt,.md,.pdf,.docx,.pptx,.xlsx,.xls,.js,.ts,.tsx,.c,.cpp,.py";
+    fileInput.accept =
+      ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md";
     fileInput.multiple = true;
     fileInput.onchange = async (event: any) => {
       setUploading(true);
@@ -2069,6 +2074,19 @@ function _Chat() {
                               <audio src={message.audio_url} controls />
                             </div>
                           )}
+                          {message.attachFiles && message.attachFiles.length > 0 && (
+                            <div className={styles["chat-message-attachments"]}>
+                              {message.attachFiles.map((file, index) => (
+                                <div
+                                  key={index}
+                                  className={styles["chat-message-attachment"]}
+                                >
+                                  <FileIcon name={file.name} />
+                                  <span>{file.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
 
                           <div className={styles["chat-message-action-date"]}>
                             {isContext
@@ -2206,22 +2224,27 @@ function _Chat() {
             )}
           </div>
         </div>
-      </div>
+      </div >
       {showExport && (
         <ExportMessageModal onClose={() => setShowExport(false)} />
-      )}
+      )
+      }
 
-      {isEditingMessage && (
-        <EditMessageModal
-          onClose={() => {
-            setIsEditingMessage(false);
-          }}
-        />
-      )}
+      {
+        isEditingMessage && (
+          <EditMessageModal
+            onClose={() => {
+              setIsEditingMessage(false);
+            }}
+          />
+        )
+      }
 
-      {showShortcutKeyModal && (
-        <ShortcutKeyModal onClose={() => setShowShortcutKeyModal(false)} />
-      )}
+      {
+        showShortcutKeyModal && (
+          <ShortcutKeyModal onClose={() => setShowShortcutKeyModal(false)} />
+        )
+      }
     </>
   );
 }
