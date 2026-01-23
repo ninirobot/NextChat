@@ -237,6 +237,10 @@ export class DeepSeekApi implements LLMApi {
           options,
         );
       } else {
+        const requestTimeoutId = setTimeout(
+          () => controller.abort(),
+          getTimeoutMSByModel(options.config.model),
+        );
         const res = await fetch(chatPath, chatPayload);
         clearTimeout(requestTimeoutId);
 
