@@ -109,38 +109,6 @@ function ThinkingBlock(props: {
   isThinking?: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(true);
-  const peekRef = useRef<HTMLDivElement>(null);
-  const [localDuration, setLocalDuration] = useState(0);
-  const timerRef = useRef<any>(null);
-
-  const isActuallyThinking = props.isThinking ?? props.streaming;
-
-  // Local timer avoids global re-renders
-  useEffect(() => {
-    if (isActuallyThinking) {
-      const start = Date.now();
-      timerRef.current = setInterval(() => {
-        setLocalDuration((Date.now() - start) / 1000);
-      }, 100);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [isActuallyThinking]);
-
-  // Sync scroll for lyrics effect
-  useEffect(() => {
-    if (collapsed && peekRef.current) {
-      // Smoothly scroll to bottom
-      peekRef.current.scrollTo({
-        top: peekRef.current.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-  }, [props.thinking, collapsed]);
-
   // Users can easily add more models here
   const isReasoningModel = useCallback((model?: string) => {
     if (!model) return false;
@@ -179,8 +147,8 @@ function ThinkingBlock(props: {
           </div>
           {collapsed && props.thinking && (
             <div className={styles["thinking-peek-container"]}>
-              <div className={styles["thinking-peek"]} ref={peekRef}>
-                {props.thinking.trim()}
+              <div className={styles["thinking-peek"]}>
+                {props.thinking.slice(-80)}
               </div>
             </div>
           )}
