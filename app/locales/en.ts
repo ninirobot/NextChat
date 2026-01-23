@@ -110,6 +110,9 @@ const en: LocaleType = {
       showShortcutKey: "Show Shortcuts",
       clearContext: "Clear Context",
     },
+    Thinking: "Thinking",
+    Thought: "Thought",
+    ThinkingDuration: (d: number) => `took ${d} seconds`,
   },
   Export: {
     Title: "Export Messages",

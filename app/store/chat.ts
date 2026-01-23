@@ -64,6 +64,8 @@ export type ChatMessage = RequestMessage & {
   audio_url?: string;
   isMcpResponse?: boolean;
   attachFiles?: { name: string; content: string }[];
+  reasoning_content?: string;
+  reasoning_duration?: number;
 };
 
 export function createMessage(override: Partial<ChatMessage>): ChatMessage {
@@ -478,6 +480,18 @@ export const useChatStore = createPersistStore(
             botMessage.streaming = true;
             if (message) {
               botMessage.content = message;
+            }
+            get().updateTargetSession(session, (session) => {
+              session.messages = session.messages.concat();
+            });
+          },
+          onUpdateThinking(reasoning, duration) {
+            botMessage.streaming = true;
+            if (reasoning) {
+              botMessage.reasoning_content = reasoning;
+            }
+            if (duration) {
+              botMessage.reasoning_duration = duration;
             }
             get().updateTargetSession(session, (session) => {
               session.messages = session.messages.concat();

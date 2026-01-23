@@ -100,6 +100,44 @@ import {
   showPrompt,
   showToast,
 } from "./ui-lib";
+
+function ThinkingBlock(props: {
+  thinking: string;
+  duration?: number;
+  streaming?: boolean;
+}) {
+  const [collapsed, setCollapsed] = useState(true);
+
+  if (!props.thinking && !props.streaming) return null;
+
+  return (
+    <div className={styles["thinking-block"]}>
+      <div
+        className={clsx(styles["thinking-header"], {
+          [styles["collapsed"]]: collapsed,
+        })}
+        onClick={() => setCollapsed(!collapsed)}
+      >
+        <div className={styles["thinking-title"]}>
+          {props.streaming ? Locale.Chat.Thinking : Locale.Chat.Thought}
+          {props.duration !== undefined && (
+            <span className={styles["thinking-duration"]}>
+              ({Locale.Chat.ThinkingDuration(props.duration)})
+            </span>
+          )}
+        </div>
+        <div className={styles["thinking-tag"]}>
+          {collapsed ? <MaxIcon /> : <MinIcon />}
+        </div>
+      </div>
+      {!collapsed && (
+        <div className={styles["thinking-content"]}>
+          <Markdown content={props.thinking} />
+        </div>
+      )}
+    </div>
+  );
+}
 import { useNavigate } from "react-router-dom";
 import {
   CHAT_PAGE_SIZE,
@@ -2015,6 +2053,11 @@ function _Chat() {
                             </div>
                           )}
                           <div className={styles["chat-message-item"]}>
+                            <ThinkingBlock
+                              thinking={message.reasoning_content ?? ""}
+                              duration={message.reasoning_duration}
+                              streaming={message.streaming}
+                            />
                             <Markdown
                               key={message.streaming ? "loading" : "done"}
                               content={getMessageTextContent(message)}

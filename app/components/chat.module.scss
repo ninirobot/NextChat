@@ -878,3 +878,62 @@
 .md {
   background-color: #607d8b !important;
 }
+.thinking-block {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.thinking-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: var(--white);
+  border: var(--border-in-light);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all ease 0.3s;
+  user-select: none;
+
+  &:hover {
+    border-color: var(--primary);
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+
+  &.collapsed {
+    background-color: transparent;
+    opacity: 0.6;
+  }
+}
+
+.thinking-title {
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--black);
+}
+
+.thinking-duration {
+  font-size: 12px;
+  opacity: 0.5;
+  font-family: var(--font-family);
+}
+
+.thinking-tag {
+  display: flex;
+  align-items: center;
+  opacity: 0.5;
+}
+
+.thinking-content {
+  margin-top: 8px;
+  padding: 10px 14px;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  border-left: 3px solid var(--primary);
+  font-size: 14px;
+  color: var(--black);
+  animation: slide-in ease 0.3s;
+}
