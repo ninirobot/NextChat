@@ -136,12 +136,6 @@ export class DeepSeekApi implements LLMApi {
         headers: getHeaders(),
       };
 
-      // make a fetch request
-      const requestTimeoutId = setTimeout(
-        () => controller.abort(),
-        getTimeoutMSByModel(options.config.model),
-      );
-
       if (shouldStream) {
         const [tools, funcs] = usePluginStore
           .getState()
@@ -159,6 +153,12 @@ export class DeepSeekApi implements LLMApi {
           (text: string, runTools: ChatMessageTool[]) => {
             // console.log("parseSSE", text, runTools);
             const json = JSON.parse(text);
+            if (json.error) {
+              return {
+                isThinking: false,
+                content: `\n\n> [!ERROR]\n> ${json.error.message || json.error.code || "Unknown Error"}`,
+              };
+            }
             const choices = json.choices as Array<{
               delta: {
                 content: string | null;

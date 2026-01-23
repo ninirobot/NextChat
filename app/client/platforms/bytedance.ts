@@ -125,12 +125,6 @@ export class DoubaoApi implements LLMApi {
         headers: getHeaders(),
       };
 
-      // make a fetch request
-      const requestTimeoutId = setTimeout(
-        () => controller.abort(),
-        getTimeoutMSByModel(options.config.model),
-      );
-
       if (shouldStream) {
         const [tools, funcs] = usePluginStore
           .getState()
@@ -224,6 +218,10 @@ export class DoubaoApi implements LLMApi {
           options,
         );
       } else {
+        const requestTimeoutId = setTimeout(
+          () => controller.abort(),
+          getTimeoutMSByModel(options.config.model),
+        );
         const res = await fetch(chatPath, chatPayload);
         clearTimeout(requestTimeoutId);
 

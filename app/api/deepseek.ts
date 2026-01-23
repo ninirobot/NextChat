@@ -61,7 +61,7 @@ async function request(req: NextRequest) {
     () => {
       controller.abort();
     },
-    10 * 60 * 1000,
+    30 * 60 * 1000,
   );
 
   const fetchUrl = `${baseUrl}${path}`;
@@ -69,6 +69,7 @@ async function request(req: NextRequest) {
     headers: {
       "Content-Type": "application/json",
       Authorization: req.headers.get("Authorization") ?? "",
+      Connection: "keep-alive",
     },
     method: req.method,
     body: req.body,
