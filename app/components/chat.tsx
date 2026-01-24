@@ -110,6 +110,36 @@ function ThinkingBlock(props: {
 }) {
   const [collapsed, setCollapsed] = useState(true);
   const peekRef = useRef<HTMLDivElement>(null);
+  const [localDuration, setLocalDuration] = useState(0);
+  const timerRef = useRef<any>(null);
+
+  const isActuallyThinking = props.isThinking ?? props.streaming;
+
+  // Local timer avoids global re-renders
+  useEffect(() => {
+    if (isActuallyThinking) {
+      const start = Date.now();
+      timerRef.current = setInterval(() => {
+        setLocalDuration((Date.now() - start) / 1000);
+      }, 100);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isActuallyThinking]);
+
+  // Sync scroll for lyrics effect
+  useEffect(() => {
+    if (collapsed && peekRef.current) {
+      // Smoothly scroll to bottom
+      peekRef.current.scrollTo({
+        top: peekRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [props.thinking, collapsed]);
 
   // Users can easily add more models here
   const isReasoningModel = useCallback((model?: string) => {
@@ -124,17 +154,13 @@ function ThinkingBlock(props: {
     );
   }, []);
 
-  useEffect(() => {
-    if (collapsed && peekRef.current) {
-      peekRef.current.scrollTop = peekRef.current.scrollHeight;
-    }
-  }, [props.thinking, collapsed]);
-
   if (!isReasoningModel(props.model)) return null;
   if (!props.thinking && (props.isThinking === undefined && !props.streaming))
     return null;
 
-  const isActuallyThinking = props.isThinking ?? props.streaming;
+  const displayDuration = isActuallyThinking
+    ? localDuration.toFixed(1)
+    : props.duration ?? localDuration.toFixed(1);
 
   return (
     <div className={styles["thinking-block"]}>
@@ -147,15 +173,15 @@ function ThinkingBlock(props: {
         <div className={styles["thinking-title-container"]}>
           <div className={styles["thinking-title"]}>
             {isActuallyThinking ? Locale.Chat.Thinking : Locale.Chat.Thought}
-            {props.duration !== undefined && (
-              <span className={styles["thinking-duration"]}>
-                ({Locale.Chat.ThinkingDuration(props.duration)})
-              </span>
-            )}
+            <span className={styles["thinking-duration"]}>
+              ({Locale.Chat.ThinkingDuration(displayDuration)})
+            </span>
           </div>
           {collapsed && props.thinking && (
-            <div className={styles["thinking-peek"]} ref={peekRef}>
-              {props.thinking.trim()}
+            <div className={styles["thinking-peek-container"]}>
+              <div className={styles["thinking-peek"]} ref={peekRef}>
+                {props.thinking.trim()}
+              </div>
             </div>
           )}
         </div>

@@ -110,8 +110,8 @@ export class QwenApi implements LLMApi {
         visionModel
           ? await preProcessImageContentForAlibabaDashScope(v.content)
           : v.role === "assistant"
-          ? getMessageTextContentWithoutThinking(v)
-          : getMessageTextContent(v)
+            ? getMessageTextContentWithoutThinking(v)
+            : getMessageTextContent(v)
       ) as any;
 
       messages.push({ role: v.role, content });
@@ -205,34 +205,14 @@ export class QwenApi implements LLMApi {
             const reasoning = choices[0]?.message?.reasoning_content;
             const content = choices[0]?.message?.content;
 
-            // Skip if both content and reasoning_content are empty or null
-            if (
-              (!reasoning || reasoning.length === 0) &&
-              (!content || content.length === 0)
-            ) {
-              return {
-                isThinking: false,
-                content: "",
-              };
-            }
-
-            if (reasoning && reasoning.length > 0) {
-              return {
-                isThinking: true,
-                content: reasoning,
-              };
-            } else if (content && content.length > 0) {
-              return {
-                isThinking: false,
-                content: Array.isArray(content)
-                  ? content.map((item) => item.text).join(",")
-                  : content,
-              };
-            }
+            const reasoning = choices[0]?.message?.reasoning_content;
+            const content = choices[0]?.message?.content;
 
             return {
-              isThinking: false,
-              content: "",
+              reasoning: reasoning || undefined,
+              content: Array.isArray(content)
+                ? content.map((item) => (item as any).text).join(",")
+                : (content as string) || undefined,
             };
           },
           // processToolMessage, include tool_calls message and tool call results

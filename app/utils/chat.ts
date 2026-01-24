@@ -400,8 +400,9 @@ export function streamWithThink(
     text: string,
     runTools: any[],
   ) => {
-    isThinking: boolean;
-    content: string | undefined;
+    isThinking?: boolean;
+    content?: string;
+    reasoning?: string;
   },
   processToolMessage: (
     requestPayload: any,
@@ -502,57 +503,60 @@ export function streamWithThink(
           return finish();
         }
         const text = msg.data;
-        // Skip empty messages
-        if (!text || text.trim().length === 0) {
-          return;
-        }
+        if (!text || text.trim().length === 0) return;
+
         try {
           const chunk = parseSSE(text, runTools);
-          // Skip if content is empty
-          if (!chunk?.content || chunk.content.length === 0) {
-            return;
-          }
+          if (!chunk) return;
 
-          // deal with <think> and </think> tags start
-          if (!chunk.isThinking) {
-            if (chunk.content.startsWith("<think>")) {
+          let blockContent = chunk.content || "";
+          let blockReasoning = chunk.reasoning || "";
+
+          // Legacy <think> tag fallback
+          if (!chunk.reasoning && !chunk.isThinking && blockContent) {
+            if (blockContent.startsWith("<think>")) {
               chunk.isThinking = true;
-              chunk.content = chunk.content.slice(7).trim();
+              blockReasoning = blockContent.slice(7).trim();
+              blockContent = "";
               lastIsThinkingTagged = true;
-            } else if (chunk.content.endsWith("</think>")) {
+            } else if (blockContent.endsWith("</think>")) {
               chunk.isThinking = false;
-              chunk.content = chunk.content.slice(0, -8).trim();
+              blockReasoning = blockContent.slice(0, -8).trim();
+              blockContent = "";
               lastIsThinkingTagged = false;
             } else if (lastIsThinkingTagged) {
               chunk.isThinking = true;
+              blockReasoning = blockContent;
+              blockContent = "";
             }
           }
-          // deal with <think> and </think> tags end
 
-          if (chunk.isThinking) {
+          const hasNewReasoning = blockReasoning.length > 0 || chunk.isThinking || (chunk.reasoning !== undefined);
+          const hasNewContent = blockContent.length > 0;
+
+          if (hasNewReasoning) {
             if (!isInThinkingMode) {
               isInThinkingMode = true;
               thinkingStartTime = Date.now();
             }
-            reasoningText += chunk.content;
-            const duration = ((Date.now() - thinkingStartTime) / 1000).toFixed(1);
-            options.onUpdateThinking?.(reasoningText, parseFloat(duration));
-          } else {
+            reasoningText += blockReasoning;
+            options.onUpdateThinking?.(reasoningText, parseFloat(((Date.now() - thinkingStartTime) / 1000).toFixed(1)));
+          }
+
+          if (hasNewContent) {
             if (isInThinkingMode) {
               isInThinkingMode = false;
-              // thinking finished, finalize duration
-              const duration = ((Date.now() - thinkingStartTime) / 1000).toFixed(1);
-              options.onUpdateThinking?.(reasoningText, parseFloat(duration));
+              options.onUpdateThinking?.(reasoningText, parseFloat(((Date.now() - thinkingStartTime) / 1000).toFixed(1)));
             }
-            remainText += chunk.content;
+            remainText += blockContent;
             options.onUpdate?.(remainText);
           }
         } catch (e) {
           console.error("[Request] parse error", text, msg, e);
-          // Don't throw error for parse failures, just log them
         }
       },
       onclose() {
+        options.onUpdate?.(remainText);
         finish();
       },
       onerror(e) {

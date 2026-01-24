@@ -191,32 +191,9 @@ export class DeepSeekApi implements LLMApi {
               choices[0]?.delta?.reasoning;
             const content = choices[0]?.delta?.content;
 
-            // Skip if both content and reasoning are empty or null
-            if (
-              (!reasoning || reasoning.length === 0) &&
-              (!content || content.length === 0)
-            ) {
-              return {
-                isThinking: false,
-                content: "",
-              };
-            }
-
-            if (reasoning && reasoning.length > 0) {
-              return {
-                isThinking: true,
-                content: reasoning,
-              };
-            } else if (content && content.length > 0) {
-              return {
-                isThinking: false,
-                content: content,
-              };
-            }
-
             return {
-              isThinking: false,
-              content: "",
+              reasoning: reasoning || undefined,
+              content: content || undefined,
             };
           },
           // processToolMessage, include tool_calls message and tool call results
