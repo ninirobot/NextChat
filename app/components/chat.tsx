@@ -159,8 +159,8 @@ function ThinkingBlock(props: {
     return null;
 
   const displayDuration = isActuallyThinking
-    ? localDuration.toFixed(1)
-    : props.duration ?? localDuration.toFixed(1);
+    ? parseFloat(localDuration.toFixed(1))
+    : props.duration ?? parseFloat(localDuration.toFixed(1));
 
   return (
     <div className={styles["thinking-block"]}>
