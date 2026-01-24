@@ -506,8 +506,11 @@ export const useChatStore = createPersistStore(
             if (message) {
               botMessage.content = message;
               botMessage.date = new Date().toLocaleString();
-              get().onNewMessage(botMessage, session);
             }
+            get().updateTargetSession(session, (session) => {
+              session.messages = session.messages.concat();
+            });
+            get().onNewMessage(botMessage, session);
             ChatControllerPool.remove(session.id, botMessage.id);
           },
           onBeforeTool(tool: ChatMessageTool) {
