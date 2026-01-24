@@ -174,9 +174,6 @@ export class DoubaoApi implements LLMApi {
             const reasoning = choices[0]?.delta?.reasoning_content;
             const content = choices[0]?.delta?.content;
 
-            const reasoning = choices[0]?.delta?.reasoning_content;
-            const content = choices[0]?.delta?.content;
-
             return {
               reasoning: reasoning || undefined,
               content: content || undefined,
