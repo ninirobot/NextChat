@@ -552,29 +552,8 @@ export function streamWithThink(
           let blockContent = chunk.content || "";
           let blockReasoning = chunk.reasoning || "";
 
-          // Legacy <think> tag fallback
-          if (!chunk.reasoning && !chunk.isThinking && blockContent) {
-            if (blockContent.startsWith("<think>")) {
-              chunk.isThinking = true;
-              blockReasoning = blockContent.slice(7).trim();
-              blockContent = "";
-              lastIsThinkingTagged = true;
-            } else if (blockContent.endsWith("</think>")) {
-              chunk.isThinking = false;
-              blockReasoning = blockContent.slice(0, -8).trim();
-              blockContent = "";
-              lastIsThinkingTagged = false;
-            } else if (lastIsThinkingTagged) {
-              chunk.isThinking = true;
-              blockReasoning = blockContent;
-              blockContent = "";
-            }
-          }
-
-          const hasNewReasoning = blockReasoning.length > 0 || chunk.isThinking || (chunk.reasoning !== undefined);
-          const hasNewContent = blockContent.length > 0;
-
-          if (hasNewReasoning) {
+          // 1. Handle native reasoning (if provider supports it)
+          if (blockReasoning) {
             if (!isInThinkingMode) {
               isInThinkingMode = true;
               thinkingStartTime = Date.now();
@@ -582,7 +561,44 @@ export function streamWithThink(
             remainReasoning += blockReasoning;
           }
 
-          if (hasNewContent) {
+          // 2. Handle legacy <think> tags in content field
+          // Only process if native reasoning is not already present in the chunk
+          if (!chunk.reasoning && !chunk.isThinking && blockContent) {
+            // Check for START tag
+            if (!lastIsThinkingTagged && blockContent.includes("<think>")) {
+              const startIdx = blockContent.indexOf("<think>");
+              const before = blockContent.slice(0, startIdx);
+              const after = blockContent.slice(startIdx + 7);
+
+              if (before) remainText += before;
+              lastIsThinkingTagged = true;
+              blockContent = after;
+              if (!isInThinkingMode) {
+                isInThinkingMode = true;
+                thinkingStartTime = Date.now();
+              }
+            }
+
+            // Check for END tag if we are currently inside one
+            if (lastIsThinkingTagged) {
+              if (blockContent.includes("</think>")) {
+                const endIdx = blockContent.indexOf("</think>");
+                const inside = blockContent.slice(0, endIdx);
+                const after = blockContent.slice(endIdx + 8);
+
+                remainReasoning += inside;
+                lastIsThinkingTagged = false;
+                isInThinkingMode = false;
+                blockContent = after; // Continue processing what's left
+              } else {
+                remainReasoning += blockContent;
+                blockContent = ""; // All consumed as reasoning
+              }
+            }
+          }
+
+          // 3. Handle remaining content (or native field transition)
+          if (blockContent) {
             if (isInThinkingMode) {
               isInThinkingMode = false;
             }
