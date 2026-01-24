@@ -128,6 +128,15 @@ function ThinkingBlock(props: {
   if (!props.thinking && (props.isThinking === undefined && !props.streaming))
     return null;
 
+  const peekRef = useRef<HTMLDivElement>(null);
+
+  // Sync scroll for lyrics effect
+  useEffect(() => {
+    if (collapsed && peekRef.current) {
+      peekRef.current.scrollTop = peekRef.current.scrollHeight;
+    }
+  }, [props.thinking, collapsed]);
+
   // Use the duration passed from the store (updated by requestAnimationFrame loop)
   const displayDuration = props.duration ?? 0;
 
@@ -148,8 +157,8 @@ function ThinkingBlock(props: {
           </div>
           {collapsed && props.thinking && (
             <div className={styles["thinking-peek-container"]}>
-              <div className={styles["thinking-peek"]}>
-                {props.thinking.slice(-80)}
+              <div className={styles["thinking-peek"]} ref={peekRef}>
+                {props.thinking.trim()}
               </div>
             </div>
           )}

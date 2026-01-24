@@ -448,11 +448,11 @@ export function streamWithThink(
       const fetchText = remainReasoning.slice(0, fetchCount);
       reasoningText += fetchText;
       remainReasoning = remainReasoning.slice(fetchCount);
-      const duration = thinkingStartTime > 0 ? Math.floor((Date.now() - thinkingStartTime) / 1000) : 0;
+      const duration = thinkingStartTime > 0 ? parseFloat(((Date.now() - thinkingStartTime) / 1000).toFixed(1)) : 0;
       options.onUpdateThinking?.(reasoningText, duration);
     } else if (isInThinkingMode) {
       // update duration even if no new text
-      const duration = Math.floor((Date.now() - thinkingStartTime) / 1000);
+      const duration = thinkingStartTime > 0 ? parseFloat(((Date.now() - thinkingStartTime) / 1000).toFixed(1)) : 0;
       options.onUpdateThinking?.(reasoningText, duration);
     }
 
