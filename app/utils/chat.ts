@@ -545,6 +545,7 @@ export function streamWithThink(
               options.onUpdateThinking?.(reasoningText, parseFloat(duration));
             }
             remainText += chunk.content;
+            options.onUpdate?.(remainText);
           }
         } catch (e) {
           console.error("[Request] parse error", text, msg, e);

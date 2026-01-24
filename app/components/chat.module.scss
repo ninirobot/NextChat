@@ -938,12 +938,21 @@
   font-size: 12px;
   color: var(--black);
   opacity: 0.4;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   flex: 1;
   padding-left: 8px;
   border-left: 1px solid rgba(0, 0, 0, 0.1);
+  max-height: 1.4em; // Fixed height (roughly one line)
+  line-height: 1.4em;
+  overflow-y: auto;
+  white-space: pre-wrap; // Allow natural wrapping/newlines
+  word-break: break-all;
+  pointer-events: none; // Passthrough clicks
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  scrollbar-width: none;
 }
 
 .thinking-tag {

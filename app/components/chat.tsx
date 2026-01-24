@@ -106,8 +106,10 @@ function ThinkingBlock(props: {
   thinking: string;
   duration?: number;
   streaming?: boolean;
+  isThinking?: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(true);
+  const peekRef = useRef<HTMLDivElement>(null);
 
   // Users can easily add more models here
   const isReasoningModel = useCallback((model?: string) => {
@@ -122,8 +124,17 @@ function ThinkingBlock(props: {
     );
   }, []);
 
+  useEffect(() => {
+    if (collapsed && peekRef.current) {
+      peekRef.current.scrollTop = peekRef.current.scrollHeight;
+    }
+  }, [props.thinking, collapsed]);
+
   if (!isReasoningModel(props.model)) return null;
-  if (!props.thinking && !props.streaming) return null;
+  if (!props.thinking && (props.isThinking === undefined && !props.streaming))
+    return null;
+
+  const isActuallyThinking = props.isThinking ?? props.streaming;
 
   return (
     <div className={styles["thinking-block"]}>
@@ -135,7 +146,7 @@ function ThinkingBlock(props: {
       >
         <div className={styles["thinking-title-container"]}>
           <div className={styles["thinking-title"]}>
-            {props.streaming ? Locale.Chat.Thinking : Locale.Chat.Thought}
+            {isActuallyThinking ? Locale.Chat.Thinking : Locale.Chat.Thought}
             {props.duration !== undefined && (
               <span className={styles["thinking-duration"]}>
                 ({Locale.Chat.ThinkingDuration(props.duration)})
@@ -143,8 +154,8 @@ function ThinkingBlock(props: {
             )}
           </div>
           {collapsed && props.thinking && (
-            <div className={styles["thinking-peek"]}>
-              {props.thinking.replace(/\n/g, " ").trim()}
+            <div className={styles["thinking-peek"]} ref={peekRef}>
+              {props.thinking.trim()}
             </div>
           )}
         </div>
@@ -2080,6 +2091,7 @@ function _Chat() {
                               thinking={message.reasoning_content ?? ""}
                               duration={message.reasoning_duration}
                               streaming={message.streaming}
+                              isThinking={message.isThinking}
                             />
                             <Markdown
                               key={message.streaming ? "loading" : "done"}

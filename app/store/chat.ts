@@ -66,6 +66,7 @@ export type ChatMessage = RequestMessage & {
   attachFiles?: { name: string; content: string }[];
   reasoning_content?: string;
   reasoning_duration?: number;
+  isThinking?: boolean;
 };
 
 export function createMessage(override: Partial<ChatMessage>): ChatMessage {
@@ -478,6 +479,7 @@ export const useChatStore = createPersistStore(
           config: { ...modelConfig, stream: true },
           onUpdate(message) {
             botMessage.streaming = true;
+            botMessage.isThinking = false;
             if (message) {
               botMessage.content = message;
             }
@@ -487,6 +489,7 @@ export const useChatStore = createPersistStore(
           },
           onUpdateThinking(reasoning, duration) {
             botMessage.streaming = true;
+            botMessage.isThinking = true;
             if (reasoning) {
               botMessage.reasoning_content = reasoning;
             }
