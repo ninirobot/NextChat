@@ -421,6 +421,46 @@ export function streamWithThink(
   let lastIsThinkingTagged = false; //between <think> and </think> tags
   let thinkingStartTime = 0;
   let reasoningText = "";
+  let remainReasoning = ""; // buffer for reasoning text
+
+  // animate response to make it looks smooth
+  function animateResponseText() {
+    if (finished || controller.signal.aborted) {
+      responseText += remainText;
+      reasoningText += remainReasoning;
+      console.log("[Response Animation] finished");
+      if (responseText?.length === 0 && reasoningText?.length === 0) {
+        options.onError?.(new Error("empty response from server"));
+      }
+      return;
+    }
+
+    if (remainText.length > 0) {
+      const fetchCount = Math.max(1, Math.round(remainText.length / 60));
+      const fetchText = remainText.slice(0, fetchCount);
+      responseText += fetchText;
+      remainText = remainText.slice(fetchCount);
+      options.onUpdate?.(responseText, fetchText);
+    }
+
+    if (remainReasoning.length > 0) {
+      const fetchCount = Math.max(1, Math.round(remainReasoning.length / 60));
+      const fetchText = remainReasoning.slice(0, fetchCount);
+      reasoningText += fetchText;
+      remainReasoning = remainReasoning.slice(fetchCount);
+      const duration = thinkingStartTime > 0 ? Math.floor((Date.now() - thinkingStartTime) / 1000) : 0;
+      options.onUpdateThinking?.(reasoningText, duration);
+    } else if (isInThinkingMode) {
+      // update duration even if no new text
+      const duration = Math.floor((Date.now() - thinkingStartTime) / 1000);
+      options.onUpdateThinking?.(reasoningText, duration);
+    }
+
+    requestAnimationFrame(animateResponseText);
+  }
+
+  // start animaion
+  animateResponseText();
 
   const finish = () => {
     if (!finished) {
@@ -539,24 +579,20 @@ export function streamWithThink(
               isInThinkingMode = true;
               thinkingStartTime = Date.now();
             }
-            reasoningText += blockReasoning;
-            options.onUpdateThinking?.(reasoningText, parseFloat(((Date.now() - thinkingStartTime) / 1000).toFixed(1)));
+            remainReasoning += blockReasoning;
           }
 
           if (hasNewContent) {
             if (isInThinkingMode) {
               isInThinkingMode = false;
-              options.onUpdateThinking?.(reasoningText, parseFloat(((Date.now() - thinkingStartTime) / 1000).toFixed(1)));
             }
             remainText += blockContent;
-            options.onUpdate?.(remainText);
           }
         } catch (e) {
           console.error("[Request] parse error", text, msg, e);
         }
       },
       onclose() {
-        options.onUpdate?.(remainText);
         finish();
       },
       onerror(e) {
