@@ -484,7 +484,9 @@ export const useChatStore = createPersistStore(
               botMessage.content = message;
             }
             get().updateTargetSession(session, (session) => {
-              session.messages = session.messages.concat();
+              session.messages = session.messages.map((m) =>
+                m.id === botMessage.id ? { ...botMessage } : m,
+              );
             });
           },
           onUpdateThinking(reasoning, duration) {
@@ -497,7 +499,9 @@ export const useChatStore = createPersistStore(
               botMessage.reasoning_duration = duration;
             }
             get().updateTargetSession(session, (session) => {
-              session.messages = session.messages.concat();
+              session.messages = session.messages.map((m) =>
+                m.id === botMessage.id ? { ...botMessage } : m,
+              );
             });
           },
           async onFinish(message) {
@@ -522,7 +526,9 @@ export const useChatStore = createPersistStore(
           onBeforeTool(tool: ChatMessageTool) {
             (botMessage.tools = botMessage?.tools || []).push(tool);
             get().updateTargetSession(session, (session) => {
-              session.messages = session.messages.concat();
+              session.messages = session.messages.map((m) =>
+                m.id === botMessage.id ? { ...botMessage } : m,
+              );
             });
           },
           onAfterTool(tool: ChatMessageTool) {
@@ -532,7 +538,9 @@ export const useChatStore = createPersistStore(
               }
             });
             get().updateTargetSession(session, (session) => {
-              session.messages = session.messages.concat();
+              session.messages = session.messages.map((m) =>
+                m.id === botMessage.id ? { ...botMessage } : m,
+              );
             });
           },
           onError(error) {
@@ -544,10 +552,17 @@ export const useChatStore = createPersistStore(
                 message: error.message,
               });
             botMessage.streaming = false;
+            botMessage.isThinking = false;
             userMessage.isError = !isAborted;
             botMessage.isError = !isAborted;
+
+            // Create new message object to trigger React re-render
             get().updateTargetSession(session, (session) => {
-              session.messages = session.messages.concat();
+              session.messages = session.messages.map((m) =>
+                m.id === botMessage.id
+                  ? { ...botMessage }
+                  : m
+              );
             });
             ChatControllerPool.remove(
               session.id,

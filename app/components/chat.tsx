@@ -1931,9 +1931,10 @@ function _Chat() {
                 .map((message, i) => {
                   const isUser = message.role === "user";
                   const isContext = i < context.length;
+                  const hasContent = message.content.length > 0 || (message.reasoning_content?.length ?? 0) > 0;
                   const showActions =
                     i > 0 &&
-                    !(message.preview || (message.content.length === 0 && !message.streaming && !message.isThinking)) &&
+                    !(message.preview || (!hasContent && !message.streaming && !message.isThinking)) &&
                     !isContext;
                   const showTyping = message.preview || message.streaming;
 
