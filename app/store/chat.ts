@@ -501,8 +501,11 @@ export const useChatStore = createPersistStore(
             });
           },
           async onFinish(message) {
+            console.log("[DEBUG] onFinish called, setting streaming=false, isThinking=false");
+            console.log("[DEBUG] Before: streaming=", botMessage.streaming, "isThinking=", botMessage.isThinking);
             botMessage.streaming = false;
             botMessage.isThinking = false;
+            console.log("[DEBUG] After: streaming=", botMessage.streaming, "isThinking=", botMessage.isThinking);
             if (message) {
               botMessage.content = message;
               botMessage.date = new Date().toLocaleString();
@@ -510,7 +513,9 @@ export const useChatStore = createPersistStore(
             get().updateTargetSession(session, (session) => {
               session.messages = session.messages.concat();
             });
+            console.log("[DEBUG] updateTargetSession called");
             get().onNewMessage(botMessage, session);
+            console.log("[DEBUG] onNewMessage called");
             ChatControllerPool.remove(session.id, botMessage.id);
           },
           onBeforeTool(tool: ChatMessageTool) {
