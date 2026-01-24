@@ -431,12 +431,8 @@ export function streamWithThink(
         return;
       }
       console.debug("[ChatAPI] end");
-      console.log("[DEBUG-FINISH] About to call options.onFinish");
-      console.log("[DEBUG-FINISH] responseText:", responseText?.substring(0, 100));
-      console.log("[DEBUG-FINISH] remainText:", remainText?.substring(0, 100));
       finished = true;
       options.onFinish(responseText + remainText, responseRes);
-      console.log("[DEBUG-FINISH] options.onFinish called");
     }
   };
 

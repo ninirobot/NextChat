@@ -1933,7 +1933,7 @@ function _Chat() {
                   const isContext = i < context.length;
                   const showActions =
                     i > 0 &&
-                    !(message.preview || message.content.length === 0) &&
+                    !(message.preview || (message.content.length === 0 && !message.streaming && !message.isThinking)) &&
                     !isContext;
                   const showTyping = message.preview || message.streaming;
 

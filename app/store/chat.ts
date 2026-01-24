@@ -501,17 +501,14 @@ export const useChatStore = createPersistStore(
             });
           },
           async onFinish(message) {
-            console.log("[DEBUG] onFinish called, setting streaming=false, isThinking=false");
-            console.log("[DEBUG] Before: streaming=", botMessage.streaming, "isThinking=", botMessage.isThinking);
             botMessage.streaming = false;
             botMessage.isThinking = false;
             if (message) {
               botMessage.content = message;
               botMessage.date = new Date().toLocaleString();
             }
-            console.log("[DEBUG] After: streaming=", botMessage.streaming, "isThinking=", botMessage.isThinking);
 
-            // CRITICAL FIX: Create new message object to trigger React re-render
+            // Create new message object to trigger React re-render
             get().updateTargetSession(session, (session) => {
               session.messages = session.messages.map((m) =>
                 m.id === botMessage.id
@@ -519,9 +516,7 @@ export const useChatStore = createPersistStore(
                   : m
               );
             });
-            console.log("[DEBUG] updateTargetSession called with new message object");
             get().onNewMessage(botMessage, session);
-            console.log("[DEBUG] onNewMessage called");
             ChatControllerPool.remove(session.id, botMessage.id);
           },
           onBeforeTool(tool: ChatMessageTool) {
