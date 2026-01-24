@@ -109,6 +109,8 @@ function ThinkingBlock(props: {
   isThinking?: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(true);
+  const isActuallyThinking = props.isThinking ?? props.streaming;
+
   // Users can easily add more models here
   const isReasoningModel = useCallback((model?: string) => {
     if (!model) return false;
@@ -126,9 +128,8 @@ function ThinkingBlock(props: {
   if (!props.thinking && (props.isThinking === undefined && !props.streaming))
     return null;
 
-  const displayDuration = isActuallyThinking
-    ? parseFloat(localDuration.toFixed(1))
-    : props.duration ?? parseFloat(localDuration.toFixed(1));
+  // Use the duration passed from the store (updated by requestAnimationFrame loop)
+  const displayDuration = props.duration ?? 0;
 
   return (
     <div className={styles["thinking-block"]}>
