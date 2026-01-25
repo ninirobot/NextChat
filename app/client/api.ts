@@ -78,6 +78,7 @@ export interface ChatOptions {
   config: LLMConfig;
 
   onUpdate?: (message: string, chunk: string) => void;
+  onUpdateThinking?: (reasoning: string, duration: number) => void;
   onFinish: (message: string, responseRes: Response) => void;
   onError?: (err: Error) => void;
   onController?: (controller: AbortController) => void;
@@ -182,11 +183,11 @@ export class ClientApi {
     }
   }
 
-  config() {}
+  config() { }
 
-  prompts() {}
+  prompts() { }
 
-  masks() {}
+  masks() { }
 
   async share(messages: ChatMessage[], avatarUrl: string | null = null) {
     const msgs = messages
@@ -274,30 +275,30 @@ export function getHeaders(ignoreHeaders: boolean = false) {
     const apiKey = isGoogle
       ? accessStore.googleApiKey
       : isAzure
-      ? accessStore.azureApiKey
-      : isAnthropic
-      ? accessStore.anthropicApiKey
-      : isByteDance
-      ? accessStore.bytedanceApiKey
-      : isAlibaba
-      ? accessStore.alibabaApiKey
-      : isMoonshot
-      ? accessStore.moonshotApiKey
-      : isXAI
-      ? accessStore.xaiApiKey
-      : isDeepSeek
-      ? accessStore.deepseekApiKey
-      : isChatGLM
-      ? accessStore.chatglmApiKey
-      : isSiliconFlow
-      ? accessStore.siliconflowApiKey
-      : isIflytek
-      ? accessStore.iflytekApiKey && accessStore.iflytekApiSecret
-        ? accessStore.iflytekApiKey + ":" + accessStore.iflytekApiSecret
-        : ""
-      : isAI302
-      ? accessStore.ai302ApiKey
-      : accessStore.openaiApiKey;
+        ? accessStore.azureApiKey
+        : isAnthropic
+          ? accessStore.anthropicApiKey
+          : isByteDance
+            ? accessStore.bytedanceApiKey
+            : isAlibaba
+              ? accessStore.alibabaApiKey
+              : isMoonshot
+                ? accessStore.moonshotApiKey
+                : isXAI
+                  ? accessStore.xaiApiKey
+                  : isDeepSeek
+                    ? accessStore.deepseekApiKey
+                    : isChatGLM
+                      ? accessStore.chatglmApiKey
+                      : isSiliconFlow
+                        ? accessStore.siliconflowApiKey
+                        : isIflytek
+                          ? accessStore.iflytekApiKey && accessStore.iflytekApiSecret
+                            ? accessStore.iflytekApiKey + ":" + accessStore.iflytekApiSecret
+                            : ""
+                          : isAI302
+                            ? accessStore.ai302ApiKey
+                            : accessStore.openaiApiKey;
     return {
       isGoogle,
       isAzure,
@@ -321,10 +322,10 @@ export function getHeaders(ignoreHeaders: boolean = false) {
     return isAzure
       ? "api-key"
       : isAnthropic
-      ? "x-api-key"
-      : isGoogle
-      ? "x-goog-api-key"
-      : "Authorization";
+        ? "x-api-key"
+        : isGoogle
+          ? "x-goog-api-key"
+          : "Authorization";
   }
 
   const {

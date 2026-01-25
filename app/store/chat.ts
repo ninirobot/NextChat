@@ -64,6 +64,9 @@ export type ChatMessage = RequestMessage & {
   audio_url?: string;
   isMcpResponse?: boolean;
   attachFiles?: { name: string; content: string }[];
+  reasoning_content?: string;
+  reasoning_duration?: number;
+  isThinking?: boolean;
 };
 
 export function createMessage(override: Partial<ChatMessage>): ChatMessage {
@@ -476,6 +479,7 @@ export const useChatStore = createPersistStore(
           config: { ...modelConfig, stream: true },
           onUpdate(message) {
             botMessage.streaming = true;
+            botMessage.isThinking = false;
             if (message) {
               botMessage.content = message;
             }
@@ -483,19 +487,44 @@ export const useChatStore = createPersistStore(
               session.messages = session.messages.concat();
             });
           },
+          onUpdateThinking(reasoning, duration) {
+            botMessage.streaming = true;
+            botMessage.isThinking = true;
+            if (reasoning) {
+              botMessage.reasoning_content = reasoning;
+            }
+            if (duration) {
+              botMessage.reasoning_duration = duration;
+            }
+            get().updateTargetSession(session, (session) => {
+              session.messages = session.messages.concat();
+            });
+          },
           async onFinish(message) {
             botMessage.streaming = false;
+            botMessage.isThinking = false;
             if (message) {
               botMessage.content = message;
               botMessage.date = new Date().toLocaleString();
-              get().onNewMessage(botMessage, session);
             }
+
+            // Create new message object to trigger React re-render
+            get().updateTargetSession(session, (session) => {
+              session.messages = session.messages.map((m) =>
+                m.id === botMessage.id
+                  ? { ...botMessage }  // Create new object reference
+                  : m
+              );
+            });
+            get().onNewMessage(botMessage, session);
             ChatControllerPool.remove(session.id, botMessage.id);
           },
           onBeforeTool(tool: ChatMessageTool) {
             (botMessage.tools = botMessage?.tools || []).push(tool);
             get().updateTargetSession(session, (session) => {
-              session.messages = session.messages.concat();
+              session.messages = session.messages.map((m) =>
+                m.id === botMessage.id ? { ...botMessage } : m,
+              );
             });
           },
           onAfterTool(tool: ChatMessageTool) {
@@ -505,7 +534,9 @@ export const useChatStore = createPersistStore(
               }
             });
             get().updateTargetSession(session, (session) => {
-              session.messages = session.messages.concat();
+              session.messages = session.messages.map((m) =>
+                m.id === botMessage.id ? { ...botMessage } : m,
+              );
             });
           },
           onError(error) {
@@ -517,10 +548,17 @@ export const useChatStore = createPersistStore(
                 message: error.message,
               });
             botMessage.streaming = false;
+            botMessage.isThinking = false;
             userMessage.isError = !isAborted;
             botMessage.isError = !isAborted;
+
+            // Create new message object to trigger React re-render
             get().updateTargetSession(session, (session) => {
-              session.messages = session.messages.concat();
+              session.messages = session.messages.map((m) =>
+                m.id === botMessage.id
+                  ? { ...botMessage }
+                  : m
+              );
             });
             ChatControllerPool.remove(
               session.id,
@@ -729,9 +767,10 @@ export const useChatStore = createPersistStore(
               if (responseRes?.status === 200) {
                 get().updateTargetSession(
                   session,
-                  (session) =>
-                  (session.topic =
-                    message.length > 0 ? trimTopic(message) : DEFAULT_TOPIC),
+                  (session) => {
+                    const topic = message.length > 0 ? trimTopic(message) : DEFAULT_TOPIC;
+                    session.topic = topic.length > 0 ? topic : DEFAULT_TOPIC;
+                  },
                 );
               }
             },

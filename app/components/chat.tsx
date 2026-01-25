@@ -100,6 +100,81 @@ import {
   showPrompt,
   showToast,
 } from "./ui-lib";
+
+function ThinkingBlock(props: {
+  model?: string;
+  thinking: string;
+  duration?: number;
+  streaming?: boolean;
+  isThinking?: boolean;
+}) {
+  const [collapsed, setCollapsed] = useState(true);
+  const isActuallyThinking = props.isThinking ?? props.streaming;
+
+  // Users can easily add more models here
+  const isReasoningModel = useCallback((model?: string) => {
+    if (!model) return false;
+    const m = model.toLowerCase();
+    return (
+      m.includes("deepseek-r1") ||
+      m.includes("o1-") ||
+      m.includes("o3-") ||
+      m === "o1" ||
+      m === "o3"
+    );
+  }, []);
+
+  if (!isReasoningModel(props.model)) return null;
+  if (!props.thinking && (props.isThinking === undefined && !props.streaming))
+    return null;
+
+  const peekRef = useRef<HTMLDivElement>(null);
+
+  // Sync scroll for lyrics effect
+  useEffect(() => {
+    if (collapsed && peekRef.current) {
+      peekRef.current.scrollTop = peekRef.current.scrollHeight;
+    }
+  }, [props.thinking, collapsed]);
+
+  // Use the duration passed from the store (updated by requestAnimationFrame loop)
+  const displayDuration = props.duration ?? 0;
+
+  return (
+    <div className={styles["thinking-block"]}>
+      <div
+        className={clsx(styles["thinking-header"], {
+          [styles["collapsed"]]: collapsed,
+        })}
+        onClick={() => setCollapsed(!collapsed)}
+      >
+        <div className={styles["thinking-title-container"]}>
+          <div className={styles["thinking-title"]}>
+            {isActuallyThinking ? Locale.Chat.Thinking : Locale.Chat.Thought}
+            <span className={styles["thinking-duration"]}>
+              ({Locale.Chat.ThinkingDuration(displayDuration)})
+            </span>
+          </div>
+          {collapsed && props.thinking && (
+            <div className={styles["thinking-peek-container"]}>
+              <div className={styles["thinking-peek"]} ref={peekRef}>
+                {props.thinking.trim()}
+              </div>
+            </div>
+          )}
+        </div>
+        <div className={styles["thinking-tag"]}>
+          {collapsed ? <MaxIcon /> : <MinIcon />}
+        </div>
+      </div>
+      {!collapsed && (
+        <div className={styles["thinking-content"]}>
+          <Markdown content={props.thinking} />
+        </div>
+      )}
+    </div>
+  );
+}
 import { useNavigate } from "react-router-dom";
 import {
   CHAT_PAGE_SIZE,
@@ -1834,9 +1909,10 @@ function _Chat() {
                 .map((message, i) => {
                   const isUser = message.role === "user";
                   const isContext = i < context.length;
+                  const hasContent = message.content.length > 0 || (message.reasoning_content?.length ?? 0) > 0;
                   const showActions =
                     i > 0 &&
-                    !(message.preview || message.content.length === 0) &&
+                    !(message.preview || (!hasContent && !message.streaming && !message.isThinking)) &&
                     !isContext;
                   const showTyping = message.preview || message.streaming;
 
@@ -2015,6 +2091,13 @@ function _Chat() {
                             </div>
                           )}
                           <div className={styles["chat-message-item"]}>
+                            <ThinkingBlock
+                              model={message.model}
+                              thinking={message.reasoning_content ?? ""}
+                              duration={message.reasoning_duration}
+                              streaming={message.streaming}
+                              isThinking={message.isThinking}
+                            />
                             <Markdown
                               key={message.streaming ? "loading" : "done"}
                               content={getMessageTextContent(message)}

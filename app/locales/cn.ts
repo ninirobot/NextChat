@@ -109,6 +109,9 @@ const cn = {
       showShortcutKey: "显示快捷方式",
       clearContext: "清除上下文",
     },
+    Thinking: "思考中",
+    Thought: "已深度思考",
+    ThinkingDuration: (d: number) => `用时 ${d} 秒`,
   },
   Export: {
     Title: "分享聊天记录",

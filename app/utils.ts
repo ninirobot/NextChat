@@ -19,9 +19,12 @@ export function trimTopic(topic: string) {
   // and also trim quotes from both the start and end if they exist.
   return (
     topic
+      // fix for deepseek/thinking models
+      .replace(/<think>[\s\S]*?<\/think>/g, "")
       // fix for gemini
-      .replace(/^["“”*]+|["“”*]+$/g, "")
+      .replace(/^["“”*#]+|["“”*#]+$/g, "")
       .replace(/[，。！？”“"、,.!?*]*$/, "")
+      .trim()
   );
 }
 
