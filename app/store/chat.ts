@@ -767,9 +767,10 @@ export const useChatStore = createPersistStore(
               if (responseRes?.status === 200) {
                 get().updateTargetSession(
                   session,
-                  (session) =>
-                  (session.topic =
-                    message.length > 0 ? trimTopic(message) : DEFAULT_TOPIC),
+                  (session) => {
+                    const topic = message.length > 0 ? trimTopic(message) : DEFAULT_TOPIC;
+                    session.topic = topic.length > 0 ? topic : DEFAULT_TOPIC;
+                  },
                 );
               }
             },
