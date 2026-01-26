@@ -76,7 +76,7 @@ import {
   DeepSeek,
   SiliconFlow,
   AI302,
-  LONGCAT,
+  Meituan,
 } from "../constant";
 import { Prompt, SearchService, usePromptStore } from "../store/prompt";
 import { ErrorBoundary } from "./error";
