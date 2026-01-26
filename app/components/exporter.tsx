@@ -40,6 +40,7 @@ import { type ClientApi, getClientApi } from "../client/api";
 import { getMessageTextContent } from "../utils";
 import { MaskAvatar } from "./mask";
 import clsx from "clsx";
+import { ThinkingBlock } from "./thinking";
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
   loading: () => <LoadingIcon />,
@@ -294,6 +295,14 @@ export function RenderExport(props: {
           id={`${m.role}:${i}`}
           className={EXPORT_MESSAGE_CLASS_NAME}
         >
+          <ThinkingBlock
+            model={m.model}
+            thinking={m.reasoning_content ?? ""}
+            duration={m.reasoning_duration}
+            streaming={false}
+            isThinking={false}
+            defaultExpand={true}
+          />
           <Markdown content={getMessageTextContent(m)} defaultShow />
         </div>
       ))}
@@ -573,6 +582,14 @@ export function ImagePreviewer(props: {
               </div>
 
               <div className={styles["body"]}>
+                <ThinkingBlock
+                  model={m.model}
+                  thinking={m.reasoning_content ?? ""}
+                  duration={m.reasoning_duration}
+                  streaming={false}
+                  isThinking={false}
+                  defaultExpand={true}
+                />
                 <Markdown
                   content={getMessageTextContent(m)}
                   fontSize={config.fontSize}
@@ -625,9 +642,10 @@ export function MarkdownPreviewer(props: {
       .map((m) => {
         return m.role === "user"
           ? `## ${Locale.Export.MessageFromYou}:\n${getMessageTextContent(m)}`
-          : `## ${Locale.Export.MessageFromChatGPT}:\n${getMessageTextContent(
-              m,
-            ).trim()}`;
+          : `## ${Locale.Export.MessageFromChatGPT}:\n${m.reasoning_content
+            ? `<think>\n${m.reasoning_content}\n</think>\n\n`
+            : ""
+          }${getMessageTextContent(m).trim()}`;
       })
       .join("\n\n");
 
@@ -665,6 +683,8 @@ export function JsonPreviewer(props: {
       ...props.messages.map((m) => ({
         role: m.role,
         content: m.content,
+        reasoning_content: m.reasoning_content,
+        reasoning_duration: m.reasoning_duration,
       })),
     ],
   };
