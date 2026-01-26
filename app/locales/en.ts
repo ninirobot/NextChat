@@ -558,6 +558,17 @@ const en: LocaleType = {
           SubTitle: "Example: ",
         },
       },
+      LongCat: {
+        ApiKey: {
+          Title: "LongCat API Key",
+          SubTitle: "Use a custom LongCat API Key",
+          Placeholder: "LongCat API Key",
+        },
+        Endpoint: {
+          Title: "Endpoint Address",
+          SubTitle: "Example: ",
+        },
+      },
     },
 
     Model: "Model",
@@ -586,6 +597,14 @@ const en: LocaleType = {
       Title: "Frequency Penalty",
       SubTitle:
         "A larger value decreasing the likelihood to repeat the same line",
+    },
+    ThinkingBudget: {
+      Title: "Thinking Budget (thinking_budget)",
+      SubTitle: "Max tokens used for deep thinking (supported models only)",
+    },
+    ThinkingWidth: {
+      Title: "Heavy Thinking Mode / Thinking Width (n_trajectories)",
+      SubTitle: "Number of thinking trajectories in parallel (Recommended: 8)",
     },
     TTS: {
       Enable: {

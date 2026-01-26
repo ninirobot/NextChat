@@ -553,6 +553,17 @@ const cn = {
           SubTitle: "样例：",
         },
       },
+      LongCat: {
+        ApiKey: {
+          Title: "接口密钥",
+          SubTitle: "使用自定义 LongCat API Key",
+          Placeholder: "LongCat API Key",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "样例：",
+        },
+      },
     },
 
     Model: "模型 (model)",
@@ -579,6 +590,14 @@ const cn = {
     FrequencyPenalty: {
       Title: "频率惩罚度 (frequency_penalty)",
       SubTitle: "值越大，越有可能降低重复字词",
+    },
+    ThinkingBudget: {
+      Title: "思考预算 (thinking_budget)",
+      SubTitle: "用于深度思考的最大 Token 数 (仅部分模型支持)",
+    },
+    ThinkingWidth: {
+      Title: "强力思考模式 / 思考宽度 (n_trajectories)",
+      SubTitle: "同时进行思考的大脑数量 (Heavy Thinking Mode, 推荐 8)",
     },
     TTS: {
       Enable: {

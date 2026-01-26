@@ -37,6 +37,7 @@ export const CHATGLM_BASE_URL = "https://open.bigmodel.cn";
 export const SILICONFLOW_BASE_URL = "https://api.siliconflow.cn";
 
 export const AI302_BASE_URL = "https://api.302.ai";
+export const LONGCAT_BASE_URL = "https://api.longcat.chat/openai";
 
 export const CACHE_URL_PREFIX = "/api/cache";
 export const UPLOAD_URL = `${CACHE_URL_PREFIX}/upload`;
@@ -75,6 +76,7 @@ export enum ApiPath {
   DeepSeek = "/api/deepseek",
   SiliconFlow = "/api/siliconflow",
   "302.AI" = "/api/302ai",
+  LongCat = "/api/longcat",
 }
 
 export enum SlotID {
@@ -134,6 +136,7 @@ export enum ServiceProvider {
   DeepSeek = "DeepSeek",
   SiliconFlow = "SiliconFlow",
   "302.AI" = "302.AI",
+  LongCat = "LongCat",
 }
 
 // Google API safety settings, see https://ai.google.dev/gemini-api/docs/safety-settings
@@ -161,6 +164,7 @@ export enum ModelProvider {
   DeepSeek = "DeepSeek",
   SiliconFlow = "SiliconFlow",
   "302.AI" = "302.AI",
+  LongCat = "LongCat",
 }
 
 export const Stability = {
@@ -276,6 +280,11 @@ export const AI302 = {
   ChatPath: "v1/chat/completions",
   EmbeddingsPath: "jina/v1/embeddings",
   ListModelPath: "v1/models?llm=1",
+};
+
+export const LONGCAT = {
+  ExampleEndpoint: LONGCAT_BASE_URL,
+  ChatPath: "v1/chat/completions",
 };
 
 export const DEFAULT_INPUT_TEMPLATE = `{{input}}`; // input / time / model / lang
@@ -746,6 +755,12 @@ const ai302Models = [
   "gemini-2.5-pro",
 ];
 
+const longcatModels = [
+  "LongCat-Flash-Chat",
+  "LongCat-Flash-Thinking",
+  "LongCat-Flash-Thinking-2601",
+];
+
 let seq = 1000; // 内置的模型序号生成器从1000开始
 export const DEFAULT_MODELS = [
   ...openaiModels.map((name) => ({
@@ -801,6 +816,17 @@ export const DEFAULT_MODELS = [
       providerName: "Baidu",
       providerType: "baidu",
       sorted: 5,
+    },
+  })),
+  ...longcatModels.map((name) => ({
+    name,
+    available: true,
+    sorted: seq++,
+    provider: {
+      id: "longcat",
+      providerName: "LongCat",
+      providerType: "longcat",
+      sorted: 6, // Adjust sorting as needed
     },
   })),
   ...bytedanceModels.map((name) => ({

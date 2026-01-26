@@ -81,6 +81,9 @@ export const DEFAULT_CONFIG = {
     size: "1024x1024" as ModelSize,
     quality: "standard" as DalleQuality,
     style: "vivid" as DalleStyle,
+    enable_thinking: false,
+    thinking_budget: 1024,
+    n_trajectories: 8,
   },
 
   ttsConfig: {
@@ -159,6 +162,12 @@ export const ModalConfigValidator = {
   top_p(x: number) {
     return limitNumber(x, 0, 1, 1);
   },
+  thinking_budget(x: number) {
+    return limitNumber(x, 1024, 8192, 1024);
+  },
+  n_trajectories(x: number) {
+    return limitNumber(x, 1, 16, 8);
+  },
 };
 
 export const useAppConfig = createPersistStore(
@@ -191,7 +200,7 @@ export const useAppConfig = createPersistStore(
       }));
     },
 
-    allModels() {},
+    allModels() { },
   }),
   {
     name: StoreKey.Config,
