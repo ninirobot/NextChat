@@ -507,7 +507,7 @@ export const VISION_MODEL_REGEXES = [
   /deepseek/,
   /kimi/,
   /llama/,
-  /longcat/
+  /longcat/,
 ];
 
 export const EXCLUDE_VISION_MODEL_REGEXES = [/claude-3-5-haiku-20241022/];
