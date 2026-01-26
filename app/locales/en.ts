@@ -558,11 +558,11 @@ const en: LocaleType = {
           SubTitle: "Example: ",
         },
       },
-      LongCat: {
+      Meituan: {
         ApiKey: {
-          Title: "LongCat API Key",
-          SubTitle: "Use a custom LongCat API Key",
-          Placeholder: "LongCat API Key",
+          Title: "Meituan API Key",
+          SubTitle: "Use a custom Meituan API Key",
+          Placeholder: "Meituan API Key",
         },
         Endpoint: {
           Title: "Endpoint Address",

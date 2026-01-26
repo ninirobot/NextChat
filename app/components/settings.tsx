@@ -1499,39 +1499,39 @@ export function Settings() {
     </>
   );
 
-  const longcatConfigComponent = accessStore.provider === ServiceProvider.LongCat && (
+  const meituanConfigComponent = accessStore.provider === ServiceProvider.Meituan && (
     <>
       <ListItem
-        title={Locale.Settings.Access.LongCat.Endpoint.Title}
+        title={Locale.Settings.Access.Meituan.Endpoint.Title}
         subTitle={
-          Locale.Settings.Access.LongCat.Endpoint.SubTitle +
-          LONGCAT.ExampleEndpoint
+          Locale.Settings.Access.Meituan.Endpoint.SubTitle +
+          Meituan.ExampleEndpoint
         }
       >
         <input
-          aria-label={Locale.Settings.Access.LongCat.Endpoint.Title}
+          aria-label={Locale.Settings.Access.Meituan.Endpoint.Title}
           type="text"
-          value={accessStore.longcatUrl}
-          placeholder={LONGCAT.ExampleEndpoint}
+          value={accessStore.meituanUrl}
+          placeholder={Meituan.ExampleEndpoint}
           onChange={(e) =>
             accessStore.update(
-              (access) => (access.longcatUrl = e.currentTarget.value),
+              (access) => (access.meituanUrl = e.currentTarget.value),
             )
           }
         ></input>
       </ListItem>
       <ListItem
-        title={Locale.Settings.Access.LongCat.ApiKey.Title}
-        subTitle={Locale.Settings.Access.LongCat.ApiKey.SubTitle}
+        title={Locale.Settings.Access.Meituan.ApiKey.Title}
+        subTitle={Locale.Settings.Access.Meituan.ApiKey.SubTitle}
       >
         <PasswordInput
-          aria-label={Locale.Settings.Access.LongCat.ApiKey.Title}
-          value={accessStore.longcatApiKey}
+          aria-label={Locale.Settings.Access.Meituan.ApiKey.Title}
+          value={accessStore.meituanApiKey}
           type="text"
-          placeholder={Locale.Settings.Access.LongCat.ApiKey.Placeholder}
+          placeholder={Locale.Settings.Access.Meituan.ApiKey.Placeholder}
           onChange={(e) => {
             accessStore.update(
-              (access) => (access.longcatApiKey = e.currentTarget.value),
+              (access) => (access.meituanApiKey = e.currentTarget.value),
             );
           }}
         />
@@ -1904,7 +1904,7 @@ export function Settings() {
                   {chatglmConfigComponent}
                   {siliconflowConfigComponent}
                   {ai302ConfigComponent}
-                  {longcatConfigComponent}
+                  {meituanConfigComponent}
                 </>
               )}
             </>

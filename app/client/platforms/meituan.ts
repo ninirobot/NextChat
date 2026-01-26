@@ -1,5 +1,5 @@
 "use client";
-import { ApiPath, LONGCAT_BASE_URL, LONGCAT, ServiceProvider } from "@/app/constant";
+import { ApiPath, MEITUAN_BASE_URL, Meituan, ServiceProvider } from "@/app/constant";
 import {
     useAccessStore,
     useAppConfig,
@@ -24,7 +24,7 @@ import {
 import { RequestPayload } from "./openai";
 import { fetch } from "@/app/utils/stream";
 
-export class LongCatApi implements LLMApi {
+export class MeituanApi implements LLMApi {
     private disableListModels = true;
 
     path(path: string): string {
@@ -33,19 +33,19 @@ export class LongCatApi implements LLMApi {
         let baseUrl = "";
 
         if (accessStore.useCustomConfig) {
-            baseUrl = accessStore.longcatUrl;
+            baseUrl = accessStore.meituanUrl;
         }
 
         if (baseUrl.length === 0) {
             const isApp = !!getClientConfig()?.isApp;
-            const apiPath = ApiPath.LongCat;
-            baseUrl = isApp ? LONGCAT_BASE_URL : apiPath;
+            const apiPath = ApiPath.Meituan;
+            baseUrl = isApp ? MEITUAN_BASE_URL : apiPath;
         }
 
         if (baseUrl.endsWith("/")) {
             baseUrl = baseUrl.slice(0, baseUrl.length - 1);
         }
-        if (!baseUrl.startsWith("http") && !baseUrl.startsWith(ApiPath.LongCat)) {
+        if (!baseUrl.startsWith("http") && !baseUrl.startsWith(ApiPath.Meituan)) {
             baseUrl = "https://" + baseUrl;
         }
 
@@ -121,7 +121,7 @@ export class LongCatApi implements LLMApi {
         options.onController?.(controller);
 
         try {
-            const chatPath = this.path(LONGCAT.ChatPath);
+            const chatPath = this.path(Meituan.ChatPath);
             const chatPayload = {
                 method: "POST",
                 body: JSON.stringify(requestPayload),

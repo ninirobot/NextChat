@@ -553,11 +553,11 @@ const cn = {
           SubTitle: "样例：",
         },
       },
-      LongCat: {
+      Meituan: {
         ApiKey: {
           Title: "接口密钥",
-          SubTitle: "使用自定义 LongCat API Key",
-          Placeholder: "LongCat API Key",
+          SubTitle: "使用自定义 Meituan API Key",
+          Placeholder: "Meituan API Key",
         },
         Endpoint: {
           Title: "接口地址",
