@@ -184,13 +184,24 @@ export class MeituanApi implements LLMApi {
                         let reasoning = "";
                         let content = "";
 
+                        // Handle native delta fields
                         for (const choice of choices) {
-                            if (choice.delta?.reasoning_content) {
-                                reasoning += choice.delta.reasoning_content;
+                            const delta = choice.delta;
+                            if (delta?.reasoning_content) {
+                                reasoning += delta.reasoning_content;
                             }
-                            if (choice.delta?.content) {
-                                content += choice.delta.content;
+                            if (delta?.content) {
+                                content += delta.content;
                             }
+                        }
+
+                        // Robustness fallback: if delta is empty, check top-level fields 
+                        // (Note: we only take these if they are not already cumulative to avoid duplicates)
+                        if (!reasoning && json.reasoning_content) {
+                            reasoning = json.reasoning_content;
+                        }
+                        if (!content && !choices.length && json.content) {
+                            content = json.content;
                         }
 
                         return {
