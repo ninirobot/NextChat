@@ -602,10 +602,6 @@ const en: LocaleType = {
       Title: "Thinking Budget (thinking_budget)",
       SubTitle: "Max tokens used for deep thinking (supported models only)",
     },
-    ThinkingWidth: {
-      Title: "Heavy Thinking Mode / Thinking Width (n_trajectories)",
-      SubTitle: "Number of thinking trajectories in parallel (Recommended: 8)",
-    },
     TTS: {
       Enable: {
         Title: "Enable TTS",

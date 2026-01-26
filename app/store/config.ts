@@ -68,7 +68,7 @@ export const DEFAULT_CONFIG = {
     providerName: "Google" as ServiceProvider,
     temperature: 1,
     top_p: 1,
-    max_tokens: 1048576,
+    max_tokens: 262144,
     presence_penalty: 0,
     frequency_penalty: 0,
     sendMemory: true,
@@ -76,14 +76,13 @@ export const DEFAULT_CONFIG = {
     compressMessageLengthThreshold: 1048576,
     compressModel: "",
     compressProviderName: "",
-    enableInjectSystemPrompts: true,
+    enableInjectSystemPrompts: false,
     template: config?.template ?? DEFAULT_INPUT_TEMPLATE,
     size: "1024x1024" as ModelSize,
     quality: "standard" as DalleQuality,
     style: "vivid" as DalleStyle,
     enable_thinking: false,
     thinking_budget: 1024,
-    n_trajectories: 8,
   },
 
   ttsConfig: {
@@ -164,9 +163,6 @@ export const ModalConfigValidator = {
   },
   thinking_budget(x: number) {
     return limitNumber(x, 1024, 8192, 1024);
-  },
-  n_trajectories(x: number) {
-    return limitNumber(x, 1, 16, 8);
   },
 };
 

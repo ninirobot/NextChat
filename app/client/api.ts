@@ -63,7 +63,6 @@ export interface LLMConfig {
   max_tokens?: number;
   enable_thinking?: boolean;
   thinking_budget?: number;
-  n_trajectories?: number;
   size?: DalleRequestPayload["size"];
   quality?: DalleRequestPayload["quality"];
   style?: DalleRequestPayload["style"];

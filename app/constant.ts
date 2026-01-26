@@ -287,7 +287,7 @@ export const Meituan = {
   ChatPath: "v1/chat/completions",
 };
 
-export const DEFAULT_INPUT_TEMPLATE = `{{input}}`; // input / time / model / lang
+export const DEFAULT_INPUT_TEMPLATE = ``; // input / time / model / lang
 // export const DEFAULT_SYSTEM_TEMPLATE = `
 // You are ChatGPT, a large language model trained by {{ServiceProvider}}.
 // Knowledge cutoff: {{cutoff}}
@@ -485,29 +485,29 @@ export const DEFAULT_TTS_VOICES = [
 ];
 
 export const VISION_MODEL_REGEXES = [
-  /vision/,
-  /gpt-4o/,
-  /gpt-4\.1/,
-  /claude.*[34]/,
-  /gemini-1\.5/,
-  /gemini-exp/,
-  /gemini/,
-  /gemini-2\.[05]/,
-  /learnlm/,
-  /qwen-vl/,
-  /qwen2-vl/,
-  /gpt-4-turbo(?!.*preview)/,
-  /^dall-e-3$/,
-  /glm-4v/,
+  /vision/i,
+  /gpt-4o/i,
+  /gpt-4\.1/i,
+  /claude.*[34]/i,
+  /gemini-1\.5/i,
+  /gemini-exp/i,
+  /gemini/i,
+  /gemini-2\.[05]/i,
+  /learnlm/i,
+  /qwen-vl/i,
+  /qwen2-vl/i,
+  /gpt-4-turbo(?!.*preview)/i,
+  /^dall-e-3$/i,
+  /glm-4v/i,
   /vl/i,
-  /o3/,
-  /o4-mini/,
+  /o3/i,
+  /o4-mini/i,
   /grok-4/i,
-  /gpt-5/,
-  /deepseek/,
-  /kimi/,
-  /llama/,
-  /longcat/,
+  /gpt-5/i,
+  /deepseek/i,
+  /kimi/i,
+  /llama/i,
+  /longcat/i,
 ];
 
 export const EXCLUDE_VISION_MODEL_REGEXES = [/claude-3-5-haiku-20241022/];

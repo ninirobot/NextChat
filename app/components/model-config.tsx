@@ -93,12 +93,12 @@ export function ModelConfigList(props: {
         title={Locale.Settings.MaxTokens.Title}
         subTitle={Locale.Settings.MaxTokens.SubTitle}
       >
-        <input
-          aria-label={Locale.Settings.MaxTokens.Title}
-          type="number"
-          min={1024}
-          max={1048576}
+        <InputRange
+          aria={Locale.Settings.MaxTokens.Title}
           value={props.modelConfig.max_tokens}
+          min="1024"
+          max="1048576"
+          step="1024"
           onChange={(e) =>
             props.updateConfig(
               (config) =>
@@ -107,19 +107,19 @@ export function ModelConfigList(props: {
               )),
             )
           }
-        ></input>
+        ></InputRange>
       </ListItem>
       {props.modelConfig.model.toLowerCase().includes("thinking") && (
         <ListItem
           title={Locale.Settings.ThinkingBudget.Title}
           subTitle={Locale.Settings.ThinkingBudget.SubTitle}
         >
-          <input
-            aria-label={Locale.Settings.ThinkingBudget.Title}
-            type="number"
-            min={1024}
-            max={8192}
+          <InputRange
+            aria={Locale.Settings.ThinkingBudget.Title}
             value={props.modelConfig.thinking_budget}
+            min="1024"
+            max="8192"
+            step="1024"
             onChange={(e) =>
               props.updateConfig(
                 (config) =>
@@ -127,28 +127,6 @@ export function ModelConfigList(props: {
                   ModalConfigValidator.thinking_budget(
                     e.currentTarget.valueAsNumber,
                   )),
-              )
-            }
-          ></input>
-        </ListItem>
-      )}
-      {props.modelConfig.model.toLowerCase().includes("thinking") && (
-        <ListItem
-          title={Locale.Settings.ThinkingWidth.Title}
-          subTitle={Locale.Settings.ThinkingWidth.SubTitle}
-        >
-          <InputRange
-            aria={Locale.Settings.ThinkingWidth.Title}
-            value={props.modelConfig.n_trajectories}
-            min="1"
-            max="16"
-            step="1"
-            onChange={(e) =>
-              props.updateConfig(
-                (config) =>
-                (config.n_trajectories = ModalConfigValidator.n_trajectories(
-                  e.currentTarget.valueAsNumber,
-                )),
               )
             }
           ></InputRange>

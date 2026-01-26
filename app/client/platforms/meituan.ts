@@ -102,16 +102,16 @@ export class MeituanApi implements LLMApi {
 
         if (isThinkingModel) {
             requestPayload.enable_thinking = true;
-            // Default to 1024 or some reasonable value, ensure it's less than max_tokens if applicable
             requestPayload.thinking_budget = options.config.thinking_budget || 1024;
-            requestPayload.n_trajectories = options.config.n_trajectories || 8;
-            if (options.config.max_tokens && options.config.max_tokens <= requestPayload.thinking_budget) {
-                requestPayload.max_tokens = requestPayload.thinking_budget + 1024;
-            } else if (options.config.max_tokens) {
-                requestPayload.max_tokens = options.config.max_tokens;
-            }
-        } else if (options.config.max_tokens) {
-            requestPayload.max_tokens = options.config.max_tokens;
+        }
+
+        if (options.config.max_tokens) {
+            requestPayload.max_tokens = Math.min(options.config.max_tokens, 262144);
+        }
+
+        // Adjust for reasoning overhead if necessary, but keep within limits
+        if (isThinkingModel && requestPayload.max_tokens <= requestPayload.thinking_budget) {
+            requestPayload.max_tokens = Math.min(requestPayload.thinking_budget + 2048, 262144);
         }
 
         console.log("[Request] longcat payload: ", requestPayload);

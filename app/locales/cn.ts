@@ -595,10 +595,6 @@ const cn = {
       Title: "思考预算 (thinking_budget)",
       SubTitle: "用于深度思考的最大 Token 数 (仅部分模型支持)",
     },
-    ThinkingWidth: {
-      Title: "强力思考模式 / 思考宽度 (n_trajectories)",
-      SubTitle: "同时进行思考的大脑数量 (Heavy Thinking Mode, 推荐 8)",
-    },
     TTS: {
       Enable: {
         Title: "启用文本转语音",
