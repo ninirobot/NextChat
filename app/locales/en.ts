@@ -570,8 +570,6 @@ const en: LocaleType = {
         },
       },
       OpenRouter: {
-        Title: "OpenRouter",
-        SubTitle: "Configure OpenRouter",
         Endpoint: {
           Title: "Endpoint Address",
           SubTitle: "Example: ",
