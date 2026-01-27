@@ -38,7 +38,7 @@ export const SILICONFLOW_BASE_URL = "https://api.siliconflow.cn";
 
 export const AI302_BASE_URL = "https://api.302.ai";
 export const MEITUAN_BASE_URL = "https://api.longcat.chat/openai";
-export const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions";
+export const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 
 export const CACHE_URL_PREFIX = "/api/cache";
 export const UPLOAD_URL = `${CACHE_URL_PREFIX}/upload`;
