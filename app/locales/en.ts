@@ -602,6 +602,10 @@ const en: LocaleType = {
       Title: "Thinking Budget (thinking_budget)",
       SubTitle: "Max tokens used for deep thinking (supported models only)",
     },
+    AspectRatio: {
+      Title: "Aspect Ratio",
+      SubTitle: "Aspect ratio for generated images (supported models only)",
+    },
     TTS: {
       Enable: {
         Title: "Enable TTS",

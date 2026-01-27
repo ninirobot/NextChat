@@ -17,6 +17,7 @@ import { handle as chatglmHandler } from "../../glm";
 import { handle as proxyHandler } from "../../proxy";
 import { handle as ai302Handler } from "../../302ai";
 import { handle as meituanHandler } from "../../meituan";
+import { handle as openrouterHandler } from "../../openrouter";
 
 async function handle(
   req: NextRequest,
@@ -58,6 +59,8 @@ async function handle(
       return ai302Handler(req, { params });
     case ApiPath.Meituan:
       return meituanHandler(req, { params });
+    case ApiPath.OpenRouter:
+      return openrouterHandler(req, { params });
     default:
       return proxyHandler(req, { params });
   }

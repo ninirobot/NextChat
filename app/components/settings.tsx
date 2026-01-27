@@ -77,6 +77,7 @@ import {
   SiliconFlow,
   AI302,
   Meituan,
+  OPENROUTER_BASE_URL,
 } from "../constant";
 import { Prompt, SearchService, usePromptStore } from "../store/prompt";
 import { ErrorBoundary } from "./error";
@@ -1905,6 +1906,7 @@ export function Settings() {
                   {siliconflowConfigComponent}
                   {ai302ConfigComponent}
                   {meituanConfigComponent}
+                  {openRouterConfigComponent}
                 </>
               )}
             </>

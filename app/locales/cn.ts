@@ -564,6 +564,17 @@ const cn = {
           SubTitle: "样例：",
         },
       },
+      OpenRouter: {
+        ApiKey: {
+          Title: "接口密钥",
+          SubTitle: "使用自定义 OpenRouter API Key",
+          Placeholder: "OpenRouter API Key",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "样例：",
+        },
+      },
     },
 
     Model: "模型 (model)",
@@ -594,6 +605,10 @@ const cn = {
     ThinkingBudget: {
       Title: "思考预算 (thinking_budget)",
       SubTitle: "用于深度思考的最大 Token 数 (仅部分模型支持)",
+    },
+    AspectRatio: {
+      Title: "图片宽高比 (aspect_ratio)",
+      SubTitle: "生成图片的比例 (部分模型支持)",
     },
     TTS: {
       Enable: {

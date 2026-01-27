@@ -38,6 +38,7 @@ export const SILICONFLOW_BASE_URL = "https://api.siliconflow.cn";
 
 export const AI302_BASE_URL = "https://api.302.ai";
 export const MEITUAN_BASE_URL = "https://api.longcat.chat/openai";
+export const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 export const CACHE_URL_PREFIX = "/api/cache";
 export const UPLOAD_URL = `${CACHE_URL_PREFIX}/upload`;
@@ -77,6 +78,7 @@ export enum ApiPath {
   SiliconFlow = "/api/siliconflow",
   "302.AI" = "/api/302ai",
   Meituan = "/api/meituan",
+  OpenRouter = "/api/openrouter",
 }
 
 export enum SlotID {
@@ -137,6 +139,7 @@ export enum ServiceProvider {
   SiliconFlow = "SiliconFlow",
   "302.AI" = "302.AI",
   Meituan = "Meituan",
+  OpenRouter = "OpenRouter",
 }
 
 // Google API safety settings, see https://ai.google.dev/gemini-api/docs/safety-settings
@@ -165,6 +168,7 @@ export enum ModelProvider {
   SiliconFlow = "SiliconFlow",
   "302.AI" = "302.AI",
   Meituan = "Meituan",
+  OpenRouter = "OpenRouter",
 }
 
 export const Stability = {
@@ -285,6 +289,11 @@ export const AI302 = {
 export const Meituan = {
   ExampleEndpoint: MEITUAN_BASE_URL,
   ChatPath: "v1/chat/completions",
+};
+
+export const OpenRouter = {
+  ExampleEndpoint: OPENROUTER_BASE_URL,
+  ChatPath: "chat/completions",
 };
 
 export const DEFAULT_INPUT_TEMPLATE = ``; // input / time / model / lang
@@ -762,6 +771,16 @@ const longcatModels = [
   "LongCat-Flash-Thinking-2601",
 ];
 
+const openrouterModels = [
+  "deepseek/deepseek-r1:free",
+  "deepseek/deepseek-chat",
+  "google/gemini-2.0-flash-exp:free",
+  "openai/gpt-4o",
+  "openai/gpt-4o-mini",
+  "anthropic/claude-3.5-sonnet",
+  "meta-llama/llama-3.3-70b-instruct",
+];
+
 let seq = 1000; // 内置的模型序号生成器从1000开始
 export const DEFAULT_MODELS = [
   ...openaiModels.map((name) => ({
@@ -938,6 +957,17 @@ export const DEFAULT_MODELS = [
       providerName: "302.AI",
       providerType: "ai302",
       sorted: 15,
+    },
+  })),
+  ...openrouterModels.map((name) => ({
+    name,
+    available: true,
+    sorted: seq++,
+    provider: {
+      id: "openrouter",
+      providerName: "OpenRouter",
+      providerType: "openrouter",
+      sorted: 16,
     },
   })),
 ] as const;
