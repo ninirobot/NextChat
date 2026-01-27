@@ -37,6 +37,7 @@ export const CHATGLM_BASE_URL = "https://open.bigmodel.cn";
 export const SILICONFLOW_BASE_URL = "https://api.siliconflow.cn";
 
 export const AI302_BASE_URL = "https://api.302.ai";
+export const MEITUAN_BASE_URL = "https://api.longcat.chat/openai";
 
 export const CACHE_URL_PREFIX = "/api/cache";
 export const UPLOAD_URL = `${CACHE_URL_PREFIX}/upload`;
@@ -75,6 +76,7 @@ export enum ApiPath {
   DeepSeek = "/api/deepseek",
   SiliconFlow = "/api/siliconflow",
   "302.AI" = "/api/302ai",
+  Meituan = "/api/meituan",
 }
 
 export enum SlotID {
@@ -134,6 +136,7 @@ export enum ServiceProvider {
   DeepSeek = "DeepSeek",
   SiliconFlow = "SiliconFlow",
   "302.AI" = "302.AI",
+  Meituan = "Meituan",
 }
 
 // Google API safety settings, see https://ai.google.dev/gemini-api/docs/safety-settings
@@ -161,6 +164,7 @@ export enum ModelProvider {
   DeepSeek = "DeepSeek",
   SiliconFlow = "SiliconFlow",
   "302.AI" = "302.AI",
+  Meituan = "Meituan",
 }
 
 export const Stability = {
@@ -278,7 +282,12 @@ export const AI302 = {
   ListModelPath: "v1/models?llm=1",
 };
 
-export const DEFAULT_INPUT_TEMPLATE = `{{input}}`; // input / time / model / lang
+export const Meituan = {
+  ExampleEndpoint: MEITUAN_BASE_URL,
+  ChatPath: "v1/chat/completions",
+};
+
+export const DEFAULT_INPUT_TEMPLATE = ``; // input / time / model / lang
 // export const DEFAULT_SYSTEM_TEMPLATE = `
 // You are ChatGPT, a large language model trained by {{ServiceProvider}}.
 // Knowledge cutoff: {{cutoff}}
@@ -476,28 +485,29 @@ export const DEFAULT_TTS_VOICES = [
 ];
 
 export const VISION_MODEL_REGEXES = [
-  /vision/,
-  /gpt-4o/,
-  /gpt-4\.1/,
-  /claude.*[34]/,
-  /gemini-1\.5/,
-  /gemini-exp/,
-  /gemini/,
-  /gemini-2\.[05]/,
-  /learnlm/,
-  /qwen-vl/,
-  /qwen2-vl/,
-  /gpt-4-turbo(?!.*preview)/,
-  /^dall-e-3$/,
-  /glm-4v/,
+  /vision/i,
+  /gpt-4o/i,
+  /gpt-4\.1/i,
+  /claude.*[34]/i,
+  /gemini-1\.5/i,
+  /gemini-exp/i,
+  /gemini/i,
+  /gemini-2\.[05]/i,
+  /learnlm/i,
+  /qwen-vl/i,
+  /qwen2-vl/i,
+  /gpt-4-turbo(?!.*preview)/i,
+  /^dall-e-3$/i,
+  /glm-4v/i,
   /vl/i,
-  /o3/,
-  /o4-mini/,
+  /o3/i,
+  /o4-mini/i,
   /grok-4/i,
-  /gpt-5/,
-  /deepseek/,
-  /kimi/,
-  /llama/
+  /gpt-5/i,
+  /deepseek/i,
+  /kimi/i,
+  /llama/i,
+  /longcat/i,
 ];
 
 export const EXCLUDE_VISION_MODEL_REGEXES = [/claude-3-5-haiku-20241022/];
@@ -746,6 +756,12 @@ const ai302Models = [
   "gemini-2.5-pro",
 ];
 
+const longcatModels = [
+  "LongCat-Flash-Chat",
+  "LongCat-Flash-Thinking",
+  "LongCat-Flash-Thinking-2601",
+];
+
 let seq = 1000; // 内置的模型序号生成器从1000开始
 export const DEFAULT_MODELS = [
   ...openaiModels.map((name) => ({
@@ -801,6 +817,17 @@ export const DEFAULT_MODELS = [
       providerName: "Baidu",
       providerType: "baidu",
       sorted: 5,
+    },
+  })),
+  ...longcatModels.map((name) => ({
+    name,
+    available: true,
+    sorted: seq++,
+    provider: {
+      id: "meituan",
+      providerName: "Meituan",
+      providerType: "meituan",
+      sorted: 6,
     },
   })),
   ...bytedanceModels.map((name) => ({
