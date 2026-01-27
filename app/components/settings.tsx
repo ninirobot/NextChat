@@ -1540,6 +1540,44 @@ export function Settings() {
     </>
   );
 
+  const openRouterConfigComponent = accessStore.provider ===
+    ServiceProvider.OpenRouter && (
+      <>
+        <ListItem
+          title={Locale.Settings.Access.OpenRouter.Endpoint.Title}
+          subTitle={Locale.Settings.Access.OpenRouter.Endpoint.SubTitle}
+        >
+          <input
+            aria-label={Locale.Settings.Access.OpenRouter.Endpoint.Title}
+            type="text"
+            value={accessStore.openRouterUrl}
+            placeholder={OPENROUTER_BASE_URL}
+            onChange={(e) =>
+              accessStore.update(
+                (access) => (access.openRouterUrl = e.currentTarget.value),
+              )
+            }
+          ></input>
+        </ListItem>
+        <ListItem
+          title={Locale.Settings.Access.OpenRouter.ApiKey.Title}
+          subTitle={Locale.Settings.Access.OpenRouter.ApiKey.SubTitle}
+        >
+          <PasswordInput
+            aria-label={Locale.Settings.Access.OpenRouter.ApiKey.Title}
+            value={accessStore.openRouterApiKey}
+            type="text"
+            placeholder={Locale.Settings.Access.OpenRouter.ApiKey.Placeholder}
+            onChange={(e) => {
+              accessStore.update(
+                (access) => (access.openRouterApiKey = e.currentTarget.value),
+              );
+            }}
+          />
+        </ListItem>
+      </>
+    );
+
   return (
     <ErrorBoundary>
       <div className="window-header" data-tauri-drag-region>
