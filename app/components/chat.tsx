@@ -1179,6 +1179,16 @@ function _Chat() {
   // stop response
   const onUserStop = (messageId: string) => {
     ChatControllerPool.stop(session.id, messageId);
+
+    // Manually update the message streaming state
+    // This ensures the action buttons appear even if onError callback doesn't fire
+    chatStore.updateTargetSession(session, (session) => {
+      session.messages = session.messages.map((m) =>
+        m.id === messageId
+          ? { ...m, streaming: false, isThinking: false }
+          : m,
+      );
+    });
   };
 
   useEffect(() => {
