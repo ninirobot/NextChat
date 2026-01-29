@@ -528,7 +528,19 @@ export function ChatActions(props: {
 
   // stop all responses
   const couldStop = ChatControllerPool.hasPending();
-  const stopAll = () => ChatControllerPool.stopAll();
+  const stopAll = () => {
+    ChatControllerPool.stopAll();
+
+    // Manually update all streaming messages to stopped state
+    // This ensures UI updates even if onError callback doesn't fire
+    chatStore.updateTargetSession(session, (session) => {
+      session.messages = session.messages.map((m) =>
+        m.streaming || m.isThinking
+          ? { ...m, streaming: false, isThinking: false }
+          : m,
+      );
+    });
+  };
 
   // switch model
   const currentModel = session.mask.modelConfig.model;
@@ -1167,6 +1179,16 @@ function _Chat() {
   // stop response
   const onUserStop = (messageId: string) => {
     ChatControllerPool.stop(session.id, messageId);
+
+    // Manually update the message streaming state
+    // This ensures the action buttons appear even if onError callback doesn't fire
+    chatStore.updateTargetSession(session, (session) => {
+      session.messages = session.messages.map((m) =>
+        m.id === messageId
+          ? { ...m, streaming: false, isThinking: false }
+          : m,
+      );
+    });
   };
 
   useEffect(() => {

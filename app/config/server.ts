@@ -100,6 +100,9 @@ declare global {
       LONGCAT_URL?: string;
       LONGCAT_API_KEY?: string;
 
+      OPENROUTER_URL?: string;
+      OPENROUTER_API_KEY?: string;
+
       // custom template for preprocessing user input
       DEFAULT_INPUT_TEMPLATE?: string;
 
@@ -176,6 +179,7 @@ export const getServerSideConfig = () => {
   const isSiliconFlow = !!process.env.SILICONFLOW_API_KEY;
   const isAI302 = !!process.env.AI302_API_KEY;
   const isMeituan = !!(process.env.MEITUAN_API_KEY || process.env.LONGCAT_API_KEY);
+  const isOpenRouter = !!process.env.OPENROUTER_API_KEY;
   // const apiKeyEnvVar = process.env.OPENAI_API_KEY ?? "";
   // const apiKeys = apiKeyEnvVar.split(",").map((v) => v.trim());
   // const randomIndex = Math.floor(Math.random() * apiKeys.length);
@@ -266,6 +270,10 @@ export const getServerSideConfig = () => {
     isMeituan,
     meituanUrl: process.env.MEITUAN_URL || process.env.LONGCAT_URL,
     meituanApiKey: getApiKey(process.env.MEITUAN_API_KEY || process.env.LONGCAT_API_KEY),
+
+    isOpenRouter,
+    openRouterUrl: process.env.OPENROUTER_URL,
+    openRouterApiKey: getApiKey(process.env.OPENROUTER_API_KEY),
 
     gtmId: process.env.GTM_ID,
     gaId: process.env.GA_ID || DEFAULT_GA_ID,

@@ -19,6 +19,7 @@ import {
   SILICONFLOW_BASE_URL,
   AI302_BASE_URL,
   MEITUAN_BASE_URL,
+  OPENROUTER_BASE_URL,
 } from "../constant";
 import { getHeaders } from "../client/api";
 import { getClientConfig } from "../config/client";
@@ -64,6 +65,8 @@ const DEFAULT_SILICONFLOW_URL = isApp
 const DEFAULT_AI302_URL = isApp ? AI302_BASE_URL : ApiPath["302.AI"];
 
 const DEFAULT_MEITUAN_URL = isApp ? MEITUAN_BASE_URL : ApiPath.Meituan;
+
+const DEFAULT_OPENROUTER_URL = isApp ? OPENROUTER_BASE_URL : ApiPath.OpenRouter;
 
 const DEFAULT_ACCESS_STATE = {
   accessCode: "",
@@ -145,6 +148,8 @@ const DEFAULT_ACCESS_STATE = {
   // Meituan
   meituanUrl: DEFAULT_MEITUAN_URL,
   meituanApiKey: "",
+  openRouterUrl: DEFAULT_OPENROUTER_URL,
+  openRouterApiKey: "",
 
   // server config
   needCode: true,
@@ -235,6 +240,9 @@ export const useAccessStore = createPersistStore(
     isValidMeituan() {
       return ensure(get(), ["meituanApiKey"]);
     },
+    isValidOpenRouter() {
+      return ensure(get(), ["openRouterApiKey"]);
+    },
 
     isAuthorized() {
       this.fetch();
@@ -256,6 +264,7 @@ export const useAccessStore = createPersistStore(
         this.isValidChatGLM() ||
         this.isValidSiliconFlow() ||
         this.isValidMeituan() ||
+        this.isValidOpenRouter() ||
         !this.enabledAccessControl() ||
         (this.enabledAccessControl() && ensure(get(), ["accessCode"]))
       );

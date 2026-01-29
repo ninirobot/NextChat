@@ -83,6 +83,7 @@ export const DEFAULT_CONFIG = {
     style: "vivid" as DalleStyle,
     enable_thinking: false,
     thinking_budget: 1024,
+    aspect_ratio: "1:1",
   },
 
   ttsConfig: {
@@ -163,6 +164,9 @@ export const ModalConfigValidator = {
   },
   thinking_budget(x: number) {
     return limitNumber(x, 1024, 8192, 1024);
+  },
+  aspect_ratio(x: string) {
+    return x;
   },
 };
 

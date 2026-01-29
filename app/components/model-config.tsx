@@ -132,6 +132,38 @@ export function ModelConfigList(props: {
           ></InputRange>
         </ListItem>
       )}
+      {props.modelConfig?.providerName === ServiceProvider.OpenRouter && (
+        <ListItem
+          title={Locale.Settings.AspectRatio.Title}
+          subTitle={Locale.Settings.AspectRatio.SubTitle}
+        >
+          <Select
+            value={props.modelConfig.aspect_ratio}
+            onChange={(e) => {
+              props.updateConfig(
+                (config) => (config.aspect_ratio = e.currentTarget.value),
+              );
+            }}
+          >
+            {[
+              "1:1",
+              "2:3",
+              "3:2",
+              "3:4",
+              "4:3",
+              "4:5",
+              "5:4",
+              "9:16",
+              "16:9",
+              "21:9",
+            ].map((v) => (
+              <option value={v} key={v}>
+                {v}
+              </option>
+            ))}
+          </Select>
+        </ListItem>
+      )}
 
       {props.modelConfig?.providerName == ServiceProvider.Google ? null : (
         <>

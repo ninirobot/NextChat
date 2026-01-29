@@ -569,6 +569,17 @@ const en: LocaleType = {
           SubTitle: "Example: ",
         },
       },
+      OpenRouter: {
+        Endpoint: {
+          Title: "Endpoint Address",
+          SubTitle: "Example: ",
+        },
+        ApiKey: {
+          Title: "API Key",
+          SubTitle: "Use a custom OpenRouter API Key",
+          Placeholder: "OpenRouter API Key",
+        },
+      },
     },
 
     Model: "Model",
@@ -601,6 +612,10 @@ const en: LocaleType = {
     ThinkingBudget: {
       Title: "Thinking Budget (thinking_budget)",
       SubTitle: "Max tokens used for deep thinking (supported models only)",
+    },
+    AspectRatio: {
+      Title: "Aspect Ratio",
+      SubTitle: "Aspect ratio for generated images (supported models only)",
     },
     TTS: {
       Enable: {
