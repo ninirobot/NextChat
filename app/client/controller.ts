@@ -20,6 +20,7 @@ export const ChatControllerPool = {
 
   stopAll() {
     Object.values(this.controllers).forEach((v) => v.abort());
+    this.controllers = {}; // Clear all controllers after aborting to prevent stale state
   },
 
   hasPending() {
