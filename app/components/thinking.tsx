@@ -32,7 +32,8 @@ export function ThinkingBlock(props: {
             m.includes("o3-") ||
             m === "o1" ||
             m === "o3" ||
-            (m.includes("longcat") && m.includes("thinking")) ||
+            m.includes("longcat") && m.includes("thinking") ||
+            m.includes("gemini") ||
             m.includes("thinking")
         );
     }, []);

@@ -14,7 +14,7 @@ import {
   usePluginStore,
   ChatMessageTool,
 } from "@/app/store";
-import { stream, streamWithThink } from "@/app/utils/chat";
+import { stream } from "@/app/utils/chat";
 import { getClientConfig } from "@/app/config/client";
 import { GEMINI_BASE_URL } from "@/app/constant";
 import { nanoid } from "nanoid";
@@ -249,11 +249,6 @@ export class GeminiProApi implements LLMApi {
         headers: getHeaders(),
       };
 
-      const isThinking =
-        modelConfig.model.includes("gemini-2.5") ||
-        modelConfig.model.includes("gemini-3") ||
-        options.config.model.includes("-thinking");
-
       // make a fetch request
       const requestTimeoutId = setTimeout(
         () => controller.abort(),
@@ -266,7 +261,7 @@ export class GeminiProApi implements LLMApi {
           .getAsTools(
             useChatStore.getState().currentSession().mask?.plugin || [],
           );
-        return streamWithThink(
+        return stream(
           chatPath,
           requestPayload,
           getHeaders(),
@@ -297,21 +292,16 @@ export class GeminiProApi implements LLMApi {
               });
             }
             const parts = chunkJson?.candidates?.at(0)?.content.parts || [];
-            let reasoning = "";
-            let content = "";
+            let textContent = "";
             for (const part of parts) {
-              // DEBUG: Log the part to see if thought property exists
-              console.log("[Google] Part:", JSON.stringify(part));
               if (part.thought) {
-                reasoning += part.text;
+                // Formatting for legacy chat.ts parser which supports <think> tags
+                textContent += `<think>${part.text}</think>`;
               } else {
-                content += part.text;
+                textContent += part.text;
               }
             }
-            return {
-              reasoning: reasoning || undefined,
-              content: content || undefined,
-            };
+            return textContent;
           },
           // processToolMessage, include tool_calls message and tool call results
           (
