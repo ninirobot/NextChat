@@ -611,7 +611,11 @@ const en: LocaleType = {
     },
     ThinkingBudget: {
       Title: "Thinking Budget (thinking_budget)",
-      SubTitle: "Max tokens used for deep thinking (supported models only)",
+      SubTitle: "Max tokens for LongCat-Thinking",
+    },
+    GeminiThinkingBudget: {
+      Title: "Gemini Thinking Budget",
+      SubTitle: "Max tokens for Gemini 2.5",
     },
     AspectRatio: {
       Title: "Aspect Ratio",
