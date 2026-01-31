@@ -184,14 +184,8 @@ export class GeminiProApi implements LLMApi {
                 ? {
                   thinkingBudget:
                     modelConfig.gemini_thinking_budget === -1
-                      ? undefined // If dynamic (-1), do not set thinkingBudget to let it default to dynamic (or send nothing if that implies dynamic) -- wait, docs say "thinkingBudget = -1 (Default)" for dynamic. Let's double check if we can pass -1 directly or if we should omit it.
-                            // Docs say: "Turn on dynamic thinking: thinkingBudget: -1". So we pass -1 if it's -1.
-                            // BUT, the valid range for API might expect an integer.
-                            // Re-reading docs: "thinkingBudget: int32(-1)" in Go. "thinking_budget=-1" in Python.
-                            // So yes, pass -1.
-                            // HOWEVER, if modelConfig.thinking_budget is 1024 (default in store), we pass 1024.
-                            // If user sets to dynamic (-1), we pass -1.
-                            modelConfig.gemini_thinking_budget,
+                      ? undefined
+                      : modelConfig.gemini_thinking_budget,
                 }
                 : {}),
             }
