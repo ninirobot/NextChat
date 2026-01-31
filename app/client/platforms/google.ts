@@ -26,7 +26,6 @@ import {
   getTimeoutMSByModel,
 } from "@/app/utils";
 import { preProcessImageContent } from "@/app/utils/chat";
-import { nanoid } from "nanoid";
 import { RequestPayload } from "./openai";
 import { fetch } from "@/app/utils/stream";
 
