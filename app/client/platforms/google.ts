@@ -268,104 +268,104 @@ export class GeminiProApi implements LLMApi {
             : [],
           funcs,
           controller,
-
+          (text: string, runTools: ChatMessageTool[]) => {
             const chunkJson = JSON.parse(text);
 
-        const functionCall = chunkJson?.candidates
-          ?.at(0)
-          ?.content.parts.at(0)?.functionCall;
-        if (functionCall) {
-          const { name, args } = functionCall;
-          runTools.push({
-            id: nanoid(),
-            type: "function",
-            function: {
-              name,
-              arguments: JSON.stringify(args), // utils.chat call function, using JSON.parse
-            },
-          });
-        }
-        const parts = chunkJson?.candidates?.at(0)?.content.parts || [];
-        let reasoning = "";
-        let content = "";
-        for (const part of parts) {
-          if (part.thought) {
-            reasoning += part.text;
-          } else {
-            content += part.text;
-          }
-        }
-        return {
-          reasoning: reasoning || undefined,
-          content: content || undefined,
-        };
-      },
-      // processToolMessage, include tool_calls message and tool call results
-      (
-        requestPayload: RequestPayload,
-        toolCallMessage: any,
-        toolCallResult: any[],
-      ) => {
-        // @ts-ignore
-        requestPayload?.contents?.splice(
-          // @ts-ignore
-          requestPayload?.contents?.length,
-          0,
-          {
-            role: "model",
-            parts: toolCallMessage.tool_calls.map(
-              (tool: ChatMessageTool) => ({
-                functionCall: {
-                  name: tool?.function?.name,
-                  args: JSON.parse(tool?.function?.arguments as string),
+            const functionCall = chunkJson?.candidates
+              ?.at(0)
+              ?.content.parts.at(0)?.functionCall;
+            if (functionCall) {
+              const { name, args } = functionCall;
+              runTools.push({
+                id: nanoid(),
+                type: "function",
+                function: {
+                  name,
+                  arguments: JSON.stringify(args), // utils.chat call function, using JSON.parse
                 },
-              }),
-            ),
+              });
+            }
+            const parts = chunkJson?.candidates?.at(0)?.content.parts || [];
+            let reasoning = "";
+            let content = "";
+            for (const part of parts) {
+              if (part.thought) {
+                reasoning += part.text;
+              } else {
+                content += part.text;
+              }
+            }
+            return {
+              reasoning: reasoning || undefined,
+              content: content || undefined,
+            };
           },
-          // @ts-ignore
-          ...toolCallResult.map((result) => ({
-            role: "function",
-            parts: [
+          // processToolMessage, include tool_calls message and tool call results
+          (
+            requestPayload: RequestPayload,
+            toolCallMessage: any,
+            toolCallResult: any[],
+          ) => {
+            // @ts-ignore
+            requestPayload?.contents?.splice(
+              // @ts-ignore
+              requestPayload?.contents?.length,
+              0,
               {
-                functionResponse: {
-                  name: result.name,
-                  response: {
-                    name: result.name,
-                    content: result.content, // TODO just text content...
-                  },
-                },
+                role: "model",
+                parts: toolCallMessage.tool_calls.map(
+                  (tool: ChatMessageTool) => ({
+                    functionCall: {
+                      name: tool?.function?.name,
+                      args: JSON.parse(tool?.function?.arguments as string),
+                    },
+                  }),
+                ),
               },
-            ],
-          })),
+              // @ts-ignore
+              ...toolCallResult.map((result) => ({
+                role: "function",
+                parts: [
+                  {
+                    functionResponse: {
+                      name: result.name,
+                      response: {
+                        name: result.name,
+                        content: result.content, // TODO just text content...
+                      },
+                    },
+                  },
+                ],
+              })),
+            );
+          },
+          options,
         );
-      },
-        options,
-        );
-    } else {
-      const res = await fetch(chatPath, chatPayload);
-      clearTimeout(requestTimeoutId);
-      const resJson = await res.json();
-      if (resJson?.promptFeedback?.blockReason) {
-        // being blocked
-        options.onError?.(
-          new Error(
-            "Message is being blocked for reason: " +
-            resJson.promptFeedback.blockReason,
-          ),
-        );
+      } else {
+        const res = await fetch(chatPath, chatPayload);
+        clearTimeout(requestTimeoutId);
+        const resJson = await res.json();
+        if (resJson?.promptFeedback?.blockReason) {
+          // being blocked
+          options.onError?.(
+            new Error(
+              "Message is being blocked for reason: " +
+              resJson.promptFeedback.blockReason,
+            ),
+          );
+        }
+        const message = apiClient.extractMessage(resJson);
+        options.onFinish(message, res);
       }
-      const message = apiClient.extractMessage(resJson);
-      options.onFinish(message, res);
+    } catch (e) {
+      console.log("[Request] failed to make a chat request", e);
+      options.onError?.(e as Error);
     }
-  } catch(e) {
-    console.log("[Request] failed to make a chat request", e);
-    options.onError?.(e as Error);
   }
-}
-usage(): Promise < LLMUsage > {
-  throw new Error("Method not implemented.");
-}
-  async models(): Promise < LLMModel[] > {
-  return [];
-}
+  usage(): Promise<LLMUsage> {
+    throw new Error("Method not implemented.");
+  }
+  async models(): Promise<LLMModel[]> {
+    return [];
+  }
 }
