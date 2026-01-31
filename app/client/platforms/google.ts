@@ -159,10 +159,8 @@ export class GeminiProApi implements LLMApi {
         temperature: modelConfig.temperature,
         maxOutputTokens: modelConfig.max_tokens,
         topP: modelConfig.top_p,
-      },
-      // Thinking Configuration for Gemini 2.5 and 3
-      thinkingConfig:
-        (modelConfig.model.includes("gemini-2.5") ||
+        // Thinking Configuration for Gemini 2.5 and 3
+        ...(((modelConfig.model.includes("gemini-2.5") ||
           modelConfig.model.includes("gemini-3")) &&
           // Only add thinkingConfig if at least one thinking feature is enabled:
           // - include_thoughts is true
@@ -173,44 +171,47 @@ export class GeminiProApi implements LLMApi {
           // We should always send it if the feature is relevant to the model.
           (modelConfig.include_thoughts ||
             modelConfig.gemini_thinking_budget !== undefined ||
-            modelConfig.thinking_level !== undefined)
+            modelConfig.thinking_level !== undefined))
           ? {
-            includeThoughts: modelConfig.include_thoughts,
-            // Thinking Level for Gemini 3
-            ...(modelConfig.model.includes("gemini-3") &&
-              modelConfig.thinking_level
-              ? {
-                thinkingLevel: modelConfig.thinking_level,
-              }
-              : {}),
-            // Thinking Budget for Gemini 2.5
-            ...(modelConfig.model.includes("gemini-2.5") &&
-              modelConfig.gemini_thinking_budget !== -1
-              ? {
-                thinkingBudget: (() => {
-                  const isFlashModel =
-                    modelConfig.model.includes("gemini") &&
-                    modelConfig.model.includes("flash");
-                  const isProModel =
-                    modelConfig.model.includes("gemini") &&
-                    modelConfig.model.includes("pro");
-                  let budget = modelConfig.gemini_thinking_budget;
+            thinkingConfig: {
+              includeThoughts: modelConfig.include_thoughts,
+              // Thinking Level for Gemini 3
+              ...(modelConfig.model.includes("gemini-3") &&
+                modelConfig.thinking_level
+                ? {
+                  thinkingLevel: modelConfig.thinking_level,
+                }
+                : {}),
+              // Thinking Budget for Gemini 2.5
+              ...(modelConfig.model.includes("gemini-2.5") &&
+                modelConfig.gemini_thinking_budget !== -1
+                ? {
+                  thinkingBudget: (() => {
+                    const isFlashModel =
+                      modelConfig.model.includes("gemini") &&
+                      modelConfig.model.includes("flash");
+                    const isProModel =
+                      modelConfig.model.includes("gemini") &&
+                      modelConfig.model.includes("pro");
+                    let budget = modelConfig.gemini_thinking_budget;
 
-                  // Flash models: max 24576
-                  if (isFlashModel) {
-                    budget = Math.min(budget, 24576);
-                  }
-                  // Pro models: min 128, max 32768
-                  else if (isProModel) {
-                    budget = Math.max(128, Math.min(budget, 32768));
-                  }
+                    // Flash models: max 24576
+                    if (isFlashModel) {
+                      budget = Math.min(budget, 24576);
+                    }
+                    // Pro models: min 128, max 32768
+                    else if (isProModel) {
+                      budget = Math.max(128, Math.min(budget, 32768));
+                    }
 
-                  return budget;
-                })(),
-              }
-              : {}),
+                    return budget;
+                  })(),
+                }
+                : {}),
+            },
           }
-          : undefined,
+          : {}),
+      },
       safetySettings: [
         {
           category: "HARM_CATEGORY_HARASSMENT",
