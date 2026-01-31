@@ -602,10 +602,6 @@ const cn = {
       Title: "频率惩罚度 (frequency_penalty)",
       SubTitle: "值越大，越有可能降低重复字词",
     },
-    InputTemplate: {
-      Title: "用户输入预处理",
-      SubTitle: "用户最新的一条消息会填充到此模板",
-    },
     ThinkingBudget: {
       Title: "思考预算 (Thinking Budget)",
       SubTitle: "用于 LongCat 等模型的深度思考最大 Token 数",
