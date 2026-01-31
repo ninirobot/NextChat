@@ -14,9 +14,10 @@ import {
   usePluginStore,
   ChatMessageTool,
 } from "@/app/store";
-import { stream } from "@/app/utils/chat";
+import { stream, streamWithThink } from "@/app/utils/chat";
 import { getClientConfig } from "@/app/config/client";
 import { GEMINI_BASE_URL } from "@/app/constant";
+import { nanoid } from "nanoid";
 
 import {
   getMessageTextContent,
@@ -266,7 +267,7 @@ export class GeminiProApi implements LLMApi {
           .getAsTools(
             useChatStore.getState().currentSession().mask?.plugin || [],
           );
-        return stream(
+        return streamWithThink(
           chatPath,
           requestPayload,
           getHeaders(),
