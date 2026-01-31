@@ -109,36 +109,77 @@ export function ModelConfigList(props: {
           }
         ></InputRange>
       </ListItem>
-      {/* Gemini 2.5 Thinking Budget */}
-      {props.modelConfig.model.includes("2.5") && (
-        <ListItem
-          title={Locale.Settings.GeminiThinkingBudget.Title}
-          subTitle={
-            props.modelConfig.gemini_thinking_budget === -1
-              ? "Auto (Dynamic)"
-              : Locale.Settings.GeminiThinkingBudget.SubTitle
-          }
-        >
-          <InputRange
-            aria={Locale.Settings.GeminiThinkingBudget.Title}
-            value={props.modelConfig.gemini_thinking_budget}
-            min="-1"
-            max={
-              props.modelConfig.model.includes("pro") ? "32768" : "24576"
+      {/* Gemini 2.5 Flash Thinking Budget */}
+      {props.modelConfig.model.includes("gemini") &&
+        props.modelConfig.model.includes("2.5") &&
+        props.modelConfig.model.includes("flash") && (
+          <ListItem
+            title="Gemini 2.5 Flash Thinking Budget"
+            subTitle={
+              props.modelConfig.gemini_thinking_budget === -1
+                ? "Auto (Dynamic)"
+                : `${props.modelConfig.gemini_thinking_budget} tokens (0-24576 or -1 for auto)`
             }
-            step="1024"
-            onChange={(e) =>
-              props.updateConfig(
-                (config) =>
-                (config.gemini_thinking_budget =
-                  ModalConfigValidator.gemini_thinking_budget(
-                    e.currentTarget.valueAsNumber,
-                  )),
-              )
+          >
+            <InputRange
+              aria="Gemini 2.5 Flash Thinking Budget"
+              value={props.modelConfig.gemini_thinking_budget}
+              min="-1"
+              max="24576"
+              step="1"
+              onChange={(e) =>
+                props.updateConfig(
+                  (config) =>
+                  (config.gemini_thinking_budget =
+                    ModalConfigValidator.gemini_thinking_budget(
+                      e.currentTarget.valueAsNumber,
+                    )),
+                )
+              }
+            ></InputRange>
+          </ListItem>
+        )}
+
+      {/* Gemini 2.5 Pro Thinking Budget */}
+      {props.modelConfig.model.includes("gemini") &&
+        props.modelConfig.model.includes("2.5") &&
+        props.modelConfig.model.includes("pro") && (
+          <ListItem
+            title="Gemini 2.5 Pro Thinking Budget"
+            subTitle={
+              props.modelConfig.gemini_thinking_budget === -1
+                ? "Auto (Dynamic)"
+                : props.modelConfig.gemini_thinking_budget < 128
+                  ? "Invalid: must be ≥128 or -1"
+                  : `${props.modelConfig.gemini_thinking_budget} tokens (128-32768 or -1 for auto)`
             }
-          ></InputRange>
-        </ListItem>
-      )}
+          >
+            <InputRange
+              aria="Gemini 2.5 Pro Thinking Budget"
+              value={
+                props.modelConfig.gemini_thinking_budget === -1 ||
+                  props.modelConfig.gemini_thinking_budget < 128
+                  ? -1
+                  : props.modelConfig.gemini_thinking_budget
+              }
+              min="-1"
+              max="32768"
+              step="1"
+              onChange={(e) => {
+                const val = e.currentTarget.valueAsNumber;
+                props.updateConfig((config) => {
+                  // For Pro, enforce minimum of 128 unless it's -1
+                  if (val !== -1 && val >= 0 && val < 128) {
+                    config.gemini_thinking_budget = 128;
+                  } else {
+                    config.gemini_thinking_budget =
+                      ModalConfigValidator.gemini_thinking_budget(val);
+                  }
+                });
+              }}
+            ></InputRange>
+          </ListItem>
+        )}
 
       {/* Gemini 3 Thinking Level */}
       {props.modelConfig.model.includes("3") && (

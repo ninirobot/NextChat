@@ -158,47 +158,59 @@ export class GeminiProApi implements LLMApi {
         // ],
         temperature: modelConfig.temperature,
         maxOutputTokens: modelConfig.max_tokens,
-        topP: modelConfig.top_p,
-        // "topK": modelConfig.top_k,
-        thinkingConfig:
-          modelConfig.model.includes("gemini-3") ||
-            (modelConfig.model.includes("gemini-2.5") &&
-              // Only include thinkingConfig if we are setting budget/level or include_thoughts
-              // But for Gemini, thinking is often default on.
-              // If user explicitly wants to control it:
-              // budget = -1 means dynamic.
-              // budget > 0 means specific.
-              // budget = 0 means disabled (for 2.5 Flash).
-              // We should always send it if the feature is relevant to the model.
-              true)
-            ? {
-              includeThoughts: modelConfig.include_thoughts,
-              // Thinking Level for Gemini 3
-              ...(modelConfig.model.includes("gemini-3")
-                ? {
-                  thinkingLevel: modelConfig.thinking_level || "high",
-                }
-                : {}),
-              // Thinking Budget for Gemini 2.5
-              ...(modelConfig.model.includes("gemini-2.5")
-                ? {
-                  thinkingBudget:
-                    modelConfig.gemini_thinking_budget === -1
-                      ? undefined
-                      : (() => {
-                        // Flash models have a max thinking budget of 24576
-                        const isFlashModel = modelConfig.model.includes("flash");
-                        const maxBudget = isFlashModel ? 24576 : 32768;
-                        return Math.min(
-                          modelConfig.gemini_thinking_budget,
-                          maxBudget
-                        );
-                      })(),
-                }
-                : {}),
-            }
-            : undefined,
+        responseMimeType: modelConfig.output_format || undefined,
       },
+      // Thinking Configuration for Gemini 2.5 and 3
+      thinkingConfig:
+        (modelConfig.model.includes("gemini-2.5") ||
+          modelConfig.model.includes("gemini-3")) &&
+          // Only add thinkingConfig if at least one thinking feature is enabled:
+          // - include_thoughts is true
+          // - thinking_budget is set (for 2.5)
+          // - thinking_level is set (for 3)
+          // budget > 0 means specific.
+          // budget = 0 means disabled (for 2.5 Flash).
+          // We should always send it if the feature is relevant to the model.
+          (modelConfig.include_thoughts ||
+            modelConfig.gemini_thinking_budget !== undefined ||
+            modelConfig.thinking_level !== undefined)
+          ? {
+            includeThoughts: modelConfig.include_thoughts,
+            // Thinking Level for Gemini 3
+            ...(modelConfig.model.includes("gemini-3") &&
+              modelConfig.thinking_level
+              ? {
+                thinkingLevel: modelConfig.thinking_level,
+              }
+              : {}),
+            // Thinking Budget for Gemini 2.5
+            ...(modelConfig.model.includes("gemini-2.5") &&
+              modelConfig.gemini_thinking_budget !== -1
+              ? {
+                thinkingBudget: (() => {
+                  const isFlashModel =
+                    modelConfig.model.includes("gemini") &&
+                    modelConfig.model.includes("flash");
+                  const isProModel =
+                    modelConfig.model.includes("gemini") &&
+                    modelConfig.model.includes("pro");
+                  let budget = modelConfig.gemini_thinking_budget;
+
+                  // Flash models: max 24576
+                  if (isFlashModel) {
+                    budget = Math.min(budget, 24576);
+                  }
+                  // Pro models: min 128, max 32768
+                  else if (isProModel) {
+                    budget = Math.max(128, Math.min(budget, 32768));
+                  }
+
+                  return budget;
+                })(),
+              }
+              : {}),
+          }
+          : undefined,
       safetySettings: [
         {
           category: "HARM_CATEGORY_HARASSMENT",
