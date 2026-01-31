@@ -83,6 +83,9 @@ export const DEFAULT_CONFIG = {
     style: "vivid" as DalleStyle,
     enable_thinking: false,
     thinking_budget: 1024,
+    gemini_thinking_budget: -1,
+    thinking_level: "high",
+    include_thoughts: true,
     aspect_ratio: "1:1",
   },
 
@@ -164,6 +167,15 @@ export const ModalConfigValidator = {
   },
   thinking_budget(x: number) {
     return limitNumber(x, 1024, 8192, 1024);
+  },
+  gemini_thinking_budget(x: number) {
+    return limitNumber(x, -1, 32768, 1024);
+  },
+  thinking_level(x: string) {
+    if (["low", "medium", "high", "minimal"].includes(x)) {
+      return x;
+    }
+    return undefined;
   },
   aspect_ratio(x: string) {
     return x;

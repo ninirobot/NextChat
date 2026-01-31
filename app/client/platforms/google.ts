@@ -125,7 +125,7 @@ export class GeminiProApi implements LLMApi {
     });
 
     // google requires that role in neighboring messages must not be the same
-    for (let i = 0; i < messages.length - 1; ) {
+    for (let i = 0; i < messages.length - 1;) {
       // Check if current and next item both have the role "model"
       if (messages[i].role === messages[i + 1].role) {
         // Concatenate the 'parts' of the current and next item
@@ -160,6 +160,42 @@ export class GeminiProApi implements LLMApi {
         maxOutputTokens: modelConfig.max_tokens,
         topP: modelConfig.top_p,
         // "topK": modelConfig.top_k,
+        thinkingConfig:
+          modelConfig.model.includes("gemini-3") ||
+            (modelConfig.model.includes("gemini-2.5") &&
+              // Only include thinkingConfig if we are setting budget/level or include_thoughts
+              // But for Gemini, thinking is often default on.
+              // If user explicitly wants to control it:
+              // budget = -1 means dynamic.
+              // budget > 0 means specific.
+              // budget = 0 means disabled (for 2.5 Flash).
+              // We should always send it if the feature is relevant to the model.
+              true)
+            ? {
+              includeThoughts: modelConfig.include_thoughts,
+              // Thinking Level for Gemini 3
+              ...(modelConfig.model.includes("gemini-3")
+                ? {
+                  thinkingLevel: modelConfig.thinking_level || "high",
+                }
+                : {}),
+              // Thinking Budget for Gemini 2.5
+              ...(modelConfig.model.includes("gemini-2.5")
+                ? {
+                  thinkingBudget:
+                    modelConfig.gemini_thinking_budget === -1
+                      ? undefined // If dynamic (-1), do not set thinkingBudget to let it default to dynamic (or send nothing if that implies dynamic) -- wait, docs say "thinkingBudget = -1 (Default)" for dynamic. Let's double check if we can pass -1 directly or if we should omit it.
+                            // Docs say: "Turn on dynamic thinking: thinkingBudget: -1". So we pass -1 if it's -1.
+                            // BUT, the valid range for API might expect an integer.
+                            // Re-reading docs: "thinkingBudget: int32(-1)" in Go. "thinking_budget=-1" in Python.
+                            // So yes, pass -1.
+                            // HOWEVER, if modelConfig.thinking_budget is 1024 (default in store), we pass 1024.
+                            // If user sets to dynamic (-1), we pass -1.
+                            modelConfig.gemini_thinking_budget,
+                }
+                : {}),
+            }
+            : undefined,
       },
       safetySettings: [
         {
@@ -198,7 +234,11 @@ export class GeminiProApi implements LLMApi {
         headers: getHeaders(),
       };
 
-      const isThinking = options.config.model.includes("-thinking");
+      const isThinking =
+        modelConfig.model.includes("gemini-2.5") ||
+        modelConfig.model.includes("gemini-3") ||
+        options.config.model.includes("-thinking");
+
       // make a fetch request
       const requestTimeoutId = setTimeout(
         () => controller.abort(),
@@ -218,7 +258,7 @@ export class GeminiProApi implements LLMApi {
           // @ts-ignore
           tools.length > 0
             ? // @ts-ignore
-              [{ functionDeclarations: tools.map((tool) => tool.function) }]
+            [{ functionDeclarations: tools.map((tool) => tool.function) }]
             : [],
           funcs,
           controller,
@@ -241,10 +281,17 @@ export class GeminiProApi implements LLMApi {
                 },
               });
             }
-            return chunkJson?.candidates
-              ?.at(0)
-              ?.content.parts?.map((part: { text: string }) => part.text)
-              .join("\n\n");
+            const parts = chunkJson?.candidates?.at(0)?.content.parts || [];
+            let textContent = "";
+            for (const part of parts) {
+              if (part.thought) {
+                // If it's a thought, wrap it in <think> tags for UI to render
+                textContent += `<think>${part.text}</think>`;
+              } else {
+                textContent += part.text;
+              }
+            }
+            return textContent;
           },
           // processToolMessage, include tool_calls message and tool call results
           (
@@ -296,7 +343,7 @@ export class GeminiProApi implements LLMApi {
           options.onError?.(
             new Error(
               "Message is being blocked for reason: " +
-                resJson.promptFeedback.blockReason,
+              resJson.promptFeedback.blockReason,
             ),
           );
         }

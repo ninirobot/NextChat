@@ -602,9 +602,17 @@ const cn = {
       Title: "频率惩罚度 (frequency_penalty)",
       SubTitle: "值越大，越有可能降低重复字词",
     },
+    InputTemplate: {
+      Title: "用户输入预处理",
+      SubTitle: "用户最新的一条消息会填充到此模板",
+    },
     ThinkingBudget: {
-      Title: "思考预算 (thinking_budget)",
-      SubTitle: "用于深度思考的最大 Token 数 (仅部分模型支持)",
+      Title: "思考预算 (Thinking Budget)",
+      SubTitle: "用于 LongCat 等模型的深度思考最大 Token 数",
+    },
+    GeminiThinkingBudget: {
+      Title: "Gemini 思考预算",
+      SubTitle: "用于 Gemini 2.5 等模型的深度思考 Token 数",
     },
     AspectRatio: {
       Title: "图片宽高比 (aspect_ratio)",
