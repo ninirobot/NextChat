@@ -194,10 +194,6 @@ const cn = {
       SubTitle: "聊天内容的字体，若置空则应用全局默认字体",
       Placeholder: "字体名称",
     },
-    InjectSystemPrompts: {
-      Title: "注入系统级提示信息",
-      SubTitle: "强制给每次请求的消息列表开头添加一个模拟 ChatGPT 的系统提示",
-    },
     InputTemplate: {
       Title: "用户输入预处理",
       SubTitle: "用户最新的一条消息会填充到此模板",
@@ -613,6 +609,14 @@ const cn = {
     AspectRatio: {
       Title: "图片宽高比 (aspect_ratio)",
       SubTitle: "生成图片的比例 (部分模型支持)",
+    },
+    ThoughtSummary: {
+      Title: "思考过程摘要",
+      SubTitle: "在回复中包含模型的内部推理摘要",
+    },
+    ThinkingLevel: {
+      Title: "思考深度",
+      SubTitle: "控制模型的思考深度 (仅 Gemini 3)",
     },
     TTS: {
       Enable: {

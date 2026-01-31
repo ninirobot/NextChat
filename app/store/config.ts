@@ -76,7 +76,6 @@ export const DEFAULT_CONFIG = {
     compressMessageLengthThreshold: 1048576,
     compressModel: "",
     compressProviderName: "",
-    enableInjectSystemPrompts: false,
     template: config?.template ?? DEFAULT_INPUT_TEMPLATE,
     size: "1024x1024" as ModelSize,
     quality: "standard" as DalleQuality,
@@ -248,10 +247,6 @@ export const useAppConfig = createPersistStore(
 
       if (version < 3.5) {
         state.customModels = "claude,claude-100k";
-      }
-
-      if (version < 3.6) {
-        state.modelConfig.enableInjectSystemPrompts = true;
       }
 
       if (version < 3.7) {
