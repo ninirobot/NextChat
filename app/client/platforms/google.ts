@@ -300,6 +300,8 @@ export class GeminiProApi implements LLMApi {
             let reasoning = "";
             let content = "";
             for (const part of parts) {
+              // DEBUG: Log the part to see if thought property exists
+              console.log("[Google] Part:", JSON.stringify(part));
               if (part.thought) {
                 reasoning += part.text;
               } else {
