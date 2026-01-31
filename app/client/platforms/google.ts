@@ -297,16 +297,19 @@ export class GeminiProApi implements LLMApi {
               });
             }
             const parts = chunkJson?.candidates?.at(0)?.content.parts || [];
-            let textContent = "";
+            let reasoning = "";
+            let content = "";
             for (const part of parts) {
               if (part.thought) {
-                // If it's a thought, wrap it in <think> tags for UI to render
-                textContent += `<think>${part.text}</think>`;
+                reasoning += part.text;
               } else {
-                textContent += part.text;
+                content += part.text;
               }
             }
-            return textContent;
+            return {
+              reasoning: reasoning || undefined,
+              content: content || undefined,
+            };
           },
           // processToolMessage, include tool_calls message and tool call results
           (
