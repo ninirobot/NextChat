@@ -600,11 +600,11 @@ const cn = {
     },
     ThinkingBudget: {
       Title: "思考预算 (Thinking Budget)",
-      SubTitle: "用于 LongCat 等模型的深度思考最大 Token 数",
+      SubTitle: "用于 LongCat 模型的深度思考 Token 数",
     },
     GeminiThinkingBudget: {
       Title: "Gemini 思考预算",
-      SubTitle: "用于 Gemini 2.5 等模型的深度思考 Token 数",
+      SubTitle: "用于 Gemini 2.5 模型的深度思考 Token 数",
     },
     AspectRatio: {
       Title: "图片宽高比 (aspect_ratio)",
