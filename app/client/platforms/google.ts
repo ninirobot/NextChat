@@ -158,7 +158,7 @@ export class GeminiProApi implements LLMApi {
         // ],
         temperature: modelConfig.temperature,
         maxOutputTokens: modelConfig.max_tokens,
-        responseMimeType: modelConfig.output_format || undefined,
+        topP: modelConfig.top_p,
       },
       // Thinking Configuration for Gemini 2.5 and 3
       thinkingConfig:
