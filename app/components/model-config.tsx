@@ -115,63 +115,28 @@ export function ModelConfigList(props: {
           title={Locale.Settings.GeminiThinkingBudget.Title}
           subTitle={
             props.modelConfig.gemini_thinking_budget === -1
-              ? "Dynamic"
+              ? "Auto (Dynamic)"
               : Locale.Settings.GeminiThinkingBudget.SubTitle
           }
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-end",
-              width: "100%",
-            }}
-          >
-            <div style={{ flex: 1, marginRight: 10 }}>
-              <InputRange
-                aria={Locale.Settings.GeminiThinkingBudget.Title}
-                value={
-                  props.modelConfig.gemini_thinking_budget === -1
-                    ? 1024
-                    : props.modelConfig.gemini_thinking_budget
-                }
-                disabled={props.modelConfig.gemini_thinking_budget === -1}
-                min="0"
-                max={
-                  props.modelConfig.model.includes("pro") ? "32768" : "24576"
-                }
-                step="1024"
-                onChange={(e) =>
-                  props.updateConfig(
-                    (config) =>
-                    (config.gemini_thinking_budget =
-                      ModalConfigValidator.gemini_thinking_budget(
-                        e.currentTarget.valueAsNumber,
-                      )),
-                  )
-                }
-              ></InputRange>
-            </div>
-            {/* Dynamic Toggle for Gemini 2.5 */}
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <span style={{ fontSize: "12px", marginRight: "5px" }}>
-                Dynamic
-              </span>
-              <input
-                type="checkbox"
-                checked={props.modelConfig.gemini_thinking_budget === -1}
-                onChange={(e) => {
-                  props.updateConfig((config) => {
-                    if (e.currentTarget.checked) {
-                      config.gemini_thinking_budget = -1;
-                    } else {
-                      config.gemini_thinking_budget = 1024;
-                    }
-                  });
-                }}
-              />
-            </div>
-          </div>
+          <InputRange
+            aria={Locale.Settings.GeminiThinkingBudget.Title}
+            value={props.modelConfig.gemini_thinking_budget}
+            min="-1"
+            max={
+              props.modelConfig.model.includes("pro") ? "32768" : "24576"
+            }
+            step="1024"
+            onChange={(e) =>
+              props.updateConfig(
+                (config) =>
+                (config.gemini_thinking_budget =
+                  ModalConfigValidator.gemini_thinking_budget(
+                    e.currentTarget.valueAsNumber,
+                  )),
+              )
+            }
+          ></InputRange>
         </ListItem>
       )}
 

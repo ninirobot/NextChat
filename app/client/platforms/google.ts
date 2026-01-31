@@ -185,7 +185,15 @@ export class GeminiProApi implements LLMApi {
                   thinkingBudget:
                     modelConfig.gemini_thinking_budget === -1
                       ? undefined
-                      : modelConfig.gemini_thinking_budget,
+                      : (() => {
+                        // Flash models have a max thinking budget of 24576
+                        const isFlashModel = modelConfig.model.includes("flash");
+                        const maxBudget = isFlashModel ? 24576 : 32768;
+                        return Math.min(
+                          modelConfig.gemini_thinking_budget,
+                          maxBudget
+                        );
+                      })(),
                 }
                 : {}),
             }
