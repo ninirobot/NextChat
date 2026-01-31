@@ -14,7 +14,7 @@ import {
   usePluginStore,
   ChatMessageTool,
 } from "@/app/store";
-import { stream } from "@/app/utils/chat";
+import { stream, streamWithThink } from "@/app/utils/chat";
 import { getClientConfig } from "@/app/config/client";
 import { GEMINI_BASE_URL } from "@/app/constant";
 import { nanoid } from "nanoid";
@@ -261,7 +261,7 @@ export class GeminiProApi implements LLMApi {
           .getAsTools(
             useChatStore.getState().currentSession().mask?.plugin || [],
           );
-        return stream(
+        return streamWithThink(
           chatPath,
           requestPayload,
           getHeaders(),
@@ -292,16 +292,19 @@ export class GeminiProApi implements LLMApi {
               });
             }
             const parts = chunkJson?.candidates?.at(0)?.content.parts || [];
-            let textContent = "";
+            let reasoning = "";
+            let content = "";
             for (const part of parts) {
               if (part.thought) {
-                // Formatting for legacy chat.ts parser which supports <think> tags
-                textContent += `<think>${part.text}</think>`;
+                reasoning += part.text;
               } else {
-                textContent += part.text;
+                content += part.text;
               }
             }
-            return textContent;
+            return {
+              reasoning: reasoning || undefined,
+              content: content || undefined,
+            };
           },
           // processToolMessage, include tool_calls message and tool call results
           (
