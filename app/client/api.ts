@@ -26,6 +26,7 @@ import { ChatGLMApi } from "./platforms/glm";
 import { SiliconflowApi } from "./platforms/siliconflow";
 import { Ai302Api } from "./platforms/ai302";
 import { MeituanApi } from "./platforms/meituan";
+import { NvidiaApi } from "./platforms/nvidia";
 import { OpenRouterApi } from "./platforms/openrouter";
 
 
