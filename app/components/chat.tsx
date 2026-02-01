@@ -1,4 +1,3 @@
-import { useDebouncedCallback } from "use-debounce";
 import React, {
   Fragment,
   RefObject,
@@ -8,48 +7,12 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { useNavigate } from "react-router-dom";
+import dynamic from "next/dynamic";
+import { useDebouncedCallback } from "use-debounce";
+import clsx from "clsx";
+import { isEmpty } from "lodash-es";
 
-import SendWhiteIcon from "../icons/send-white.svg";
-import BrainIcon from "../icons/brain.svg";
-import RenameIcon from "../icons/rename.svg";
-import EditIcon from "../icons/rename.svg";
-import ExportIcon from "../icons/share.svg";
-import ReturnIcon from "../icons/return.svg";
-import CopyIcon from "../icons/copy.svg";
-import SpeakIcon from "../icons/speak.svg";
-import SpeakStopIcon from "../icons/speak-stop.svg";
-import LoadingIcon from "../icons/three-dots.svg";
-import LoadingButtonIcon from "../icons/loading.svg";
-import PromptIcon from "../icons/prompt.svg";
-import MaskIcon from "../icons/mask.svg";
-import MaxIcon from "../icons/max.svg";
-import MinIcon from "../icons/min.svg";
-import ResetIcon from "../icons/reload.svg";
-import ReloadIcon from "../icons/reload.svg";
-import BreakIcon from "../icons/break.svg";
-import SettingsIcon from "../icons/chat-settings.svg";
-import DeleteIcon from "../icons/clear.svg";
-import PinIcon from "../icons/pin.svg";
-import ConfirmIcon from "../icons/confirm.svg";
-import CloseIcon from "../icons/close.svg";
-import CancelIcon from "../icons/cancel.svg";
-import ImageIcon from "../icons/image.svg";
-
-import LightIcon from "../icons/light.svg";
-import DarkIcon from "../icons/dark.svg";
-import AutoIcon from "../icons/auto.svg";
-import UploadIcon from "../icons/upload.svg";
-import { parseFile } from "../utils/file";
-import BottomIcon from "../icons/bottom.svg";
-import StopIcon from "../icons/pause.svg";
-import RobotIcon from "../icons/robot.svg";
-import SizeIcon from "../icons/size.svg";
-import QualityIcon from "../icons/hd.svg";
-import StyleIcon from "../icons/palette.svg";
-import PluginIcon from "../icons/plugin.svg";
-import ShortcutkeyIcon from "../icons/shortcutkey.svg";
-import McpToolIcon from "../icons/tool.svg";
-import HeadphoneIcon from "../icons/headphone.svg";
 import {
   BOT_HELLO,
   ChatMessage,
@@ -63,34 +26,54 @@ import {
   useChatStore,
   usePluginStore,
 } from "../store";
+import { useMaskStore } from "../store/mask";
+import { Prompt, usePromptStore } from "../store/prompt";
 
 import {
   autoGrowTextArea,
   copyToClipboard,
   getMessageImages,
   getMessageTextContent,
+  getModelSizes,
   isDalle3,
   isVisionModel,
   safeLocalStorage,
-  getModelSizes,
-  supportsCustomSize,
-  useMobileScreen,
   selectOrCopy,
   showPlugins,
+  supportsCustomSize,
+  useMobileScreen,
 } from "../utils";
-
+import { createTTSPlayer } from "../utils/audio";
 import { uploadImage as uploadImageRemote } from "@/app/utils/chat";
+import { parseFile } from "../utils/file";
+import { prettyObject } from "../utils/format";
+import { useAllModels } from "../utils/hooks";
+import { getModelProvider } from "../utils/model";
+import { MsEdgeTTS, OUTPUT_FORMAT } from "../utils/ms_edge_tts";
 
-import dynamic from "next/dynamic";
-
+import { ClientApi, MultimodalContent } from "../client/api";
 import { ChatControllerPool } from "../client/controller";
-import { DalleQuality, DalleStyle, ModelSize } from "../typing";
-import { Prompt, usePromptStore } from "../store/prompt";
+import { ChatCommandPrefix, useChatCommand, useCommand } from "../command";
+import { getClientConfig } from "../config/client";
+import {
+  CHAT_PAGE_SIZE,
+  DEFAULT_TTS_ENGINE,
+  ModelProvider,
+  Path,
+  REQUEST_TIMEOUT_MS,
+  ServiceProvider,
+  UNFINISHED_INPUT,
+} from "../constant";
 import Locale from "../locales";
+import { getAvailableClientsCount, isMcpEnabled } from "../mcp/actions";
+import { DalleQuality, DalleStyle, ModelSize } from "../typing";
 
 import { IconButton } from "./button";
-import styles from "./chat.module.scss";
-
+import { Avatar } from "./emoji";
+import { ExportMessageModal } from "./exporter";
+import { ContextPrompts, MaskAvatar, MaskConfig } from "./mask";
+import { RealtimeChat } from "@/app/components/realtime-chat";
+import { ThinkingBlock } from "./thinking";
 import {
   List,
   ListItem,
@@ -101,34 +84,47 @@ import {
   showToast,
 } from "./ui-lib";
 
-import { ThinkingBlock } from "./thinking";
-import { useNavigate } from "react-router-dom";
-import {
-  CHAT_PAGE_SIZE,
-  DEFAULT_TTS_ENGINE,
-  ModelProvider,
-  Path,
-  REQUEST_TIMEOUT_MS,
-  ServiceProvider,
-  UNFINISHED_INPUT,
-} from "../constant";
-import { Avatar } from "./emoji";
-import { ContextPrompts, MaskAvatar, MaskConfig } from "./mask";
-import { useMaskStore } from "../store/mask";
-import { ChatCommandPrefix, useChatCommand, useCommand } from "../command";
-import { prettyObject } from "../utils/format";
-import { ExportMessageModal } from "./exporter";
-import { getClientConfig } from "../config/client";
-import { useAllModels } from "../utils/hooks";
-import { ClientApi, MultimodalContent } from "../client/api";
-import { createTTSPlayer } from "../utils/audio";
-import { MsEdgeTTS, OUTPUT_FORMAT } from "../utils/ms_edge_tts";
+import styles from "./chat.module.scss";
 
-import { isEmpty } from "lodash-es";
-import { getModelProvider } from "../utils/model";
-import { RealtimeChat } from "@/app/components/realtime-chat";
-import clsx from "clsx";
-import { getAvailableClientsCount, isMcpEnabled } from "../mcp/actions";
+import AutoIcon from "../icons/auto.svg";
+import BottomIcon from "../icons/bottom.svg";
+import BrainIcon from "../icons/brain.svg";
+import BreakIcon from "../icons/break.svg";
+import CancelIcon from "../icons/cancel.svg";
+import CloseIcon from "../icons/close.svg";
+import ConfirmIcon from "../icons/confirm.svg";
+import CopyIcon from "../icons/copy.svg";
+import DarkIcon from "../icons/dark.svg";
+import DeleteIcon from "../icons/clear.svg";
+import EditIcon from "../icons/rename.svg";
+import ExportIcon from "../icons/share.svg";
+import HeadphoneIcon from "../icons/headphone.svg";
+import ImageIcon from "../icons/image.svg";
+import LightIcon from "../icons/light.svg";
+import LoadingButtonIcon from "../icons/loading.svg";
+import LoadingIcon from "../icons/three-dots.svg";
+import MaskIcon from "../icons/mask.svg";
+import MaxIcon from "../icons/max.svg";
+import McpToolIcon from "../icons/tool.svg";
+import MinIcon from "../icons/min.svg";
+import PinIcon from "../icons/pin.svg";
+import PluginIcon from "../icons/plugin.svg";
+import PromptIcon from "../icons/prompt.svg";
+import QualityIcon from "../icons/hd.svg";
+import ReloadIcon from "../icons/reload.svg";
+import RenameIcon from "../icons/rename.svg";
+import ResetIcon from "../icons/reload.svg";
+import ReturnIcon from "../icons/return.svg";
+import RobotIcon from "../icons/robot.svg";
+import SendWhiteIcon from "../icons/send-white.svg";
+import SettingsIcon from "../icons/chat-settings.svg";
+import ShortcutkeyIcon from "../icons/shortcutkey.svg";
+import SizeIcon from "../icons/size.svg";
+import SpeakIcon from "../icons/speak.svg";
+import SpeakStopIcon from "../icons/speak-stop.svg";
+import StopIcon from "../icons/pause.svg";
+import StyleIcon from "../icons/palette.svg";
+import UploadIcon from "../icons/upload.svg";
 
 const localStorage = safeLocalStorage();
 
@@ -1025,6 +1021,35 @@ function _Chat() {
   const fontSize = config.fontSize;
   const fontFamily = config.fontFamily;
 
+  const onEditMessage = async (message: ChatMessage) => {
+    const newMessage = await showPrompt(
+      Locale.Chat.Actions.Edit,
+      getMessageTextContent(message),
+      10,
+    );
+    let newContent: string | MultimodalContent[] = newMessage;
+    const images = getMessageImages(message);
+    if (images.length > 0) {
+      newContent = [{ type: "text", text: newMessage }];
+      for (let i = 0; i < images.length; i++) {
+        newContent.push({
+          type: "image_url",
+          image_url: {
+            url: images[i],
+          },
+        });
+      }
+    }
+    chatStore.updateTargetSession(session, (session) => {
+      const m = session.mask.context
+        .concat(session.messages)
+        .find((m) => m.id === message.id);
+      if (m) {
+        m.content = newContent;
+      }
+    });
+  };
+
   const [showExport, setShowExport] = useState(false);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -1884,41 +1909,7 @@ function _Chat() {
                                 <IconButton
                                   icon={<EditIcon />}
                                   aria={Locale.Chat.Actions.Edit}
-                                  onClick={async () => {
-                                    const newMessage = await showPrompt(
-                                      Locale.Chat.Actions.Edit,
-                                      getMessageTextContent(message),
-                                      10,
-                                    );
-                                    let newContent:
-                                      | string
-                                      | MultimodalContent[] = newMessage;
-                                    const images = getMessageImages(message);
-                                    if (images.length > 0) {
-                                      newContent = [
-                                        { type: "text", text: newMessage },
-                                      ];
-                                      for (let i = 0; i < images.length; i++) {
-                                        newContent.push({
-                                          type: "image_url",
-                                          image_url: {
-                                            url: images[i],
-                                          },
-                                        });
-                                      }
-                                    }
-                                    chatStore.updateTargetSession(
-                                      session,
-                                      (session) => {
-                                        const m = session.mask.context
-                                          .concat(session.messages)
-                                          .find((m) => m.id === message.id);
-                                        if (m) {
-                                          m.content = newContent;
-                                        }
-                                      },
-                                    );
-                                  }}
+                                  onClick={() => onEditMessage(message)}
                                 ></IconButton>
                               </div>
                               {isUser ? (

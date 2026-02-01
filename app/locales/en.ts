@@ -196,10 +196,6 @@ const en: LocaleType = {
         "Font Family of the chat content, leave empty to apply global default font",
       Placeholder: "Font Family Name",
     },
-    InjectSystemPrompts: {
-      Title: "Inject System Prompts",
-      SubTitle: "Inject a global system prompt for every request",
-    },
     InputTemplate: {
       Title: "Input Template",
       SubTitle: "Newest message will be filled to this template",
@@ -611,11 +607,23 @@ const en: LocaleType = {
     },
     ThinkingBudget: {
       Title: "Thinking Budget (thinking_budget)",
-      SubTitle: "Max tokens used for deep thinking (supported models only)",
+      SubTitle: "Max tokens for LongCat-Thinking",
+    },
+    GeminiThinkingBudget: {
+      Title: "Gemini Thinking Budget",
+      SubTitle: "Max tokens for Gemini 2.5",
     },
     AspectRatio: {
       Title: "Aspect Ratio",
       SubTitle: "Aspect ratio for generated images (supported models only)",
+    },
+    ThoughtSummary: {
+      Title: "Thought Summary",
+      SubTitle: "Include model's internal reasoning summary in response",
+    },
+    ThinkingLevel: {
+      Title: "Thinking Level",
+      SubTitle: "Control the depth of thought (Gemini 3 only)",
     },
     TTS: {
       Enable: {

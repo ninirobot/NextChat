@@ -14,9 +14,10 @@ import {
   usePluginStore,
   ChatMessageTool,
 } from "@/app/store";
-import { stream } from "@/app/utils/chat";
+import { streamWithThink } from "@/app/utils/chat";
 import { getClientConfig } from "@/app/config/client";
 import { GEMINI_BASE_URL } from "@/app/constant";
+import { nanoid } from "nanoid";
 
 import {
   getMessageTextContent,
@@ -25,7 +26,6 @@ import {
   getTimeoutMSByModel,
 } from "@/app/utils";
 import { preProcessImageContent } from "@/app/utils/chat";
-import { nanoid } from "nanoid";
 import { RequestPayload } from "./openai";
 import { fetch } from "@/app/utils/stream";
 
@@ -90,7 +90,7 @@ export class GeminiProApi implements LLMApi {
 
   async chat(options: ChatOptions): Promise<void> {
     const apiClient = this;
-    let multimodal = false;
+
 
     // try get base64image from local cache image_url
     const _messages: ChatOptions["messages"] = [];
@@ -103,7 +103,7 @@ export class GeminiProApi implements LLMApi {
       if (isVisionModel(options.config.model)) {
         const images = getMessageImages(v);
         if (images.length > 0) {
-          multimodal = true;
+
           parts = parts.concat(
             images.map((image) => {
               const imageType = image.split(";")[0].split(":")[1];
@@ -125,7 +125,7 @@ export class GeminiProApi implements LLMApi {
     });
 
     // google requires that role in neighboring messages must not be the same
-    for (let i = 0; i < messages.length - 1; ) {
+    for (let i = 0; i < messages.length - 1;) {
       // Check if current and next item both have the role "model"
       if (messages[i].role === messages[i + 1].role) {
         // Concatenate the 'parts' of the current and next item
@@ -137,9 +137,7 @@ export class GeminiProApi implements LLMApi {
         i++;
       }
     }
-    // if (visionModel && messages.length > 1) {
-    //   options.onError?.(new Error("Multiturn chat is not enabled for models/gemini-pro-vision"));
-    // }
+
 
     const accessStore = useAccessStore.getState();
 
@@ -153,13 +151,62 @@ export class GeminiProApi implements LLMApi {
     const requestPayload = {
       contents: messages,
       generationConfig: {
-        // stopSequences: [
-        //   "Title"
-        // ],
+
         temperature: modelConfig.temperature,
         maxOutputTokens: modelConfig.max_tokens,
         topP: modelConfig.top_p,
-        // "topK": modelConfig.top_k,
+        // Thinking Configuration for Gemini 2.5 and 3
+        ...(((modelConfig.model.includes("gemini-2.5") ||
+          modelConfig.model.includes("gemini-3")) &&
+          // Only add thinkingConfig if at least one thinking feature is enabled:
+          // - include_thoughts is true
+          // - thinking_budget is set (for 2.5)
+          // - thinking_level is set (for 3)
+          // budget > 0 means specific.
+          // budget = 0 means disabled (for 2.5 Flash).
+          // We should always send it if the feature is relevant to the model.
+          (modelConfig.include_thoughts ||
+            modelConfig.gemini_thinking_budget !== undefined ||
+            modelConfig.thinking_level !== undefined))
+          ? {
+            thinkingConfig: {
+              includeThoughts: modelConfig.include_thoughts,
+              // Thinking Level for Gemini 3
+              ...(modelConfig.model.includes("gemini-3") &&
+                modelConfig.thinking_level
+                ? {
+                  thinkingLevel: modelConfig.thinking_level,
+                }
+                : {}),
+              // Thinking Budget for Gemini 2.5
+              ...(modelConfig.model.includes("gemini-2.5") &&
+                modelConfig.gemini_thinking_budget !== -1
+                ? {
+                  thinkingBudget: (() => {
+                    const isFlashModel =
+                      modelConfig.model.includes("gemini") &&
+                      modelConfig.model.includes("flash");
+                    const isProModel =
+                      modelConfig.model.includes("gemini") &&
+                      modelConfig.model.includes("pro");
+                    let budget = modelConfig.gemini_thinking_budget;
+
+                    // Flash models: max 24576
+                    if (isFlashModel) {
+                      budget = Math.min(budget, 24576);
+                    }
+                    // Pro models: min 128, max 32768
+                    else if (isProModel) {
+                      budget = Math.max(128, Math.min(budget, 32768));
+                    }
+
+                    return budget;
+                  })(),
+                }
+                : {}),
+            },
+          }
+          : {}),
       },
       safetySettings: [
         {
@@ -198,8 +245,7 @@ export class GeminiProApi implements LLMApi {
         headers: getHeaders(),
       };
 
-      const isThinking = options.config.model.includes("-thinking");
-      // make a fetch request
+
       const requestTimeoutId = setTimeout(
         () => controller.abort(),
         getTimeoutMSByModel(options.config.model),
@@ -211,20 +257,18 @@ export class GeminiProApi implements LLMApi {
           .getAsTools(
             useChatStore.getState().currentSession().mask?.plugin || [],
           );
-        return stream(
+        return streamWithThink(
           chatPath,
           requestPayload,
           getHeaders(),
           // @ts-ignore
           tools.length > 0
             ? // @ts-ignore
-              [{ functionDeclarations: tools.map((tool) => tool.function) }]
+            [{ functionDeclarations: tools.map((tool) => tool.function) }]
             : [],
           funcs,
           controller,
-          // parseSSE
           (text: string, runTools: ChatMessageTool[]) => {
-            // console.log("parseSSE", text, runTools);
             const chunkJson = JSON.parse(text);
 
             const functionCall = chunkJson?.candidates
@@ -241,10 +285,20 @@ export class GeminiProApi implements LLMApi {
                 },
               });
             }
-            return chunkJson?.candidates
-              ?.at(0)
-              ?.content.parts?.map((part: { text: string }) => part.text)
-              .join("\n\n");
+            const parts = chunkJson?.candidates?.at(0)?.content.parts || [];
+            let reasoning = "";
+            let content = "";
+            for (const part of parts) {
+              if (part.thought) {
+                reasoning += part.text;
+              } else {
+                content += part.text;
+              }
+            }
+            return {
+              reasoning: reasoning || undefined,
+              content: content || undefined,
+            };
           },
           // processToolMessage, include tool_calls message and tool call results
           (
@@ -296,7 +350,7 @@ export class GeminiProApi implements LLMApi {
           options.onError?.(
             new Error(
               "Message is being blocked for reason: " +
-                resJson.promptFeedback.blockReason,
+              resJson.promptFeedback.blockReason,
             ),
           );
         }

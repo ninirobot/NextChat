@@ -56,6 +56,9 @@ const fr: PartialLocaleType = {
       Edit: "Modifier",
       RefreshTitle: "Actualiser le titre",
       RefreshToast: "Demande d'actualisation du titre envoyée",
+      FullScreen: "Plein écran",
+      Speech: "Lecture",
+      StopSpeech: "Arrêter",
     },
     Commands: {
       new: "Nouvelle discussion",
@@ -63,6 +66,7 @@ const fr: PartialLocaleType = {
       next: "Discussion suivante",
       prev: "Discussion précédente",
       clear: "Effacer le contexte",
+      fork: "Copier la discussion",
       del: "Supprimer la discussion",
     },
     InputActions: {
@@ -89,11 +93,25 @@ const fr: PartialLocaleType = {
       return inputHints + "，/ pour compléter, : pour déclencher des commandes";
     },
     Send: "Envoyer",
+    StartSpeak: "Commencer à parler",
+    StopSpeak: "Arrêter de parler",
     Config: {
       Reset: "Effacer la mémoire",
       SaveAs: "Enregistrer comme masque",
     },
     IsContext: "Prompt prédéfini",
+    ShortcutKey: {
+      Title: "Raccourcis clavier",
+      newChat: "Ouvrir une nouvelle discussion",
+      focusInput: "Mettre le focus sur le champ de saisie",
+      copyLastMessage: "Copier la dernière réponse",
+      copyLastCode: "Copier le dernier bloc de code",
+      showShortcutKey: "Afficher les raccourcis",
+      clearContext: "Effacer le contexte",
+    },
+    Thinking: "Réflexion",
+    Thought: "Pensée",
+    ThinkingDuration: (d: number) => `a pris ${d} secondes`,
   },
   Export: {
     Title: "Partager l'historique des discussions",
@@ -119,6 +137,10 @@ const fr: PartialLocaleType = {
       Modal:
         "Appuyez longuement ou faites un clic droit pour enregistrer l'image",
     },
+    Artifacts: {
+      Title: "Partager les artefacts",
+      Error: "Erreur de partage",
+    },
   },
   Select: {
     Search: "Rechercher des messages",
@@ -143,6 +165,7 @@ const fr: PartialLocaleType = {
   Settings: {
     Title: "Paramètres",
     SubTitle: "Toutes les options de configuration",
+    ShowPassword: "Afficher le mot de passe",
 
     Danger: {
       Reset: {
@@ -176,11 +199,7 @@ const fr: PartialLocaleType = {
         "Police du contenu du chat, laissez vide pour appliquer la police par défaut globale",
       Placeholder: "Nom de la Police",
     },
-    InjectSystemPrompts: {
-      Title: "Injecter des invites système",
-      SubTitle:
-        "Ajouter de manière forcée une invite système simulée de ChatGPT au début de chaque liste de messages",
-    },
+
     InputTemplate: {
       Title: "Prétraitement des entrées utilisateur",
       SubTitle:
@@ -194,6 +213,8 @@ const fr: PartialLocaleType = {
       IsChecking: "Vérification des mises à jour en cours...",
       FoundUpdate: (x: string) => `Nouvelle version trouvée : ${x}`,
       GoToUpdate: "Aller à la mise à jour",
+      Success: "Mise à jour réussie",
+      Failed: "Échec de la mise à jour",
     },
     SendKey: "Touche d'envoi",
     Theme: "Thème",
@@ -435,15 +456,124 @@ const fr: PartialLocaleType = {
           SubTitle: "Exemple :",
         },
       },
-      AI302: {
+      Tencent: {
         ApiKey: {
-          Title: "Clé d'interface",
-          SubTitle: "Utiliser une clé API 302.AI personnalisée",
-          Placeholder: "Clé API 302.AI",
+          Title: "Tencent API Key",
+          SubTitle: "Use a custom Tencent API Key",
+          Placeholder: "Tencent API Key",
+        },
+        SecretKey: {
+          Title: "Tencent Secret Key",
+          SubTitle: "Use a custom Tencent Secret Key",
+          Placeholder: "Tencent Secret Key",
         },
         Endpoint: {
-          Title: "Adresse de l'endpoint",
-          SubTitle: "Exemple :",
+          Title: "Endpoint Address",
+          SubTitle: "not supported, configure in .env",
+        },
+      },
+      Moonshot: {
+        ApiKey: {
+          Title: "Moonshot API Key",
+          SubTitle: "Use a custom Moonshot API Key",
+          Placeholder: "Moonshot API Key",
+        },
+        Endpoint: {
+          Title: "Endpoint Address",
+          SubTitle: "Example: ",
+        },
+      },
+      DeepSeek: {
+        ApiKey: {
+          Title: "DeepSeek API Key",
+          SubTitle: "Use a custom DeepSeek API Key",
+          Placeholder: "DeepSeek API Key",
+        },
+        Endpoint: {
+          Title: "Endpoint Address",
+          SubTitle: "Example: ",
+        },
+      },
+      XAI: {
+        ApiKey: {
+          Title: "XAI API Key",
+          SubTitle: "Use a custom XAI API Key",
+          Placeholder: "XAI API Key",
+        },
+        Endpoint: {
+          Title: "Endpoint Address",
+          SubTitle: "Example: ",
+        },
+      },
+      ChatGLM: {
+        ApiKey: {
+          Title: "ChatGLM API Key",
+          SubTitle: "Use a custom ChatGLM API Key",
+          Placeholder: "ChatGLM API Key",
+        },
+        Endpoint: {
+          Title: "Endpoint Address",
+          SubTitle: "Example: ",
+        },
+      },
+      SiliconFlow: {
+        ApiKey: {
+          Title: "SiliconFlow API Key",
+          SubTitle: "Use a custom SiliconFlow API Key",
+          Placeholder: "SiliconFlow API Key",
+        },
+        Endpoint: {
+          Title: "Endpoint Address",
+          SubTitle: "Example: ",
+        },
+      },
+      Stability: {
+        ApiKey: {
+          Title: "Stability API Key",
+          SubTitle: "Use a custom Stability API Key",
+          Placeholder: "Stability API Key",
+        },
+        Endpoint: {
+          Title: "Endpoint Address",
+          SubTitle: "Example: ",
+        },
+      },
+      Iflytek: {
+        ApiKey: {
+          Title: "Iflytek API Key",
+          SubTitle: "Use a Iflytek API Key",
+          Placeholder: "Iflytek API Key",
+        },
+        ApiSecret: {
+          Title: "Iflytek API Secret",
+          SubTitle: "Use a Iflytek API Secret",
+          Placeholder: "Iflytek API Secret",
+        },
+        Endpoint: {
+          Title: "Endpoint Address",
+          SubTitle: "Example: ",
+        },
+      },
+      Meituan: {
+        ApiKey: {
+          Title: "Meituan API Key",
+          SubTitle: "Use a custom Meituan API Key",
+          Placeholder: "Meituan API Key",
+        },
+        Endpoint: {
+          Title: "Endpoint Address",
+          SubTitle: "Example: ",
+        },
+      },
+      OpenRouter: {
+        Endpoint: {
+          Title: "Endpoint Address",
+          SubTitle: "Example: ",
+        },
+        ApiKey: {
+          Title: "API Key",
+          SubTitle: "Use a custom OpenRouter API Key",
+          Placeholder: "OpenRouter API Key",
         },
       },
       CustomModel: {
@@ -481,6 +611,80 @@ const fr: PartialLocaleType = {
       SubTitle:
         "Plus la valeur est élevée, plus il est probable de réduire les répétitions",
     },
+    ThinkingBudget: {
+      Title: "Thinking Budget (thinking_budget)",
+      SubTitle: "Max tokens for LongCat-Thinking",
+    },
+    GeminiThinkingBudget: {
+      Title: "Gemini Thinking Budget",
+      SubTitle: "Max tokens for Gemini 2.5",
+    },
+    AspectRatio: {
+      Title: "Aspect Ratio",
+      SubTitle: "Aspect ratio for generated images (supported models only)",
+    },
+    ThoughtSummary: {
+      Title: "Thought Summary",
+      SubTitle: "Include model's internal reasoning summary in response",
+    },
+    ThinkingLevel: {
+      Title: "Thinking Level",
+      SubTitle: "Control the depth of thought (Gemini 3 only)",
+    },
+    TTS: {
+      Enable: {
+        Title: "Enable TTS",
+        SubTitle: "Enable text-to-speech service",
+      },
+      Autoplay: {
+        Title: "Enable Autoplay",
+        SubTitle:
+          "Automatically generate speech and play, you need to enable the text-to-speech switch first",
+      },
+      Model: "Model",
+      Voice: {
+        Title: "Voice",
+        SubTitle: "The voice to use when generating the audio",
+      },
+      Speed: {
+        Title: "Speed",
+        SubTitle: "The speed of the generated audio",
+      },
+      Engine: "TTS Engine",
+    },
+    Realtime: {
+      Enable: {
+        Title: "Realtime Chat",
+        SubTitle: "Enable realtime chat feature",
+      },
+      Provider: {
+        Title: "Model Provider",
+        SubTitle: "Switch between different providers",
+      },
+      Model: {
+        Title: "Model",
+        SubTitle: "Select a model",
+      },
+      ApiKey: {
+        Title: "API Key",
+        SubTitle: "API Key",
+        Placeholder: "API Key",
+      },
+      Azure: {
+        Endpoint: {
+          Title: "Endpoint",
+          SubTitle: "Endpoint",
+        },
+        Deployment: {
+          Title: "Deployment Name",
+          SubTitle: "Deployment Name",
+        },
+      },
+      Temperature: {
+        Title: "Randomness (temperature)",
+        SubTitle: "Higher values result in more random responses",
+      },
+    },
   },
   Store: {
     DefaultTopic: "Nouvelle discussion",
@@ -509,6 +713,12 @@ const fr: PartialLocaleType = {
     Add: "Ajouter une discussion",
     Clear: "Contexte effacé",
     Revert: "Restaurer le contexte",
+  },
+  Discovery: {
+    Name: "Discovery",
+  },
+  Mcp: {
+    Name: "MCP",
   },
   Plugin: {
     Name: "Plugin",

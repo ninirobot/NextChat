@@ -76,13 +76,15 @@ export const DEFAULT_CONFIG = {
     compressMessageLengthThreshold: 1048576,
     compressModel: "",
     compressProviderName: "",
-    enableInjectSystemPrompts: false,
     template: config?.template ?? DEFAULT_INPUT_TEMPLATE,
     size: "1024x1024" as ModelSize,
     quality: "standard" as DalleQuality,
     style: "vivid" as DalleStyle,
     enable_thinking: false,
     thinking_budget: 1024,
+    gemini_thinking_budget: -1,
+    thinking_level: "high",
+    include_thoughts: true,
     aspect_ratio: "1:1",
   },
 
@@ -165,6 +167,15 @@ export const ModalConfigValidator = {
   thinking_budget(x: number) {
     return limitNumber(x, 1024, 8192, 1024);
   },
+  gemini_thinking_budget(x: number) {
+    return limitNumber(x, -1, 32768, 1024);
+  },
+  thinking_level(x: string) {
+    if (["low", "medium", "high", "minimal"].includes(x)) {
+      return x;
+    }
+    return undefined;
+  },
   aspect_ratio(x: string) {
     return x;
   },
@@ -236,10 +247,6 @@ export const useAppConfig = createPersistStore(
 
       if (version < 3.5) {
         state.customModels = "claude,claude-100k";
-      }
-
-      if (version < 3.6) {
-        state.modelConfig.enableInjectSystemPrompts = true;
       }
 
       if (version < 3.7) {
