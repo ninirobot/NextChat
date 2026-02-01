@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { getClientConfig } from "../config/client";
 import clsx from "clsx";
 import Locale from "../locales";
 import styles from "./chat.module.scss";
@@ -26,6 +27,7 @@ export function ThinkingBlock(props: {
     const isReasoningModel = useCallback((model?: string) => {
         if (!model) return false;
         const m = model.toLowerCase();
+        const customThinkingModels = getClientConfig()?.thinkingModels || "";
         return (
             m.includes("deepseek-r1") ||
             m.includes("o1-") ||
@@ -34,8 +36,12 @@ export function ThinkingBlock(props: {
             m === "o3" ||
             m.includes("longcat") && m.includes("thinking") ||
             m.includes("gemini") ||
-            m.includes("thinking")
+            m.includes("thinking") ||
+            m.includes("kimi") ||
+            m.includes("gpt-oss") ||
+            customThinkingModels.split(",").some((item: string) => item.length > 0 && m.includes(item.toLowerCase().trim()))
         );
+
     }, []);
 
     useEffect(() => {

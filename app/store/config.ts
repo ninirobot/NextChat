@@ -84,6 +84,7 @@ export const DEFAULT_CONFIG = {
     thinking_budget: 1024,
     gemini_thinking_budget: -1,
     thinking_level: "high",
+    reasoning_effort: "medium" as "low" | "medium" | "high",
     include_thoughts: true,
     aspect_ratio: "1:1",
   },

@@ -571,6 +571,18 @@ const cn = {
           SubTitle: "样例：",
         },
       },
+      Nvidia: {
+        ApiKey: {
+          Title: "接口密钥",
+          SubTitle: "使用自定义 Nvidia API Key",
+          Placeholder: "Nvidia API Key",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "样例：",
+        },
+      },
+
     },
 
     Model: "模型 (model)",
@@ -617,6 +629,10 @@ const cn = {
     ThinkingLevel: {
       Title: "思考深度",
       SubTitle: "控制模型的思考深度 (仅 Gemini 3)",
+    },
+    ReasoningEffort: {
+      Title: "推理强度 (reasoning_effort)",
+      SubTitle: "控制推理模型的思考深度 (仅 GPT-OSS 系列)",
     },
     TTS: {
       Enable: {

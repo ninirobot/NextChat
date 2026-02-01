@@ -18,6 +18,7 @@ import { handle as proxyHandler } from "../../proxy";
 import { handle as ai302Handler } from "../../302ai";
 import { handle as meituanHandler } from "../../meituan";
 import { handle as openrouterHandler } from "../../openrouter";
+import { handle as nvidiaHandler } from "../../nvidia";
 
 async function handle(
   req: NextRequest,
@@ -61,6 +62,8 @@ async function handle(
       return meituanHandler(req, { params });
     case ApiPath.OpenRouter:
       return openrouterHandler(req, { params });
+    case ApiPath.Nvidia:
+      return nvidiaHandler(req, { params });
     default:
       return proxyHandler(req, { params });
   }

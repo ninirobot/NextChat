@@ -576,6 +576,18 @@ const en: LocaleType = {
           Placeholder: "OpenRouter API Key",
         },
       },
+      Nvidia: {
+        Endpoint: {
+          Title: "Endpoint Address",
+          SubTitle: "Example: ",
+        },
+        ApiKey: {
+          Title: "API Key",
+          SubTitle: "Use a custom Nvidia API Key",
+          Placeholder: "Nvidia API Key",
+        },
+      },
+
     },
 
     Model: "Model",
@@ -624,6 +636,10 @@ const en: LocaleType = {
     ThinkingLevel: {
       Title: "Thinking Level",
       SubTitle: "Control the depth of thought (Gemini 3 only)",
+    },
+    ReasoningEffort: {
+      Title: "Reasoning Effort (reasoning_effort)",
+      SubTitle: "Control reasoning model's thinking depth (GPT-OSS series only)",
     },
     TTS: {
       Enable: {

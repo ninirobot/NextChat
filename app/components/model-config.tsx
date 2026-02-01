@@ -235,6 +235,27 @@ export function ModelConfigList(props: {
           </ListItem>
         )}
 
+      {/* GPT-OSS Reasoning Effort */}
+      {props.modelConfig.model.includes("gpt-oss") && (
+        <ListItem
+          title={Locale.Settings.ReasoningEffort.Title}
+          subTitle={Locale.Settings.ReasoningEffort.SubTitle}
+        >
+          <Select
+            value={props.modelConfig.reasoning_effort || "medium"}
+            onChange={(e) => {
+              props.updateConfig((config) => {
+                config.reasoning_effort = e.currentTarget.value as "low" | "medium" | "high";
+              });
+            }}
+          >
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </Select>
+        </ListItem>
+      )}
+
       {/* Thought Summary Toggle - Only for Gemini 2.5 and 3 */}
       {(props.modelConfig.model.includes("2.5") ||
         props.modelConfig.model.includes("3")) && (
