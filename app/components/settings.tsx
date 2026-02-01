@@ -58,6 +58,7 @@ import {
   Tencent,
   ByteDance,
   Alibaba,
+  Nvidia,
   Moonshot,
   XAI,
   Google,
