@@ -82,12 +82,13 @@ export class NvidiaApi implements LLMApi {
 
         const isKimiK25 = modelConfig.model === "moonshotai/kimi-k2.5";
         const isGPTOSS120B = modelConfig.model === "openai/gpt-oss-120b";
+        const enableThinking = modelConfig.enable_thinking ?? true;
 
         const requestPayload: any = {
             messages,
             stream: options.config.stream,
             model: modelConfig.model,
-            temperature: isKimiK25 ? 1.0 : modelConfig.temperature,
+            temperature: isKimiK25 ? (enableThinking ? 1.0 : 0.6) : modelConfig.temperature,
             presence_penalty: isKimiK25 ? 0.0 : modelConfig.presence_penalty,
             frequency_penalty: isKimiK25 ? 0.0 : modelConfig.frequency_penalty,
             top_p: isKimiK25 ? 0.95 : modelConfig.top_p,
@@ -101,7 +102,6 @@ export class NvidiaApi implements LLMApi {
 
         // Add thinking parameter for Kimi 2.5 models
         if (isKimiK25) {
-            const enableThinking = modelConfig.enable_thinking ?? true;
             requestPayload.thinking = {
                 type: enableThinking ? "enabled" : "disabled"
             };
