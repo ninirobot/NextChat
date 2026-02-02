@@ -430,6 +430,8 @@ export function getClientApi(provider: ServiceProvider): ClientApi {
       return new ClientApi(ModelProvider.Meituan);
     case ServiceProvider.OpenRouter:
       return new ClientApi(ModelProvider.OpenRouter);
+    case ServiceProvider.Nvidia:
+      return new ClientApi(ModelProvider.Nvidia);
     default:
       return new ClientApi(ModelProvider.GPT);
   }
