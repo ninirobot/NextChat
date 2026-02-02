@@ -80,7 +80,7 @@ export const DEFAULT_CONFIG = {
     size: "1024x1024" as ModelSize,
     quality: "standard" as DalleQuality,
     style: "vivid" as DalleStyle,
-    enable_thinking: false,
+    enable_thinking: true,
     thinking_budget: 1024,
     gemini_thinking_budget: -1,
     thinking_level: "high",

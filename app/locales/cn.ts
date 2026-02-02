@@ -611,12 +611,20 @@ const cn = {
       SubTitle: "值越大，越有可能降低重复字词",
     },
     ThinkingBudget: {
-      Title: "思考预算 (Thinking Budget)",
+      Title: "思考预算 (thinking_budget)",
       SubTitle: "用于 LongCat 模型的深度思考 Token 数",
     },
-    GeminiThinkingBudget: {
-      Title: "Gemini 思考预算",
-      SubTitle: "用于 Gemini 2.5 模型的深度思考 Token 数",
+    KimiThinking: {
+      Title: "启用思考 (Thinking)",
+      SubTitle: "启用 Kimi 2.5 模型的深度思考功能",
+    },
+    GeminiFlashThinkingBudget: {
+      Title: "Gemini 2.5 Flash 思考预算",
+      SubTitle: "0-24576 tokens 或 -1 为自动",
+    },
+    GeminiProThinkingBudget: {
+      Title: "Gemini 2.5 Pro 思考预算",
+      SubTitle: "128-32768 tokens 或 -1 为自动",
     },
     AspectRatio: {
       Title: "图片宽高比 (aspect_ratio)",

@@ -621,9 +621,17 @@ const en: LocaleType = {
       Title: "Thinking Budget (thinking_budget)",
       SubTitle: "Max tokens for LongCat-Thinking",
     },
-    GeminiThinkingBudget: {
-      Title: "Gemini Thinking Budget",
-      SubTitle: "Max tokens for Gemini 2.5",
+    KimiThinking: {
+      Title: "Enable Thinking",
+      SubTitle: "Enable deep thinking for Kimi 2.5 models",
+    },
+    GeminiFlashThinkingBudget: {
+      Title: "Gemini 2.5 Flash Thinking Budget",
+      SubTitle: "0-24576 tokens or -1 for auto",
+    },
+    GeminiProThinkingBudget: {
+      Title: "Gemini 2.5 Pro Thinking Budget",
+      SubTitle: "128-32768 tokens or -1 for auto",
     },
     AspectRatio: {
       Title: "Aspect Ratio",

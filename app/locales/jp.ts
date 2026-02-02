@@ -594,12 +594,20 @@ const jp: PartialLocaleType = {
       SubTitle: "値が大きいほど繰り返しの単語が減少します",
     },
     ThinkingBudget: {
-      Title: "Thinking Budget (thinking_budget)",
-      SubTitle: "Max tokens for LongCat-Thinking",
+      Title: "思考予算 (thinking_budget)",
+      SubTitle: "LongCat-Thinkingの最大トークン数",
     },
-    GeminiThinkingBudget: {
-      Title: "Gemini Thinking Budget",
-      SubTitle: "Max tokens for Gemini 2.5",
+    KimiThinking: {
+      Title: "思考を有効化",
+      SubTitle: "Kimi 2.5モデルの深い思考を有効化",
+    },
+    GeminiFlashThinkingBudget: {
+      Title: "Gemini 2.5 Flash 思考予算",
+      SubTitle: "0-24576トークンまたは-1で自動",
+    },
+    GeminiProThinkingBudget: {
+      Title: "Gemini 2.5 Pro 思考予算",
+      SubTitle: "128-32768トークンまたは-1で自動",
     },
     AspectRatio: {
       Title: "Aspect Ratio",

@@ -99,6 +99,13 @@ export class NvidiaApi implements LLMApi {
             requestPayload.reasoning_effort = modelConfig.reasoning_effort;
         }
 
+        // Add thinking parameter for Kimi 2.5 models
+        if (isKimiK25) {
+            const enableThinking = modelConfig.enable_thinking ?? true;
+            requestPayload.thinking = {
+                type: enableThinking ? "enabled" : "disabled"
+            };
+        }
 
 
         console.log("[Request] nvidia payload: ", requestPayload);

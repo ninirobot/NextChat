@@ -114,7 +114,7 @@ export function ModelConfigList(props: {
         props.modelConfig.model.includes("2.5") &&
         props.modelConfig.model.includes("flash") && (
           <ListItem
-            title="Gemini 2.5 Flash Thinking Budget"
+            title={Locale.Settings.GeminiFlashThinkingBudget.Title}
             subTitle={
               props.modelConfig.gemini_thinking_budget === -1
                 ? "Auto (Dynamic)"
@@ -122,7 +122,7 @@ export function ModelConfigList(props: {
             }
           >
             <InputRange
-              aria="Gemini 2.5 Flash Thinking Budget"
+              aria={Locale.Settings.GeminiFlashThinkingBudget.Title}
               value={props.modelConfig.gemini_thinking_budget}
               min="-1"
               max="24576"
@@ -145,7 +145,7 @@ export function ModelConfigList(props: {
         props.modelConfig.model.includes("2.5") &&
         props.modelConfig.model.includes("pro") && (
           <ListItem
-            title="Gemini 2.5 Pro Thinking Budget"
+            title={Locale.Settings.GeminiProThinkingBudget.Title}
             subTitle={
               props.modelConfig.gemini_thinking_budget === -1
                 ? "Auto (Dynamic)"
@@ -155,7 +155,7 @@ export function ModelConfigList(props: {
             }
           >
             <InputRange
-              aria="Gemini 2.5 Pro Thinking Budget"
+              aria={Locale.Settings.GeminiProThinkingBudget.Title}
               value={
                 props.modelConfig.gemini_thinking_budget === -1 ||
                   props.modelConfig.gemini_thinking_budget < 128
@@ -256,9 +256,12 @@ export function ModelConfigList(props: {
         </ListItem>
       )}
 
+
       {/* Thought Summary Toggle - Only for Gemini 2.5 and 3 */}
-      {(props.modelConfig.model.includes("2.5") ||
-        props.modelConfig.model.includes("3")) && (
+      {(props.modelConfig.model.toLowerCase().includes("gemini-2.5") ||
+        props.modelConfig.model.toLowerCase().includes("gemini-3") ||
+        props.modelConfig.model.toLowerCase().includes("gemini_2.5") ||
+        props.modelConfig.model.toLowerCase().includes("gemini_3")) && (
           <ListItem
             title={Locale.Settings.ThoughtSummary.Title}
             subTitle={Locale.Settings.ThoughtSummary.SubTitle}
@@ -269,6 +272,25 @@ export function ModelConfigList(props: {
               onChange={(e) =>
                 props.updateConfig(
                   (config) => (config.include_thoughts = e.currentTarget.checked),
+                )
+              }
+            ></input>
+          </ListItem>
+        )}
+
+      {/* Kimi 2.5 Thinking Toggle */}
+      {(props.modelConfig.model.toLowerCase().includes("kimi") &&
+        props.modelConfig.model.includes("2.5")) && (
+          <ListItem
+            title={Locale.Settings.KimiThinking.Title}
+            subTitle={Locale.Settings.KimiThinking.SubTitle}
+          >
+            <input
+              type="checkbox"
+              checked={props.modelConfig.enable_thinking ?? true}
+              onChange={(e) =>
+                props.updateConfig(
+                  (config) => (config.enable_thinking = e.currentTarget.checked),
                 )
               }
             ></input>

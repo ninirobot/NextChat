@@ -101,7 +101,7 @@ export class MeituanApi implements LLMApi {
         };
 
         if (isThinkingModel) {
-            requestPayload.enable_thinking = true;
+            requestPayload.enable_thinking = options.config.enable_thinking ?? true;
             requestPayload.thinking_budget = options.config.thinking_budget || 1024;
         }
 
