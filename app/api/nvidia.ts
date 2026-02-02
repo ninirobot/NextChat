@@ -26,39 +26,6 @@ export async function handle(
         });
     }
 
-    // #1815 try to refuse unauthorized model request
-    if (serverConfig.customModels && req.body) {
-        try {
-            const clonedBody = await req.text();
-            const jsonBody = JSON.parse(clonedBody) as { model?: string };
-
-            // Check if model is not available
-            const { isModelNotavailableInServer } = await import(
-                "@/app/utils/model"
-            );
-
-            if (
-                isModelNotavailableInServer(
-                    serverConfig.customModels,
-                    jsonBody?.model as string,
-                    ["Nvidia"],
-                )
-            ) {
-                return new Response(
-                    JSON.stringify({
-                        error: true,
-                        message: `you are not allowed to use ${jsonBody?.model} model`,
-                    }),
-                    {
-                        status: 403,
-                    },
-                );
-            }
-        } catch (e) {
-            console.error("[Nvidia] parse error", e);
-        }
-    }
-
     try {
         const response = await request(req);
         return response;
@@ -110,6 +77,42 @@ async function request(req: NextRequest) {
         duplex: "half",
         signal: controller.signal,
     };
+
+    // #1815 try to refuse unauthorized model request
+    if (serverConfig.customModels && req.body) {
+        try {
+            const clonedBody = await req.text();
+            fetchOptions.body = clonedBody;
+
+            const jsonBody = JSON.parse(clonedBody) as { model?: string };
+
+            // Check if model is not available
+            const { isModelNotavailableInServer } = await import(
+                "@/app/utils/model"
+            );
+
+            if (
+                isModelNotavailableInServer(
+                    serverConfig.customModels,
+                    jsonBody?.model as string,
+                    ["Nvidia"],
+                )
+            ) {
+                clearTimeout(timeoutId);
+                return new Response(
+                    JSON.stringify({
+                        error: true,
+                        message: `you are not allowed to use ${jsonBody?.model} model`,
+                    }),
+                    {
+                        status: 403,
+                    },
+                );
+            }
+        } catch (e) {
+            console.error("[Nvidia] parse error", e);
+        }
+    }
 
     try {
         const res = await fetch(fetchUrl, fetchOptions);
