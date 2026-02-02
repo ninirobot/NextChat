@@ -58,6 +58,7 @@ import {
   Tencent,
   ByteDance,
   Alibaba,
+  Nvidia,
   Moonshot,
   XAI,
   Google,
@@ -1577,6 +1578,47 @@ export function Settings() {
         </ListItem>
       </>
     );
+  const nvidiaConfigComponent = accessStore.provider ===
+    ServiceProvider.Nvidia && (
+      <>
+        <ListItem
+          title={Locale.Settings.Access.Nvidia.Endpoint.Title}
+          subTitle={
+            Locale.Settings.Access.Nvidia.Endpoint.SubTitle +
+            Nvidia.ExampleEndpoint
+          }
+        >
+          <input
+            aria-label={Locale.Settings.Access.Nvidia.Endpoint.Title}
+            type="text"
+            value={accessStore.nvidiaUrl}
+            placeholder={Nvidia.ExampleEndpoint}
+            onChange={(e) =>
+              accessStore.update(
+                (access) => (access.nvidiaUrl = e.currentTarget.value),
+              )
+            }
+          ></input>
+        </ListItem>
+        <ListItem
+          title={Locale.Settings.Access.Nvidia.ApiKey.Title}
+          subTitle={Locale.Settings.Access.Nvidia.ApiKey.SubTitle}
+        >
+          <PasswordInput
+            aria-label={Locale.Settings.Access.Nvidia.ApiKey.Title}
+            value={accessStore.nvidiaApiKey}
+            type="text"
+            placeholder={Locale.Settings.Access.Nvidia.ApiKey.Placeholder}
+            onChange={(e) => {
+              accessStore.update(
+                (access) => (access.nvidiaApiKey = e.currentTarget.value),
+              );
+            }}
+          />
+        </ListItem>
+      </>
+    );
+
 
   return (
     <ErrorBoundary>
@@ -1945,6 +1987,8 @@ export function Settings() {
                   {ai302ConfigComponent}
                   {meituanConfigComponent}
                   {openRouterConfigComponent}
+                  {nvidiaConfigComponent}
+
                 </>
               )}
             </>

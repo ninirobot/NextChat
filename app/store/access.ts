@@ -20,7 +20,10 @@ import {
   AI302_BASE_URL,
   MEITUAN_BASE_URL,
   OPENROUTER_BASE_URL,
+  NVIDIA_BASE_URL,
 } from "../constant";
+
+
 import { getHeaders } from "../client/api";
 import { getClientConfig } from "../config/client";
 import { createPersistStore } from "../utils/store";
@@ -67,6 +70,10 @@ const DEFAULT_AI302_URL = isApp ? AI302_BASE_URL : ApiPath["302.AI"];
 const DEFAULT_MEITUAN_URL = isApp ? MEITUAN_BASE_URL : ApiPath.Meituan;
 
 const DEFAULT_OPENROUTER_URL = isApp ? OPENROUTER_BASE_URL : ApiPath.OpenRouter;
+
+const DEFAULT_NVIDIA_URL = isApp ? NVIDIA_BASE_URL : ApiPath.Nvidia;
+
+
 
 const DEFAULT_ACCESS_STATE = {
   accessCode: "",
@@ -148,6 +155,11 @@ const DEFAULT_ACCESS_STATE = {
   // Meituan
   meituanUrl: DEFAULT_MEITUAN_URL,
   meituanApiKey: "",
+
+  nvidiaUrl: DEFAULT_NVIDIA_URL,
+
+  nvidiaApiKey: "",
+
   openRouterUrl: DEFAULT_OPENROUTER_URL,
   openRouterApiKey: "",
 
@@ -244,6 +256,10 @@ export const useAccessStore = createPersistStore(
       return ensure(get(), ["openRouterApiKey"]);
     },
 
+    isValidNvidia() {
+      return ensure(get(), ["nvidiaApiKey"]);
+    },
+
     isAuthorized() {
       this.fetch();
 
@@ -264,6 +280,7 @@ export const useAccessStore = createPersistStore(
         this.isValidChatGLM() ||
         this.isValidSiliconFlow() ||
         this.isValidMeituan() ||
+        this.isValidNvidia() ||
         this.isValidOpenRouter() ||
         !this.enabledAccessControl() ||
         (this.enabledAccessControl() && ensure(get(), ["accessCode"]))

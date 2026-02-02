@@ -73,6 +73,7 @@ export function compressImage(file: Blob, maxSize: number): Promise<string> {
 export async function preProcessImageContentBase(
   content: RequestMessage["content"],
   transformImageUrl: (url: string) => Promise<{ [key: string]: any }>,
+  transformVideoUrl?: (url: string) => Promise<{ [key: string]: any }>,
 ) {
   if (typeof content === "string") {
     return content;
@@ -86,12 +87,24 @@ export async function preProcessImageContentBase(
       } catch (error) {
         console.error("Error processing image URL:", error);
       }
+    } else if (part?.type == "video_url" && part?.video_url?.url) {
+      try {
+        const url = await cacheImageToBase64Image(part?.video_url?.url);
+        result.push(
+          transformVideoUrl
+            ? await transformVideoUrl(url)
+            : { type: "video_url", video_url: { url } },
+        );
+      } catch (error) {
+        console.error("Error processing video URL:", error);
+      }
     } else {
       result.push({ ...part });
     }
   }
   return result;
 }
+
 
 export async function preProcessImageContent(
   content: RequestMessage["content"],

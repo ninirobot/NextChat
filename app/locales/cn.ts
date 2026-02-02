@@ -571,6 +571,18 @@ const cn = {
           SubTitle: "样例：",
         },
       },
+      Nvidia: {
+        ApiKey: {
+          Title: "接口密钥",
+          SubTitle: "使用自定义 Nvidia API Key",
+          Placeholder: "Nvidia API Key",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "样例：",
+        },
+      },
+
     },
 
     Model: "模型 (model)",
@@ -599,12 +611,20 @@ const cn = {
       SubTitle: "值越大，越有可能降低重复字词",
     },
     ThinkingBudget: {
-      Title: "思考预算 (Thinking Budget)",
+      Title: "思考预算 (thinking_budget)",
       SubTitle: "用于 LongCat 模型的深度思考 Token 数",
     },
-    GeminiThinkingBudget: {
-      Title: "Gemini 思考预算",
-      SubTitle: "用于 Gemini 2.5 模型的深度思考 Token 数",
+    KimiThinking: {
+      Title: "启用思考 (Thinking)",
+      SubTitle: "启用 Kimi 2.5 模型的深度思考功能",
+    },
+    GeminiFlashThinkingBudget: {
+      Title: "Gemini 2.5 Flash 思考预算",
+      SubTitle: "0-24576 tokens 或 -1 为自动",
+    },
+    GeminiProThinkingBudget: {
+      Title: "Gemini 2.5 Pro 思考预算",
+      SubTitle: "128-32768 tokens 或 -1 为自动",
     },
     AspectRatio: {
       Title: "图片宽高比 (aspect_ratio)",
@@ -617,6 +637,10 @@ const cn = {
     ThinkingLevel: {
       Title: "思考深度",
       SubTitle: "控制模型的思考深度 (仅 Gemini 3)",
+    },
+    ReasoningEffort: {
+      Title: "推理强度 (reasoning_effort)",
+      SubTitle: "控制推理模型的思考深度 (仅 GPT-OSS 系列)",
     },
     TTS: {
       Enable: {

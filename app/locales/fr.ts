@@ -612,12 +612,20 @@ const fr: PartialLocaleType = {
         "Plus la valeur est élevée, plus il est probable de réduire les répétitions",
     },
     ThinkingBudget: {
-      Title: "Thinking Budget (thinking_budget)",
-      SubTitle: "Max tokens for LongCat-Thinking",
+      Title: "Budget de Réflexion (thinking_budget)",
+      SubTitle: "Max tokens pour LongCat-Thinking",
     },
-    GeminiThinkingBudget: {
-      Title: "Gemini Thinking Budget",
-      SubTitle: "Max tokens for Gemini 2.5",
+    KimiThinking: {
+      Title: "Activer la Réflexion",
+      SubTitle: "Activer la réflexion profonde pour les modèles Kimi 2.5",
+    },
+    GeminiFlashThinkingBudget: {
+      Title: "Budget de Réflexion Gemini 2.5 Flash",
+      SubTitle: "0-24576 tokens ou -1 pour auto",
+    },
+    GeminiProThinkingBudget: {
+      Title: "Budget de Réflexion Gemini 2.5 Pro",
+      SubTitle: "128-32768 tokens ou -1 pour auto",
     },
     AspectRatio: {
       Title: "Aspect Ratio",

@@ -26,7 +26,9 @@ import { ChatGLMApi } from "./platforms/glm";
 import { SiliconflowApi } from "./platforms/siliconflow";
 import { Ai302Api } from "./platforms/ai302";
 import { MeituanApi } from "./platforms/meituan";
+import { NvidiaApi } from "./platforms/nvidia";
 import { OpenRouterApi } from "./platforms/openrouter";
+
 
 export const ROLES = ["system", "user", "assistant"] as const;
 export type MessageRole = (typeof ROLES)[number];
@@ -36,12 +38,16 @@ export const TTSModels = ["tts-1", "tts-1-hd"] as const;
 export type ChatModel = ModelType;
 
 export interface MultimodalContent {
-  type: "text" | "image_url";
+  type: "text" | "image_url" | "video_url";
   text?: string;
   image_url?: {
     url: string;
   };
+  video_url?: {
+    url: string;
+  };
 }
+
 
 export interface MultimodalContentForAlibaba {
   text?: string;
@@ -64,10 +70,12 @@ export interface LLMConfig {
   max_tokens?: number;
   enable_thinking?: boolean;
   thinking_budget?: number;
+  reasoning_effort?: "low" | "medium" | "high";
   size?: DalleRequestPayload["size"];
   quality?: DalleRequestPayload["quality"];
   style?: DalleRequestPayload["style"];
 }
+
 
 export interface SpeechOptions {
   model: string;
@@ -156,6 +164,10 @@ export class ClientApi {
       case ModelProvider.Doubao:
         this.llm = new DoubaoApi();
         break;
+      case ModelProvider.Nvidia:
+        this.llm = new NvidiaApi();
+        break;
+
       case ModelProvider.Qwen:
         this.llm = new QwenApi();
         break;
@@ -418,6 +430,8 @@ export function getClientApi(provider: ServiceProvider): ClientApi {
       return new ClientApi(ModelProvider.Meituan);
     case ServiceProvider.OpenRouter:
       return new ClientApi(ModelProvider.OpenRouter);
+    case ServiceProvider.Nvidia:
+      return new ClientApi(ModelProvider.Nvidia);
     default:
       return new ClientApi(ModelProvider.GPT);
   }

@@ -576,6 +576,18 @@ const en: LocaleType = {
           Placeholder: "OpenRouter API Key",
         },
       },
+      Nvidia: {
+        Endpoint: {
+          Title: "Endpoint Address",
+          SubTitle: "Example: ",
+        },
+        ApiKey: {
+          Title: "API Key",
+          SubTitle: "Use a custom Nvidia API Key",
+          Placeholder: "Nvidia API Key",
+        },
+      },
+
     },
 
     Model: "Model",
@@ -609,9 +621,17 @@ const en: LocaleType = {
       Title: "Thinking Budget (thinking_budget)",
       SubTitle: "Max tokens for LongCat-Thinking",
     },
-    GeminiThinkingBudget: {
-      Title: "Gemini Thinking Budget",
-      SubTitle: "Max tokens for Gemini 2.5",
+    KimiThinking: {
+      Title: "Enable Thinking",
+      SubTitle: "Enable deep thinking for Kimi 2.5 models",
+    },
+    GeminiFlashThinkingBudget: {
+      Title: "Gemini 2.5 Flash Thinking Budget",
+      SubTitle: "0-24576 tokens or -1 for auto",
+    },
+    GeminiProThinkingBudget: {
+      Title: "Gemini 2.5 Pro Thinking Budget",
+      SubTitle: "128-32768 tokens or -1 for auto",
     },
     AspectRatio: {
       Title: "Aspect Ratio",
@@ -624,6 +644,10 @@ const en: LocaleType = {
     ThinkingLevel: {
       Title: "Thinking Level",
       SubTitle: "Control the depth of thought (Gemini 3 only)",
+    },
+    ReasoningEffort: {
+      Title: "Reasoning Effort (reasoning_effort)",
+      SubTitle: "Control reasoning model's thinking depth (GPT-OSS series only)",
     },
     TTS: {
       Enable: {

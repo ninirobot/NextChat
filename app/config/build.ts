@@ -40,7 +40,9 @@ export const getBuildConfig = () => {
     buildMode,
     isApp,
     template: process.env.DEFAULT_INPUT_TEMPLATE ?? DEFAULT_INPUT_TEMPLATE,
+    thinkingModels: process.env.THINKING_MODELS,
   };
+
 };
 
 export type BuildConfig = ReturnType<typeof getBuildConfig>;

@@ -107,8 +107,12 @@ export function auth(req: NextRequest, modelProvider: ModelProvider) {
       case ModelProvider.Meituan:
         systemApiKey = serverConfig.meituanApiKey;
         break;
+      case ModelProvider.Nvidia:
+        systemApiKey = serverConfig.nvidiaApiKey;
+        break;
       case ModelProvider.GPT:
       default:
+
         if (req.nextUrl.pathname.includes("azure/deployments")) {
           systemApiKey = serverConfig.azureApiKey;
         } else {
