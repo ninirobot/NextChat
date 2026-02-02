@@ -82,7 +82,7 @@ export class NvidiaApi implements LLMApi {
 
         const isKimiK25 = modelConfig.model === "moonshotai/kimi-k2.5";
         const isGPTOSS120B = modelConfig.model === "openai/gpt-oss-120b";
-        const enableThinking = modelConfig.enable_thinking ?? true;
+        const enableThinking = options.config.enable_thinking ?? true;
 
         const requestPayload: any = {
             messages,
