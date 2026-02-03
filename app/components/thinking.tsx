@@ -20,8 +20,22 @@ export function ThinkingBlock(props: {
     isThinking?: boolean;
     defaultExpand?: boolean;
 }) {
-    const [collapsed, setCollapsed] = useState(!props.defaultExpand);
     const isActuallyThinking = props.isThinking ?? props.streaming;
+    const [collapsed, setCollapsed] = useState<boolean>(() => {
+        // If defaultExpand is explicitly set, use it
+        if (props.defaultExpand !== undefined) return !props.defaultExpand;
+        // Default to expanded if currently thinking, collapsed otherwise
+        return !isActuallyThinking;
+    });
+
+    // Auto-expand when thinking starts, auto-collapse when thinking ends
+    useEffect(() => {
+        if (isActuallyThinking) {
+            setCollapsed(false);
+        } else {
+            setCollapsed(true);
+        }
+    }, [isActuallyThinking]);
 
     // Users can easily add more models here
     const isReasoningModel = useCallback((model?: string) => {
