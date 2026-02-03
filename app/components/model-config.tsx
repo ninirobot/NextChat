@@ -78,7 +78,7 @@ export function ModelConfigList(props: {
           value={(props.modelConfig.top_p ?? 1).toFixed(1)}
           min="0"
           max="1"
-          step="0.1"
+          step="0.05"
           onChange={(e) => {
             props.updateConfig(
               (config) =>

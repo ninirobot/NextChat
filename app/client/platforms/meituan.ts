@@ -105,17 +105,8 @@ export class MeituanApi implements LLMApi {
             requestPayload.thinking_budget = options.config.thinking_budget || 1024;
         }
 
-        const modelName = modelConfig.model.toLowerCase();
-        const maxLimit = modelName.includes("2601") || !modelName.includes("flash") ? 262144 : 131072;
-
-        if (options.config.max_tokens) {
-            requestPayload.max_tokens = Math.min(options.config.max_tokens, maxLimit);
-        }
-
-        // Adjust for reasoning overhead if necessary, but keep within limits
-        if (isThinkingModel && requestPayload.max_tokens <= requestPayload.thinking_budget) {
-            requestPayload.max_tokens = Math.min(requestPayload.thinking_budget + 2048, maxLimit);
-        }
+        // Omit max_tokens to avoid compatibility issues with large context window settings
+        // requestPayload.max_tokens = ...
 
         console.log("[Request] longcat payload: ", requestPayload);
 

@@ -151,28 +151,27 @@ export class GeminiProApi implements LLMApi {
     const isFlashModel = modelConfig.model.includes("flash");
     const isProModel = modelConfig.model.includes("pro");
 
-    // Thinking Configuration Logic
+    // 1. Feature Detection
+    const modelName = modelConfig.model.toLowerCase();
+    const isGen3 = modelName.includes("gemini-3") || modelName.includes("gemini_3");
+    const isThinkingVersion = modelName.includes("thinking") || modelName.includes("2.5");
+
+    // 2. Build Thinking Config (Structured and mutually exclusive)
     let thinkingConfig: any = undefined;
     if (modelConfig.include_thoughts) {
-      thinkingConfig = {
-        includeThoughts: true,
-      };
+      thinkingConfig = { includeThoughts: true };
 
-      if (modelConfig.thinking_level) {
+      if (isGen3) {
+        // Gemini 3 series: Uses thinkingLevel
         thinkingConfig.thinkingLevel = modelConfig.thinking_level;
-      }
-
-      const budget = modelConfig.gemini_thinking_budget;
-      if (budget && budget !== -1) {
-        // Flash: max 24576, Pro: min 128 max 32768
-        // Only apply budget if it makes sense for the model type, but if user set it, we try to honor or clamp it.
-        let validBudget = budget;
-        if (isFlashModel) {
-          validBudget = Math.min(budget, 24576);
-        } else if (isProModel) {
-          validBudget = Math.max(128, Math.min(budget, 32768));
+      } else if (isThinkingVersion) {
+        // Gemini 2.x Thinking or 2.5: Uses thinkingBudget
+        const budget = modelConfig.gemini_thinking_budget;
+        if (budget && budget !== -1) {
+          thinkingConfig.thinkingBudget = isFlashModel
+            ? Math.min(budget, 24576)
+            : Math.max(128, Math.min(budget, 32768));
         }
-        thinkingConfig.thinkingBudget = validBudget;
       }
     }
 
@@ -180,12 +179,6 @@ export class GeminiProApi implements LLMApi {
       contents: messages,
       generationConfig: {
         temperature: modelConfig.temperature,
-        // Google models maxOutputTokens limit is 65536.
-        // If config > 65536 (context size), clamp to 65536 (max output).
-        // If config < 65536, send the smaller value.
-        ...(modelConfig.max_tokens
-          ? { maxOutputTokens: Math.min(modelConfig.max_tokens, 65536) }
-          : {}),
         topP: modelConfig.top_p,
         ...(thinkingConfig ? { thinkingConfig } : {}),
       },
