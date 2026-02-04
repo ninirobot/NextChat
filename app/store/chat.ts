@@ -471,9 +471,71 @@ export const useChatStore = createPersistStore(
             botMessage,
           ]);
         });
+        get().doRequest(sendMessages, session, botMessage, messageIndex);
+      },
 
+      async retryBotMessage(
+        botMessageId: string,
+        userMessage: ChatMessage,
+      ) {
+        const session = get().currentSession();
+        const modelConfig = session.mask.modelConfig;
+
+        const botMessageIndex = session.messages.findIndex(
+          (m) => m.id === botMessageId,
+        );
+        if (botMessageIndex < 0) return;
+
+        const botMessage = session.messages[botMessageIndex];
+        botMessage.content = "";
+        botMessage.streaming = true;
+        botMessage.isError = false;
+        botMessage.date = new Date().toLocaleString();
+        botMessage.model = modelConfig.model;
+        botMessage.reasoning_content = undefined;
+        botMessage.reasoning_duration = undefined;
+        botMessage.isThinking = false;
+        botMessage.tools = undefined;
+
+        // update session to trigger re-render
+        get().updateTargetSession(session, (session) => {
+          session.messages = [...session.messages];
+        });
+
+        // get context messages up to the user message
+        const recentMessages = await get().getMessagesWithMemory();
+        // remove messages after the user message (including the bot message being retried)
+        const userMessageIndex = recentMessages.findIndex(m => m.id === userMessage.id);
+        const validRecentMessages = userMessageIndex >= 0
+          ? recentMessages.slice(0, userMessageIndex) // Messages before user message
+          : recentMessages.filter(m => m.id !== botMessageId); // Fallback: just remove bot message
+
+        const fileContent = userMessage.attachFiles
+          ?.map((f) => `File: ${f.name}\nContent:\n${f.content}`)
+          .join("\n\n");
+
+        const content = getMessageTextContent(userMessage);
+        const finalContentForLLM = fileContent
+          ? `${content}\n\nProcessed files:\n${fileContent}`
+          : content;
+
+        const sendMessages = validRecentMessages.concat({
+          ...userMessage,
+          content: finalContentForLLM,
+        });
+
+        get().doRequest(sendMessages, session, botMessage, botMessageIndex);
+      },
+
+      async doRequest(
+        sendMessages: ChatMessage[],
+        session: ChatSession,
+        botMessage: ChatMessage,
+        messageIndex: number,
+      ) {
+        const modelConfig = session.mask.modelConfig;
         const api: ClientApi = getClientApi(modelConfig.providerName);
-        // make request
+
         api.llm.chat({
           messages: sendMessages,
           config: { ...modelConfig, stream: true },
@@ -549,7 +611,6 @@ export const useChatStore = createPersistStore(
               });
             botMessage.streaming = false;
             botMessage.isThinking = false;
-            userMessage.isError = !isAborted;
             botMessage.isError = !isAborted;
 
             // Create new message object to trigger React re-render

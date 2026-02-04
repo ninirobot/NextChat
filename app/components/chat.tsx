@@ -1253,12 +1253,7 @@ function _Chat() {
   };
 
   const onResend = (message: ChatMessage) => {
-    // when it is resending a message
-    // 1. for a user's message, find the next bot response
-    // 2. for a bot's message, find the last user's input
-    // 3. delete original user input and bot's message
-    // 4. resend the user's input
-
+    // 重构后的重试逻辑：使用专门的重试方法
     const resendingIndex = session.messages.findIndex(
       (m) => m.id === message.id,
     );
@@ -1296,11 +1291,26 @@ function _Chat() {
       return;
     }
 
-    // delete the original messages
-    deleteMessage(userMessage.id);
-    deleteMessage(botMessage?.id);
+    // 如果是重试 bot 消息，使用专门的重试方法
+    if (botMessage) {
+      setIsLoading(true);
+      chatStore
+        .retryBotMessage(botMessage.id, userMessage)
+        .then(() => {
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error("[Chat] failed to retry bot message", error);
+          setIsLoading(false);
+        });
+      inputRef.current?.focus();
+      return;
+    }
 
-    // resend the message
+    // 如果是重试用户消息，使用原有逻辑（删除后续消息并重新发送）
+    deleteMessage(userMessage.id);
+    // 同时也删除可能存在的关联 Bot 消息
+    deleteMessage(botMessage?.id);
     setIsLoading(true);
     const textContent = getMessageTextContent(userMessage);
     const images = getMessageImages(userMessage);
