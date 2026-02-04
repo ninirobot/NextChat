@@ -67,6 +67,8 @@ export type ChatMessage = RequestMessage & {
   reasoning_content?: string;
   reasoning_duration?: number;
   isThinking?: boolean;
+  versions?: string[];
+  currentVersionIndex?: number;
 };
 
 export function createMessage(override: Partial<ChatMessage>): ChatMessage {
@@ -487,14 +489,28 @@ export const useChatStore = createPersistStore(
         if (botMessageIndex < 0) return;
 
         const botMessage = session.messages[botMessageIndex];
+
+        // 保存当前版本到历史
+        if (!botMessage.versions) {
+          botMessage.versions = [];
+        }
+        const currentContent = getMessageTextContent(botMessage);
+        // 只有当有实际内容时才保存版本，避免保存空字符串
+        if (currentContent && currentContent.trim().length > 0) {
+          botMessage.versions.push(currentContent);
+        }
+        // 设置索引指向即将生成的新版本
+        botMessage.currentVersionIndex = botMessage.versions.length;
+
+        // 重置消息状态，准备重新生成
         botMessage.content = "";
         botMessage.streaming = true;
         botMessage.isError = false;
+        botMessage.isThinking = false;
         botMessage.date = new Date().toLocaleString();
         botMessage.model = modelConfig.model;
         botMessage.reasoning_content = undefined;
         botMessage.reasoning_duration = undefined;
-        botMessage.isThinking = false;
         botMessage.tools = undefined;
 
         // update session to trigger re-render

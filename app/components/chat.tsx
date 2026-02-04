@@ -87,6 +87,8 @@ import {
 import styles from "./chat.module.scss";
 
 import AutoIcon from "../icons/auto.svg";
+import LeftIcon from "../icons/left.svg";
+import RightIcon from "../icons/right.svg";
 import BottomIcon from "../icons/bottom.svg";
 import BrainIcon from "../icons/brain.svg";
 import BreakIcon from "../icons/break.svg";
@@ -1309,13 +1311,27 @@ function _Chat() {
 
     // 如果是重试用户消息，使用原有逻辑（删除后续消息并重新发送）
     deleteMessage(userMessage.id);
-    // 同时也删除可能存在的关联 Bot 消息
-    deleteMessage(botMessage?.id);
     setIsLoading(true);
     const textContent = getMessageTextContent(userMessage);
     const images = getMessageImages(userMessage);
     chatStore.onUserInput(textContent, images).then(() => setIsLoading(false));
     inputRef.current?.focus();
+  };
+
+  // 切换消息版本 (1 为下一条, -1 为上一条)
+  const onSwitchVersion = (message: ChatMessage, delta: number) => {
+    chatStore.updateTargetSession(session, (session) => {
+      const idx = session.messages.findIndex((m) => m.id === message.id);
+      if (idx >= 0) {
+        const msg = session.messages[idx];
+        if (msg.versions && msg.versions.length >= 1) {
+          const current = msg.currentVersionIndex ?? 0;
+          const max = msg.versions.length;
+          const next = Math.min(Math.max(0, current + delta), max);
+          msg.currentVersionIndex = next;
+        }
+      }
+    });
   };
 
   const onPinMessage = (message: ChatMessage) => {
@@ -1330,6 +1346,32 @@ function _Chat() {
       },
     });
   };
+
+  // 获取当前显示的消息内容
+  const getCurrentMessageContent = (message: ChatMessage): string => {
+    // 若消息没有版本，优先返回字符串；否则从多模态数组里提取文本
+    if (!message.versions || message.versions.length < 1) {
+      return typeof message.content === "string"
+        ? message.content
+        : getMessageTextContent(message);
+    }
+
+    const currentIndex = message.currentVersionIndex ?? 0;
+    if (currentIndex === message.versions.length) {
+      // 显示最新版本（当前消息内容）
+      return typeof message.content === "string"
+        ? message.content
+        : getMessageTextContent(message);
+    } else if (currentIndex >= 0 && currentIndex < message.versions.length) {
+      // 显示历史版本（字符串）
+      return message.versions[currentIndex];
+    }
+
+    return typeof message.content === "string"
+      ? message.content
+      : getMessageTextContent(message);
+  };
+
 
   const accessStore = useAccessStore();
   const [speechStatus, setSpeechStatus] = useState(false);
@@ -2008,6 +2050,38 @@ function _Chat() {
                             </div>
                           )}
                           <div className={styles["chat-message-item"]}>
+                            {!isUser &&
+                              message.versions &&
+                              message.versions.length > 0 && (
+                                <div className={styles["chat-message-versions"]}>
+                                  <div
+                                    className={clsx(
+                                      styles["chat-message-version-btn"],
+                                      "clickable",
+                                    )}
+                                    onClick={() => onSwitchVersion(message, -1)}
+                                  >
+                                    <LeftIcon />
+                                  </div>
+                                  <div
+                                    className={
+                                      styles["chat-message-version-index"]
+                                    }
+                                  >
+                                    {(message.currentVersionIndex ?? 0) + 1} /{" "}
+                                    {message.versions.length + 1}
+                                  </div>
+                                  <div
+                                    className={clsx(
+                                      styles["chat-message-version-btn"],
+                                      "clickable",
+                                    )}
+                                    onClick={() => onSwitchVersion(message, 1)}
+                                  >
+                                    <RightIcon />
+                                  </div>
+                                </div>
+                              )}
                             <ThinkingBlock
                               model={message.model}
                               thinking={message.reasoning_content ?? ""}
@@ -2017,7 +2091,7 @@ function _Chat() {
                             />
                             <Markdown
                               key={message.streaming ? "loading" : "done"}
-                              content={getMessageTextContent(message)}
+                              content={getCurrentMessageContent(message)}
                               loading={
                                 (message.preview || message.streaming) &&
                                 message.content.length === 0 &&
@@ -2026,7 +2100,7 @@ function _Chat() {
                               //   onContextMenu={(e) => onRightClick(e, message)} // hard to use
                               onDoubleClickCapture={() => {
                                 if (!isMobileScreen) return;
-                                setUserInput(getMessageTextContent(message));
+                                setUserInput(getCurrentMessageContent(message));
                               }}
                               fontSize={fontSize}
                               fontFamily={fontFamily}
