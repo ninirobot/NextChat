@@ -590,38 +590,40 @@
 .chat-message-versions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
+  gap: 6px;
+  font-size: 13px;
   color: var(--black);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 
   .chat-message-version-btn {
     cursor: pointer;
-    padding: 2px;
-    border-radius: 4px;
+    padding: 4px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0.6;
-    transition: all ease 0.3s;
-    width: 16px;
-    height: 16px;
+    opacity: 0.5;
+    transition: all ease 0.2s;
+    width: 20px;
+    height: 20px;
 
     /* Increase hit area */
     &.clickable {
-      width: 20px;
-      height: 20px;
+      width: 24px;
+      height: 24px;
     }
 
     &:hover {
       opacity: 1;
-      background-color: var(--gray);
+      background-color: var(--hover-color);
     }
   }
 
   .chat-message-version-index {
-    font-family: monospace;
-    opacity: 0.6;
+    font-family: inherit;
+    opacity: 0.7;
+    min-width: 36px;
+    text-align: center;
   }
 }
 

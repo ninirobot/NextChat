@@ -67,7 +67,12 @@ export type ChatMessage = RequestMessage & {
   reasoning_content?: string;
   reasoning_duration?: number;
   isThinking?: boolean;
-  versions?: string[];
+  // 版本历史：每个版本包含内容和思考内容
+  versions?: {
+    content: string;
+    reasoning_content?: string;
+    reasoning_duration?: number;
+  }[];
   currentVersionIndex?: number;
 };
 
@@ -497,7 +502,11 @@ export const useChatStore = createPersistStore(
         const currentContent = getMessageTextContent(botMessage);
         // 只有当有实际内容时才保存版本，避免保存空字符串
         if (currentContent && currentContent.trim().length > 0) {
-          botMessage.versions.push(currentContent);
+          botMessage.versions.push({
+            content: currentContent,
+            reasoning_content: botMessage.reasoning_content,
+            reasoning_duration: botMessage.reasoning_duration,
+          });
         }
         // 设置索引指向即将生成的新版本
         botMessage.currentVersionIndex = botMessage.versions.length;
@@ -736,8 +745,25 @@ export const useChatStore = createPersistStore(
         ) {
           const msg = messages[i];
           if (!msg || msg.isError) continue;
-          tokenCount += estimateTokenLength(getMessageTextContent(msg));
-          reversedRecentMessages.push(msg);
+
+          // 版本感知：如果消息有历史版本且当前索引指向历史版本，替换 content
+          let msgToSend = msg;
+          if (msg.versions && msg.versions.length > 0) {
+            const idx = msg.currentVersionIndex ?? 0;
+            if (idx >= 0 && idx < msg.versions.length) {
+              // 当前索引指向历史版本，创建副本并替换 content 和 reasoning_content
+              const version = msg.versions[idx];
+              msgToSend = {
+                ...msg,
+                content: version.content,
+                reasoning_content: version.reasoning_content,
+                reasoning_duration: version.reasoning_duration,
+              };
+            }
+          }
+
+          tokenCount += estimateTokenLength(getMessageTextContent(msgToSend));
+          reversedRecentMessages.push(msgToSend);
         }
         // concat all messages
         const recentMessages = [

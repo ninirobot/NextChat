@@ -240,8 +240,8 @@ export function getMessageTextContent(message: RequestMessage) {
   const msg = message as any;
   const v = msg.versions;
   const i = msg.currentVersionIndex ?? 0;
-  // 若存在合法历史版本，返回它
-  if (v?.length > 0 && i >= 0 && i < v.length) return v[i];
+  // 若存在合法历史版本，返回它的 content
+  if (v?.length > 0 && i >= 0 && i < v.length) return v[i].content;
   // 否则返回当前内容
   if (typeof message.content === "string") return message.content;
   return message.content?.find((c) => c.type === "text")?.text ?? "";

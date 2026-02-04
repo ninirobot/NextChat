@@ -1363,13 +1363,47 @@ function _Chat() {
         ? message.content
         : getMessageTextContent(message);
     } else if (currentIndex >= 0 && currentIndex < message.versions.length) {
-      // 显示历史版本（字符串）
-      return message.versions[currentIndex];
+      // 显示历史版本（访问 content 字段）
+      return message.versions[currentIndex].content;
     }
 
     return typeof message.content === "string"
       ? message.content
       : getMessageTextContent(message);
+  };
+
+  // 获取当前显示的思考内容
+  const getCurrentReasoningContent = (message: ChatMessage): string | undefined => {
+    if (!message.versions || message.versions.length < 1) {
+      return message.reasoning_content;
+    }
+
+    const currentIndex = message.currentVersionIndex ?? 0;
+    if (currentIndex === message.versions.length) {
+      // 显示最新版本的思考内容
+      return message.reasoning_content;
+    } else if (currentIndex >= 0 && currentIndex < message.versions.length) {
+      // 显示历史版本的思考内容
+      return message.versions[currentIndex].reasoning_content;
+    }
+
+    return message.reasoning_content;
+  };
+
+  // 获取当前显示的思考时长
+  const getCurrentReasoningDuration = (message: ChatMessage): number | undefined => {
+    if (!message.versions || message.versions.length < 1) {
+      return message.reasoning_duration;
+    }
+
+    const currentIndex = message.currentVersionIndex ?? 0;
+    if (currentIndex === message.versions.length) {
+      return message.reasoning_duration;
+    } else if (currentIndex >= 0 && currentIndex < message.versions.length) {
+      return message.versions[currentIndex].reasoning_duration;
+    }
+
+    return message.reasoning_duration;
   };
 
 
@@ -1902,7 +1936,11 @@ function _Chat() {
                 .map((message, i) => {
                   const isUser = message.role === "user";
                   const isContext = i < context.length;
-                  const hasContent = message.content.length > 0 || (message.reasoning_content?.length ?? 0) > 0;
+                  // 检查内容时也要考虑版本历史
+                  const hasContent =
+                    message.content.length > 0 ||
+                    (message.reasoning_content?.length ?? 0) > 0 ||
+                    (message.versions?.length ?? 0) > 0;
                   const showActions =
                     i > 0 &&
                     !(message.preview || (!hasContent && !message.streaming && !message.isThinking)) &&
@@ -2084,8 +2122,8 @@ function _Chat() {
                               )}
                             <ThinkingBlock
                               model={message.model}
-                              thinking={message.reasoning_content ?? ""}
-                              duration={message.reasoning_duration}
+                              thinking={getCurrentReasoningContent(message) ?? ""}
+                              duration={getCurrentReasoningDuration(message)}
                               streaming={message.streaming}
                               isThinking={message.isThinking}
                             />
@@ -2095,6 +2133,7 @@ function _Chat() {
                               loading={
                                 (message.preview || message.streaming) &&
                                 message.content.length === 0 &&
+                                (message.versions?.length ?? 0) === 0 &&
                                 !isUser
                               }
                               //   onContextMenu={(e) => onRightClick(e, message)} // hard to use
