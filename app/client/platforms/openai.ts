@@ -244,7 +244,9 @@ export class ChatGPTApi implements LLMApi {
         // Remove max_tokens if present
         delete requestPayload.max_tokens;
         // Add max_completion_tokens (or max_completion_tokens if that's what you meant)
-        requestPayload["max_completion_tokens"] = modelConfig.max_tokens;
+        if (modelConfig.max_tokens && modelConfig.max_tokens < 65536) {
+          requestPayload["max_completion_tokens"] = modelConfig.max_tokens;
+        }
 
       } else if (isO1OrO3) {
         // by default the o1/o3 models will not attempt to produce output that includes markdown formatting
@@ -256,13 +258,18 @@ export class ChatGPTApi implements LLMApi {
         });
 
         // o1/o3 uses max_completion_tokens to control the number of tokens (https://platform.openai.com/docs/guides/reasoning#controlling-costs)
-        requestPayload["max_completion_tokens"] = modelConfig.max_tokens;
+        if (modelConfig.max_tokens && modelConfig.max_tokens < 65536) {
+          requestPayload["max_completion_tokens"] = modelConfig.max_tokens;
+        }
       }
 
 
       // add max_tokens to vision model
       if (visionModel && !isO1OrO3 && !isGpt5) {
-        requestPayload["max_tokens"] = Math.max(modelConfig.max_tokens, 4000);
+        // Prevent sending context window size as max_tokens
+        if (modelConfig.max_tokens && modelConfig.max_tokens < 65536) {
+          requestPayload["max_tokens"] = Math.max(modelConfig.max_tokens, 4000);
+        }
       }
     }
 

@@ -75,10 +75,10 @@ export function ModelConfigList(props: {
       >
         <InputRange
           aria={Locale.Settings.TopP.Title}
-          value={(props.modelConfig.top_p ?? 1).toFixed(1)}
+          value={(props.modelConfig.top_p ?? 1).toFixed(2)}
           min="0"
           max="1"
-          step="0.1"
+          step="0.05"
           onChange={(e) => {
             props.updateConfig(
               (config) =>

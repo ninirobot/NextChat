@@ -184,7 +184,8 @@ export class ClaudeApi implements LLMApi {
       stream: shouldStream,
 
       model: modelConfig.model,
-      max_tokens: modelConfig.max_tokens,
+      // Anthropic requires max_tokens. Clamp to 8192 which is a common safe maximum for generation.
+      max_tokens: Math.min(modelConfig.max_tokens || 4096, 8192),
       temperature: modelConfig.temperature,
       top_p: modelConfig.top_p,
       // top_k: modelConfig.top_k,
@@ -224,20 +225,20 @@ export class ClaudeApi implements LLMApi {
           let chunkJson:
             | undefined
             | {
-                type: "content_block_delta" | "content_block_stop" | "message_delta" | "message_stop";
-                content_block?: {
-                  type: "tool_use";
-                  id: string;
-                  name: string;
-                };
-                delta?: {
-                  type: "text_delta" | "input_json_delta";
-                  text?: string;
-                  partial_json?: string;
-                  stop_reason?: string;
-                };
-                index: number;
+              type: "content_block_delta" | "content_block_stop" | "message_delta" | "message_stop";
+              content_block?: {
+                type: "tool_use";
+                id: string;
+                name: string;
               };
+              delta?: {
+                type: "text_delta" | "input_json_delta";
+                text?: string;
+                partial_json?: string;
+                stop_reason?: string;
+              };
+              index: number;
+            };
           chunkJson = JSON.parse(text);
 
           // Handle refusal stop reason in message_delta

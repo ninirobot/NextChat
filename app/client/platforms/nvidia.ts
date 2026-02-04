@@ -92,7 +92,7 @@ export class NvidiaApi implements LLMApi {
             presence_penalty: isKimiK25 ? 0.0 : modelConfig.presence_penalty,
             frequency_penalty: isKimiK25 ? 0.0 : modelConfig.frequency_penalty,
             top_p: isKimiK25 ? 0.95 : modelConfig.top_p,
-            max_tokens: isGPTOSS120B ? 131072 : (isKimiK25 ? 32768 : Math.max(modelConfig.max_tokens, 1024)),
+            // Omit max_tokens to avoid compatibility issues
         };
 
         // Add reasoning_effort for gpt-oss models

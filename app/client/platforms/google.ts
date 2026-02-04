@@ -148,82 +148,56 @@ export class GeminiProApi implements LLMApi {
         model: options.config.model,
       },
     };
+    const isFlashModel = modelConfig.model.includes("flash");
+    const isProModel = modelConfig.model.includes("pro");
+
+    // 1. Feature Detection
+    const modelName = modelConfig.model.toLowerCase();
+    const isGen3 = modelName.includes("gemini-3") || modelName.includes("gemini_3");
+    const isThinkingVersion = modelName.includes("thinking") || modelName.includes("2.5");
+
+    // 2. Build Thinking Config (Structured and mutually exclusive)
+    let thinkingConfig: any = undefined;
+    if (modelConfig.include_thoughts) {
+      thinkingConfig = { includeThoughts: true };
+
+      if (isGen3) {
+        // Gemini 3 series: Uses thinkingLevel
+        thinkingConfig.thinkingLevel = modelConfig.thinking_level;
+      } else if (isThinkingVersion) {
+        // Gemini 2.x Thinking or 2.5: Uses thinkingBudget
+        const budget = modelConfig.gemini_thinking_budget;
+        if (budget && budget !== -1) {
+          thinkingConfig.thinkingBudget = isFlashModel
+            ? Math.min(budget, 24576)
+            : Math.max(128, Math.min(budget, 32768));
+        }
+      }
+    }
+
     const requestPayload = {
       contents: messages,
       generationConfig: {
-
         temperature: modelConfig.temperature,
-        maxOutputTokens: modelConfig.max_tokens,
         topP: modelConfig.top_p,
-        // Thinking Configuration for Gemini 2.5 and 3
-        ...(((modelConfig.model.includes("gemini-2.5") ||
-          modelConfig.model.includes("gemini-3")) &&
-          // Only add thinkingConfig if at least one thinking feature is enabled:
-          // - include_thoughts is true
-          // - thinking_budget is set (for 2.5)
-          // - thinking_level is set (for 3)
-          // budget > 0 means specific.
-          // budget = 0 means disabled (for 2.5 Flash).
-          // We should always send it if the feature is relevant to the model.
-          (modelConfig.include_thoughts ||
-            modelConfig.gemini_thinking_budget !== undefined ||
-            modelConfig.thinking_level !== undefined))
-          ? {
-            thinkingConfig: {
-              includeThoughts: modelConfig.include_thoughts,
-              // Thinking Level for Gemini 3
-              ...(modelConfig.model.includes("gemini-3") &&
-                modelConfig.thinking_level
-                ? {
-                  thinkingLevel: modelConfig.thinking_level,
-                }
-                : {}),
-              // Thinking Budget for Gemini 2.5
-              ...(modelConfig.model.includes("gemini-2.5") &&
-                modelConfig.gemini_thinking_budget !== -1
-                ? {
-                  thinkingBudget: (() => {
-                    const isFlashModel =
-                      modelConfig.model.includes("gemini") &&
-                      modelConfig.model.includes("flash");
-                    const isProModel =
-                      modelConfig.model.includes("gemini") &&
-                      modelConfig.model.includes("pro");
-                    let budget = modelConfig.gemini_thinking_budget;
-
-                    // Flash models: max 24576
-                    if (isFlashModel) {
-                      budget = Math.min(budget, 24576);
-                    }
-                    // Pro models: min 128, max 32768
-                    else if (isProModel) {
-                      budget = Math.max(128, Math.min(budget, 32768));
-                    }
-
-                    return budget;
-                  })(),
-                }
-                : {}),
-            },
-          }
-          : {}),
+        ...(thinkingConfig ? { thinkingConfig } : {}),
       },
       safetySettings: [
         {
           category: "HARM_CATEGORY_HARASSMENT",
-          threshold: accessStore.googleSafetySettings,
+          threshold: "BLOCK_NONE",
         },
         {
           category: "HARM_CATEGORY_HATE_SPEECH",
-          threshold: accessStore.googleSafetySettings,
+          threshold: "BLOCK_NONE",
         },
         {
           category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-          threshold: accessStore.googleSafetySettings,
+          threshold: "BLOCK_NONE",
         },
         {
           category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-          threshold: accessStore.googleSafetySettings,
+          threshold: "BLOCK_NONE",
         },
       ],
     };
