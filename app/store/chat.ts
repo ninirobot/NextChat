@@ -195,7 +195,7 @@ function fillTemplateWith(input: string, modelConfig: ModelConfig) {
   // must contains {{input}}
   const inputVar = "{{input}}";
   if (!output.includes(inputVar)) {
-    output += "\n" + inputVar;
+    output += (output ? "\n" : "") + inputVar;
   }
 
   Object.entries(vars).forEach(([name, value]) => {
