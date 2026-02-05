@@ -1144,9 +1144,10 @@ function _Chat() {
     chatStore
       .onUserInput(userInput, attachImages, false, attachFiles)
       .then(() => setIsLoading(false));
+    // 先保存输入，然后清空（在 onUserInput 调用之后，避免 preview 消失和真实消息出现之间的空档）
+    chatStore.setLastInput(userInput);
     setAttachImages([]);
     setAttachFiles([]);
-    chatStore.setLastInput(userInput);
     setUserInput("");
     setPromptHints([]);
     if (!isMobileScreen) inputRef.current?.focus();
