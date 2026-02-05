@@ -2115,7 +2115,7 @@ function _Chat() {
                               isThinking={message.isThinking}
                             />
                             <Markdown
-                              key={message.streaming ? "loading" : "done"}
+                              key={message.id}
                               content={getCurrentMessageContent(message)}
                               loading={
                                 (message.preview || message.streaming) &&
