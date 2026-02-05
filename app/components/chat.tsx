@@ -1144,10 +1144,9 @@ function _Chat() {
     chatStore
       .onUserInput(userInput, attachImages, false, attachFiles)
       .then(() => setIsLoading(false));
-    // 先保存输入，然后清空（在 onUserInput 调用之后，避免 preview 消失和真实消息出现之间的空档）
-    chatStore.setLastInput(userInput);
     setAttachImages([]);
     setAttachFiles([]);
+    chatStore.setLastInput(userInput);
     setUserInput("");
     setPromptHints([]);
     if (!isMobileScreen) inputRef.current?.focus();
@@ -1478,11 +1477,10 @@ function _Chat() {
         userInput.length > 0 && config.sendPreviewBubble
           ? [
             {
-              // 使用固定的 preview ID 避免每次渲染都生成新 ID 导致闪烁
-              id: "__user_preview__",
-              date: "",
-              role: "user" as const,
-              content: userInput,
+              ...createMessage({
+                role: "user",
+                content: userInput,
+              }),
               preview: true,
             },
           ]
@@ -2116,11 +2114,11 @@ function _Chat() {
                               isThinking={message.isThinking}
                             />
                             <Markdown
-                              key={message.id}
+                              key={message.streaming ? "loading" : "done"}
                               content={getCurrentMessageContent(message)}
                               loading={
                                 (message.preview || message.streaming) &&
-                                getCurrentMessageContent(message).length === 0 &&
+                                message.content.length === 0 &&
                                 !isUser
                               }
                               //   onContextMenu={(e) => onRightClick(e, message)} // hard to use

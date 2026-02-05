@@ -478,7 +478,7 @@ export const useChatStore = createPersistStore(
             botMessage,
           ]);
         });
-        get().doRequest(sendMessages, botMessage, messageIndex);
+        get().doRequest(sendMessages, session, botMessage, messageIndex);
       },
 
       async retryBotMessage(
@@ -549,15 +549,15 @@ export const useChatStore = createPersistStore(
           content: finalContentForLLM,
         });
 
-        get().doRequest(sendMessages, botMessage, botMessageIndex);
+        get().doRequest(sendMessages, session, botMessage, botMessageIndex);
       },
 
       async doRequest(
         sendMessages: ChatMessage[],
+        session: ChatSession,
         botMessage: ChatMessage,
         messageIndex: number,
       ) {
-        const session = get().currentSession();
         const modelConfig = session.mask.modelConfig;
         const api: ClientApi = getClientApi(modelConfig.providerName);
 
@@ -570,7 +570,6 @@ export const useChatStore = createPersistStore(
             if (message) {
               botMessage.content = message;
             }
-            const session = get().currentSession();
             get().updateTargetSession(session, (session) => {
               session.messages = session.messages.concat();
             });
@@ -584,7 +583,6 @@ export const useChatStore = createPersistStore(
             if (duration) {
               botMessage.reasoning_duration = duration;
             }
-            const session = get().currentSession();
             get().updateTargetSession(session, (session) => {
               session.messages = session.messages.concat();
             });
@@ -598,7 +596,6 @@ export const useChatStore = createPersistStore(
             }
 
             // Create new message object to trigger React re-render
-            const session = get().currentSession();
             get().updateTargetSession(session, (session) => {
               session.messages = session.messages.map((m) =>
                 m.id === botMessage.id
@@ -611,7 +608,6 @@ export const useChatStore = createPersistStore(
           },
           onBeforeTool(tool: ChatMessageTool) {
             (botMessage.tools = botMessage?.tools || []).push(tool);
-            const session = get().currentSession();
             get().updateTargetSession(session, (session) => {
               session.messages = session.messages.map((m) =>
                 m.id === botMessage.id ? { ...botMessage } : m,
@@ -624,7 +620,6 @@ export const useChatStore = createPersistStore(
                 tools[i] = { ...tool };
               }
             });
-            const session = get().currentSession();
             get().updateTargetSession(session, (session) => {
               session.messages = session.messages.map((m) =>
                 m.id === botMessage.id ? { ...botMessage } : m,
@@ -644,7 +639,6 @@ export const useChatStore = createPersistStore(
             botMessage.isError = !isAborted;
 
             // Create new message object to trigger React re-render
-            const session = get().currentSession();
             get().updateTargetSession(session, (session) => {
               session.messages = session.messages.map((m) =>
                 m.id === botMessage.id
