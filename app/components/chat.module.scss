@@ -590,7 +590,7 @@
 .chat-message-versions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 3px;
   font-size: 13px;
   color: var(--black);
   margin-bottom: 6px;
@@ -622,7 +622,7 @@
   .chat-message-version-index {
     font-family: inherit;
     opacity: 0.7;
-    min-width: 36px;
+    min-width: 28px;
     text-align: center;
   }
 }
