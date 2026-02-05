@@ -571,7 +571,9 @@ export const useChatStore = createPersistStore(
               botMessage.content = message;
             }
             get().updateTargetSession(session, (session) => {
-              session.messages = session.messages.concat();
+              session.messages = session.messages.map((m) =>
+                m.id === botMessage.id ? { ...botMessage } : m,
+              );
             });
           },
           onUpdateThinking(reasoning, duration) {
@@ -584,7 +586,9 @@ export const useChatStore = createPersistStore(
               botMessage.reasoning_duration = duration;
             }
             get().updateTargetSession(session, (session) => {
-              session.messages = session.messages.concat();
+              session.messages = session.messages.map((m) =>
+                m.id === botMessage.id ? { ...botMessage } : m,
+              );
             });
           },
           async onFinish(message) {
