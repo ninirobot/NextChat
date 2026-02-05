@@ -1477,10 +1477,11 @@ function _Chat() {
         userInput.length > 0 && config.sendPreviewBubble
           ? [
             {
-              ...createMessage({
-                role: "user",
-                content: userInput,
-              }),
+              // 使用固定的 preview ID 避免每次渲染都生成新 ID 导致闪烁
+              id: "__user_preview__",
+              date: "",
+              role: "user" as const,
+              content: userInput,
               preview: true,
             },
           ]
@@ -2118,8 +2119,7 @@ function _Chat() {
                               content={getCurrentMessageContent(message)}
                               loading={
                                 (message.preview || message.streaming) &&
-                                message.content.length === 0 &&
-                                (message.versions?.length ?? 0) === 0 &&
+                                getCurrentMessageContent(message).length === 0 &&
                                 !isUser
                               }
                               //   onContextMenu={(e) => onRightClick(e, message)} // hard to use
