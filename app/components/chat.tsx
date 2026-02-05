@@ -1655,11 +1655,6 @@ function _Chat() {
                   });
               })),
             );
-            const imagesLength = images.length;
-
-            if (imagesLength > 3) {
-              images.splice(3, imagesLength - 3);
-            }
             setAttachImages(images);
           }
         }
@@ -1688,10 +1683,7 @@ function _Chat() {
             uploadImageRemote(file)
               .then((dataUrl) => {
                 imagesData.push(dataUrl);
-                if (
-                  imagesData.length === 3 ||
-                  imagesData.length === files.length
-                ) {
+                if (imagesData.length === files.length) {
                   setUploading(false);
                   res(imagesData);
                 }
@@ -1706,10 +1698,6 @@ function _Chat() {
       })),
     );
 
-    const imagesLength = images.length;
-    if (imagesLength > 3) {
-      images.splice(3, imagesLength - 3);
-    }
     setAttachImages(images);
   }
 
@@ -1717,7 +1705,7 @@ function _Chat() {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.accept =
-      ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md";
+      ".pdf,.docx,.xlsx,.pptx,.txt,.md";
     fileInput.multiple = true;
     fileInput.onchange = async (event: any) => {
       setUploading(true);
@@ -1728,8 +1716,8 @@ function _Chat() {
         try {
           const content = await parseFile(file);
           newFiles.push({ name: file.name, content });
-        } catch (e) {
-          showToast(`Failed to parse ${file.name}`);
+        } catch (e: any) {
+          showToast(e.message || `解析 ${file.name} 失败`);
           console.error(e);
         }
       }
