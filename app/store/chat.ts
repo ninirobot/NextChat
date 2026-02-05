@@ -238,6 +238,9 @@ const DEFAULT_CHAT_STATE = {
   sessions: [createEmptySession()],
   currentSessionIndex: 0,
   lastInput: "",
+  // MCP 缓存，避免每次发送消息时都进行异步调用
+  mcpEnabled: false,
+  mcpSystemPrompt: "",
 };
 
 export const useChatStore = createPersistStore(
@@ -282,6 +285,18 @@ export const useChatStore = createPersistStore(
           sessions: [createEmptySession()],
           currentSessionIndex: 0,
         }));
+      },
+
+      // 更新 MCP 缓存（异步加载一次，避免每次发送消息时都调用）
+      async updateMcpCache() {
+        try {
+          const mcpEnabled = await isMcpEnabled();
+          const mcpSystemPrompt = mcpEnabled ? await getMcpSystemPrompt() : "";
+          set({ mcpEnabled, mcpSystemPrompt });
+        } catch (error) {
+          console.error("[Chat] Failed to update MCP cache:", error);
+          set({ mcpEnabled: false, mcpSystemPrompt: "" });
+        }
       },
 
       selectSession(index: number) {
@@ -460,7 +475,7 @@ export const useChatStore = createPersistStore(
         });
 
         // get recent messages
-        const recentMessages = await get().getMessagesWithMemory();
+        const recentMessages = get().getMessagesWithMemory();
         const sendMessages = recentMessages.concat({
           ...userMessage,
           content: finalContentForLLM,
@@ -528,7 +543,7 @@ export const useChatStore = createPersistStore(
         });
 
         // get context messages up to the user message
-        const recentMessages = await get().getMessagesWithMemory();
+        const recentMessages = get().getMessagesWithMemory();
         // remove messages after the user message (including the bot message being retried)
         const userMessageIndex = recentMessages.findIndex(m => m.id === userMessage.id);
         const validRecentMessages = userMessageIndex >= 0
@@ -676,7 +691,7 @@ export const useChatStore = createPersistStore(
         }
       },
 
-      async getMessagesWithMemory() {
+      getMessagesWithMemory() {
         const session = get().currentSession();
         const modelConfig = session.mask.modelConfig;
         const clearContextIndex = session.clearContextIndex ?? 0;
@@ -686,8 +701,10 @@ export const useChatStore = createPersistStore(
         // in-context prompts
         const contextPrompts = session.mask.context.slice();
 
-        const mcpEnabled = await isMcpEnabled();
-        const mcpSystemPrompt = mcpEnabled ? await getMcpSystemPrompt() : "";
+        // 使用缓存的 MCP 状态，避免异步调用导致的界面闪烁
+        const state = _get();
+        const mcpEnabled = state.mcpEnabled;
+        const mcpSystemPrompt = state.mcpSystemPrompt;
 
         var systemPrompts: ChatMessage[] = [];
 
