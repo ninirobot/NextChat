@@ -1060,6 +1060,82 @@ function _Chat() {
     { name: string; content: string }[]
   >([]);
   const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Handle drag and drop
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+
+      const currentModel = chatStore.currentSession().mask.modelConfig.model;
+      const files = Array.from(e.dataTransfer.files);
+
+      if (files.length === 0) return;
+
+      setUploading(true);
+
+      // Separate images and other files
+      const imageFiles: File[] = [];
+      const documentFiles: File[] = [];
+
+      files.forEach((file) => {
+        if (file.type.startsWith("image/")) {
+          imageFiles.push(file);
+        } else {
+          documentFiles.push(file);
+        }
+      });
+
+      // Upload images if model supports vision
+      if (imageFiles.length > 0 && isVisionModel(currentModel)) {
+        const newImages: string[] = [...attachImages];
+        for (const file of imageFiles) {
+          try {
+            const dataUrl = await uploadImageRemote(file);
+            newImages.push(dataUrl);
+          } catch (e) {
+            console.error("Failed to upload image:", e);
+            showToast(`上传图片 ${file.name} 失败`);
+          }
+        }
+        setAttachImages(newImages);
+      } else if (imageFiles.length > 0) {
+        showToast("当前模型不支持图片，请切换到支持视觉的模型");
+      }
+
+      // Parse document files
+      if (documentFiles.length > 0) {
+        const newFiles = [...attachFiles];
+        for (const file of documentFiles) {
+          try {
+            const content = await parseFile(file);
+            newFiles.push({ name: file.name, content });
+          } catch (e: any) {
+            showToast(e.message || `解析 ${file.name} 失败`);
+            console.error(e);
+          }
+        }
+        setAttachFiles(newFiles);
+      }
+
+      setUploading(false);
+    },
+    [attachImages, attachFiles, chatStore],
+  );
 
   // prompt hints
   const promptStore = usePromptStore();
@@ -1705,7 +1781,7 @@ function _Chat() {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.accept =
-      ".pdf,.docx,.xlsx,.pptx,.txt,.md";
+      ".pdf,.docx,.xls,.xlsx,.pptx,.txt,.md";
     fileInput.multiple = true;
     fileInput.onchange = async (event: any) => {
       setUploading(true);
@@ -2226,8 +2302,12 @@ function _Chat() {
                 className={clsx(styles["chat-input-panel-inner"], {
                   [styles["chat-input-panel-inner-attach"]]:
                     attachImages.length !== 0 || attachFiles.length !== 0,
+                  [styles["chat-input-panel-dragging"]]: isDragging,
                 })}
                 htmlFor="chat-input"
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
               >
                 <textarea
                   id="chat-input"

@@ -172,11 +172,8 @@ export async function parseFile(file: File): Promise<string> {
                 "不支持旧版 .doc 格式。请使用 Microsoft Word 或 WPS 将文件另存为 .docx 格式后重试。"
             );
         case "xlsx":
-            return await readXlsxFile(file);
         case "xls":
-            throw new Error(
-                "不支持旧版 .xls 格式。请使用 Microsoft Excel 或 WPS 将文件另存为 .xlsx 格式后重试。"
-            );
+            return await readXlsxFile(file);
         case "pptx":
             return await readPptxFile(file);
         case "ppt":
