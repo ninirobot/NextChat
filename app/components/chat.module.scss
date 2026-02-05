@@ -720,8 +720,9 @@
 
 .chat-input-panel-dragging {
   background-color: rgba(var(--primary-rgb), 0.05);
-  border: 2px dashed var(--primary) !important;
-  transition: all ease 0.2s;
+  outline: 2px dashed var(--primary);
+  outline-offset: -2px;
+  border-color: transparent !important;
 }
 
 .chat-input-panel-inner:has(.chat-input:focus) {
