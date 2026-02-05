@@ -1195,7 +1195,13 @@ function _Chat() {
             m.streaming = false;
           }
 
-          if (m.content.length === 0) {
+          // Check if message is truly empty (no content AND no attached files)
+          const hasContent = typeof m.content === "string"
+            ? m.content.length > 0
+            : Array.isArray(m.content) && m.content.length > 0;
+          const hasFiles = m.attachFiles && m.attachFiles.length > 0;
+
+          if (!hasContent && !hasFiles) {
             m.isError = true;
             m.content = prettyObject({
               error: true,

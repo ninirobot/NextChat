@@ -442,9 +442,33 @@ export const useChatStore = createPersistStore(
         const fileContent = attachFiles
           ?.map((f) => `File: ${f.name}\nContent:\n${f.content}`)
           .join("\n\n");
-        const finalContentForLLM = fileContent
-          ? `${content}\n\nProcessed files:\n${fileContent}`
-          : content;
+
+        // Preserve multimodal content (images) or create text content with files
+        let finalContentForLLM: string | MultimodalContent[];
+        if (Array.isArray(mContent)) {
+          // mContent is multimodal (has images) - preserve it
+          if (fileContent) {
+            // Add file content to existing text part, or create new text part
+            const textPartIndex = mContent.findIndex((c) => c.type === "text");
+            if (textPartIndex >= 0 && "text" in mContent[textPartIndex]) {
+              // Append to existing text
+              (mContent[textPartIndex] as { type: "text"; text: string }).text +=
+                `\n\nProcessed files:\n${fileContent}`;
+            } else {
+              // No text part - add one at the beginning
+              mContent = [
+                { type: "text" as const, text: `Processed files:\n${fileContent}` },
+                ...mContent,
+              ];
+            }
+          }
+          finalContentForLLM = mContent;
+        } else {
+          // mContent is string (no images) - use text with files
+          finalContentForLLM = fileContent
+            ? `${mContent}\n\nProcessed files:\n${fileContent}`
+            : mContent;
+        }
 
         let userMessage: ChatMessage = createMessage({
           role: "user",
