@@ -374,7 +374,7 @@ async function updateMcpConfig(config: McpConfigData): Promise<void> {
 }
 
 // 检查 MCP 是否启用
-export async function isMcpEnabled() {
+export function isMcpEnabled() {
   try {
     const serverConfig = getServerSideConfig();
     return serverConfig.enableMcp;

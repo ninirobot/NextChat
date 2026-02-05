@@ -238,9 +238,6 @@ const DEFAULT_CHAT_STATE = {
   sessions: [createEmptySession()],
   currentSessionIndex: 0,
   lastInput: "",
-  // MCP 缓存，避免每次发送消息时都进行异步调用
-  mcpEnabled: false,
-  mcpSystemPrompt: "",
 };
 
 export const useChatStore = createPersistStore(
@@ -285,18 +282,6 @@ export const useChatStore = createPersistStore(
           sessions: [createEmptySession()],
           currentSessionIndex: 0,
         }));
-      },
-
-      // 更新 MCP 缓存（异步加载一次，避免每次发送消息时都调用）
-      async updateMcpCache() {
-        try {
-          const mcpEnabled = await isMcpEnabled();
-          const mcpSystemPrompt = mcpEnabled ? await getMcpSystemPrompt() : "";
-          set({ mcpEnabled, mcpSystemPrompt });
-        } catch (error) {
-          console.error("[Chat] Failed to update MCP cache:", error);
-          set({ mcpEnabled: false, mcpSystemPrompt: "" });
-        }
       },
 
       selectSession(index: number) {
@@ -700,29 +685,6 @@ export const useChatStore = createPersistStore(
 
         // in-context prompts
         const contextPrompts = session.mask.context.slice();
-
-        // 使用缓存的 MCP 状态，避免异步调用导致的界面闪烁
-        const state = _get();
-        const mcpEnabled = state.mcpEnabled;
-        const mcpSystemPrompt = state.mcpSystemPrompt;
-
-        var systemPrompts: ChatMessage[] = [];
-
-        if (mcpEnabled) {
-          systemPrompts = [
-            createMessage({
-              role: "system",
-              content: mcpSystemPrompt,
-            }),
-          ];
-        }
-
-        if (mcpEnabled) {
-          console.log(
-            "[Global System Prompt] ",
-            systemPrompts.at(0)?.content ?? "empty",
-          );
-        }
         const memoryPrompt = get().getMemoryPrompt();
         // long term memory
         const shouldSendLongTermMemory =
@@ -784,7 +746,6 @@ export const useChatStore = createPersistStore(
         }
         // concat all messages
         const recentMessages = [
-          ...systemPrompts,
           ...longTermMemoryPrompts,
           ...contextPrompts,
           ...reversedRecentMessages.reverse(),

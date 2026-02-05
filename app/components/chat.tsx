@@ -990,11 +990,6 @@ function _Chat() {
   const fontSize = config.fontSize;
   const fontFamily = config.fontFamily;
 
-  // 初始化 MCP 缓存，避免每次发送消息时都进行异步调用
-  useEffect(() => {
-    chatStore.updateMcpCache();
-  }, []);
-
   const onEditMessage = async (message: ChatMessage) => {
     const newMessage = await showPrompt(
       Locale.Chat.Actions.Edit,
