@@ -572,10 +572,39 @@ export const useChatStore = createPersistStore(
           ?.map((f) => `File: ${f.name}\nContent:\n${f.content}`)
           .join("\n\n");
 
-        const content = getMessageTextContent(userMessage);
-        const finalContentForLLM = fileContent
-          ? `${content}\n\nProcessed files:\n${fileContent}`
-          : content;
+        // Preserve multimodal content (images) - same logic as onUserInput
+        const originalContent = userMessage.content;
+        let finalContentForLLM: string | MultimodalContent[];
+
+        if (Array.isArray(originalContent)) {
+          // Content is multimodal (has images) - preserve it
+          if (fileContent) {
+            // Create a copy to avoid modifying the original
+            const contentCopy = [...originalContent];
+            const textPartIndex = contentCopy.findIndex((c) => c.type === "text");
+            if (textPartIndex >= 0 && "text" in contentCopy[textPartIndex]) {
+              contentCopy[textPartIndex] = {
+                type: "text" as const,
+                text: (contentCopy[textPartIndex] as { type: "text"; text: string }).text +
+                  `\n\nProcessed files:\n${fileContent}`,
+              };
+            } else {
+              contentCopy.unshift({
+                type: "text" as const,
+                text: `Processed files:\n${fileContent}`,
+              });
+            }
+            finalContentForLLM = contentCopy;
+          } else {
+            finalContentForLLM = originalContent;
+          }
+        } else {
+          // Content is string (no images)
+          const content = getMessageTextContent(userMessage);
+          finalContentForLLM = fileContent
+            ? `${content}\n\nProcessed files:\n${fileContent}`
+            : content;
+        }
 
         const sendMessages = validRecentMessages.concat({
           ...userMessage,
