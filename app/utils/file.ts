@@ -58,36 +58,103 @@ export async function readPptxFile(file: File): Promise<string> {
     const zip = await JSZip.loadAsync(arrayBuffer);
     let fullText = "";
 
-    // PPTX files store slides in ppt/slides/slideN.xml
+    // Helper function to extract all text from XML content
+    const extractTextFromXml = (xmlContent: string): string => {
+        const texts: string[] = [];
+
+        // Extract text from <a:t> tags (main text)
+        const textMatches = xmlContent.match(/<a:t>([^<]*)<\/a:t>/g);
+        if (textMatches) {
+            textMatches.forEach((tag) => {
+                const text = tag.replace(/<\/?a:t>/g, "").trim();
+                if (text) texts.push(text);
+            });
+        }
+
+        // Extract text from <a:fld> fields (dates, slide numbers, etc.)
+        const fieldMatches = xmlContent.match(/<a:fld[^>]*>[\s\S]*?<\/a:fld>/g);
+        if (fieldMatches) {
+            fieldMatches.forEach((field) => {
+                const innerText = field.match(/<a:t>([^<]*)<\/a:t>/g);
+                if (innerText) {
+                    innerText.forEach((tag) => {
+                        const text = tag.replace(/<\/?a:t>/g, "").trim();
+                        if (text) texts.push(text);
+                    });
+                }
+            });
+        }
+
+        return texts.join(" ");
+    };
+
+    // Get all slide files
     const slideFiles = Object.keys(zip.files).filter((path) =>
-        path.startsWith("ppt/slides/slide") && path.endsWith(".xml")
+        path.startsWith("ppt/slides/slide") && path.endsWith(".xml") && !path.includes("_rels")
     );
 
     // Sort slides by number
     slideFiles.sort((a, b) => {
-        const matchA = a.match(/\d+/);
-        const matchB = b.match(/\d+/);
-        const numA = parseInt(matchA ? matchA[0] : "0");
-        const numB = parseInt(matchB ? matchB[0] : "0");
+        const matchA = a.match(/slide(\d+)\.xml/);
+        const matchB = b.match(/slide(\d+)\.xml/);
+        const numA = parseInt(matchA ? matchA[1] : "0");
+        const numB = parseInt(matchB ? matchB[1] : "0");
         return numA - numB;
     });
 
-    for (const slideFile of slideFiles) {
+    for (let i = 0; i < slideFiles.length; i++) {
+        const slideFile = slideFiles[i];
+        const slideNum = i + 1;
+        let slideContent = `Slide ${slideNum}:\n`;
+
+        // Extract slide content
         const content = await zip.file(slideFile)?.async("text");
         if (content) {
-            // Basic XML text extraction (regex-based for simplicity in browser)
-            const textMatches = content.match(/<a:t>([^<]+)<\/a:t>/g);
-            if (textMatches) {
-                const slideText = textMatches
-                    .map((tag) => tag.replace(/<\/?a:t>/g, ""))
-                    .join(" ");
-                fullText += `Slide:\n${slideText}\n\n`;
+            const slideText = extractTextFromXml(content);
+            if (slideText) {
+                slideContent += slideText + "\n";
             }
+        }
+
+        // Try to extract notes for this slide
+        const notesFile = `ppt/notesSlides/notesSlide${slideNum}.xml`;
+        if (zip.files[notesFile]) {
+            const notesContent = await zip.file(notesFile)?.async("text");
+            if (notesContent) {
+                const notesText = extractTextFromXml(notesContent);
+                if (notesText) {
+                    slideContent += `[Notes: ${notesText}]\n`;
+                }
+            }
+        }
+
+        fullText += slideContent + "\n";
+    }
+
+    // Extract text from diagrams/SmartArt if present
+    const diagramFiles = Object.keys(zip.files).filter((path) =>
+        path.startsWith("ppt/diagrams/") && path.endsWith(".xml")
+    );
+
+    if (diagramFiles.length > 0) {
+        let diagramText = "";
+        for (const diagramFile of diagramFiles) {
+            const content = await zip.file(diagramFile)?.async("text");
+            if (content) {
+                const text = extractTextFromXml(content);
+                if (text) {
+                    diagramText += text + " ";
+                }
+            }
+        }
+        if (diagramText.trim()) {
+            fullText += `\nDiagrams/SmartArt:\n${diagramText.trim()}\n`;
         }
     }
 
-    return fullText;
+    return fullText.trim();
 }
+
 
 export async function parseFile(file: File): Promise<string> {
     const extension = file.name.split(".").pop()?.toLowerCase();
@@ -99,20 +166,27 @@ export async function parseFile(file: File): Promise<string> {
         case "pdf":
             return await readPdfFile(file);
         case "docx":
-        case "doc":
             return await readDocxFile(file);
+        case "doc":
+            throw new Error(
+                "不支持旧版 .doc 格式。请使用 Microsoft Word 或 WPS 将文件另存为 .docx 格式后重试。"
+            );
         case "xlsx":
         case "xls":
             return await readXlsxFile(file);
         case "pptx":
-        case "ppt":
             return await readPptxFile(file);
+        case "ppt":
+            throw new Error(
+                "不支持旧版 .ppt 格式。请使用 Microsoft PowerPoint 或 WPS 将文件另存为 .pptx 格式后重试。"
+            );
         default:
             // Try reading as text by default for common text-based office files
             try {
                 return await readTextFile(file);
             } catch {
-                throw new Error(`Unsupported file type: ${extension}`);
+                throw new Error(`不支持的文件类型: ${extension}`);
             }
     }
 }
+

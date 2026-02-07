@@ -67,6 +67,13 @@ export type ChatMessage = RequestMessage & {
   reasoning_content?: string;
   reasoning_duration?: number;
   isThinking?: boolean;
+  // 版本历史：每个版本包含内容和思考内容
+  versions?: {
+    content: string;
+    reasoning_content?: string;
+    reasoning_duration?: number;
+  }[];
+  currentVersionIndex?: number;
 };
 
 export function createMessage(override: Partial<ChatMessage>): ChatMessage {
@@ -195,7 +202,7 @@ function fillTemplateWith(input: string, modelConfig: ModelConfig) {
   // must contains {{input}}
   const inputVar = "{{input}}";
   if (!output.includes(inputVar)) {
-    output += "\n" + inputVar;
+    output += (output ? "\n" : "") + inputVar;
   }
 
   Object.entries(vars).forEach(([name, value]) => {
@@ -435,9 +442,42 @@ export const useChatStore = createPersistStore(
         const fileContent = attachFiles
           ?.map((f) => `File: ${f.name}\nContent:\n${f.content}`)
           .join("\n\n");
-        const finalContentForLLM = fileContent
-          ? `${content}\n\nProcessed files:\n${fileContent}`
-          : content;
+
+        // Preserve multimodal content (images) or create text content with files
+        let finalContentForLLM: string | MultimodalContent[];
+        if (Array.isArray(mContent)) {
+          // mContent is multimodal (has images) - preserve it
+          if (fileContent) {
+            // Create a copy to avoid modifying the original mContent
+            const contentCopy = [...mContent];
+
+            // Add file content to existing text part, or create new text part
+            const textPartIndex = contentCopy.findIndex((c) => c.type === "text");
+            if (textPartIndex >= 0 && "text" in contentCopy[textPartIndex]) {
+              // Append to existing text (create new object to avoid mutation)
+              contentCopy[textPartIndex] = {
+                type: "text" as const,
+                text: (contentCopy[textPartIndex] as { type: "text"; text: string }).text +
+                  `\n\nProcessed files:\n${fileContent}`,
+              };
+            } else {
+              // No text part - add one at the beginning
+              contentCopy.unshift({
+                type: "text" as const,
+                text: `Processed files:\n${fileContent}`,
+              });
+            }
+            finalContentForLLM = contentCopy;
+          } else {
+            // No files, just use mContent as-is
+            finalContentForLLM = mContent;
+          }
+        } else {
+          // mContent is string (no images) - use text with files
+          finalContentForLLM = fileContent
+            ? `${mContent}\n\nProcessed files:\n${fileContent}`
+            : mContent;
+        }
 
         let userMessage: ChatMessage = createMessage({
           role: "user",
@@ -453,7 +493,7 @@ export const useChatStore = createPersistStore(
         });
 
         // get recent messages
-        const recentMessages = await get().getMessagesWithMemory();
+        const recentMessages = get().getMessagesWithMemory();
         const sendMessages = recentMessages.concat({
           ...userMessage,
           content: finalContentForLLM,
@@ -471,9 +511,118 @@ export const useChatStore = createPersistStore(
             botMessage,
           ]);
         });
+        get().doRequest(sendMessages, session, botMessage, messageIndex);
+      },
 
+      async retryBotMessage(
+        botMessageId: string,
+        userMessage: ChatMessage,
+      ) {
+        const session = get().currentSession();
+        const modelConfig = session.mask.modelConfig;
+
+        const botMessageIndex = session.messages.findIndex(
+          (m) => m.id === botMessageId,
+        );
+        if (botMessageIndex < 0) return;
+
+        const botMessage = session.messages[botMessageIndex];
+
+        // 保存当前版本到历史
+        if (!botMessage.versions) {
+          botMessage.versions = [];
+        }
+        const currentContent = getMessageTextContent(botMessage);
+        // 只有当有实际内容时才保存版本，避免保存空字符串
+        if (currentContent && currentContent.trim().length > 0) {
+          botMessage.versions.push({
+            content: currentContent,
+            reasoning_content: botMessage.reasoning_content,
+            reasoning_duration: botMessage.reasoning_duration,
+          });
+        }
+        // 设置索引指向即将生成的新版本
+        botMessage.currentVersionIndex = botMessage.versions.length;
+
+        // 重置消息状态，准备重新生成
+        botMessage.content = "";
+        botMessage.streaming = true;
+        botMessage.isError = false;
+        botMessage.isThinking = false;
+        botMessage.date = new Date().toLocaleString();
+        botMessage.model = modelConfig.model;
+        botMessage.reasoning_content = undefined;
+        botMessage.reasoning_duration = undefined;
+        botMessage.tools = undefined;
+
+        // update session to trigger re-render
+        get().updateTargetSession(session, (session) => {
+          session.messages = [...session.messages];
+        });
+
+        // get context messages up to the user message
+        const recentMessages = get().getMessagesWithMemory();
+        // remove messages after the user message (including the bot message being retried)
+        const userMessageIndex = recentMessages.findIndex(m => m.id === userMessage.id);
+        const validRecentMessages = userMessageIndex >= 0
+          ? recentMessages.slice(0, userMessageIndex) // Messages before user message
+          : recentMessages.filter(m => m.id !== botMessageId); // Fallback: just remove bot message
+
+        const fileContent = userMessage.attachFiles
+          ?.map((f) => `File: ${f.name}\nContent:\n${f.content}`)
+          .join("\n\n");
+
+        // Preserve multimodal content (images) - same logic as onUserInput
+        const originalContent = userMessage.content;
+        let finalContentForLLM: string | MultimodalContent[];
+
+        if (Array.isArray(originalContent)) {
+          // Content is multimodal (has images) - preserve it
+          if (fileContent) {
+            // Create a copy to avoid modifying the original
+            const contentCopy = [...originalContent];
+            const textPartIndex = contentCopy.findIndex((c) => c.type === "text");
+            if (textPartIndex >= 0 && "text" in contentCopy[textPartIndex]) {
+              contentCopy[textPartIndex] = {
+                type: "text" as const,
+                text: (contentCopy[textPartIndex] as { type: "text"; text: string }).text +
+                  `\n\nProcessed files:\n${fileContent}`,
+              };
+            } else {
+              contentCopy.unshift({
+                type: "text" as const,
+                text: `Processed files:\n${fileContent}`,
+              });
+            }
+            finalContentForLLM = contentCopy;
+          } else {
+            finalContentForLLM = originalContent;
+          }
+        } else {
+          // Content is string (no images)
+          const content = getMessageTextContent(userMessage);
+          finalContentForLLM = fileContent
+            ? `${content}\n\nProcessed files:\n${fileContent}`
+            : content;
+        }
+
+        const sendMessages = validRecentMessages.concat({
+          ...userMessage,
+          content: finalContentForLLM,
+        });
+
+        get().doRequest(sendMessages, session, botMessage, botMessageIndex);
+      },
+
+      async doRequest(
+        sendMessages: ChatMessage[],
+        session: ChatSession,
+        botMessage: ChatMessage,
+        messageIndex: number,
+      ) {
+        const modelConfig = session.mask.modelConfig;
         const api: ClientApi = getClientApi(modelConfig.providerName);
-        // make request
+
         api.llm.chat({
           messages: sendMessages,
           config: { ...modelConfig, stream: true },
@@ -549,7 +698,6 @@ export const useChatStore = createPersistStore(
               });
             botMessage.streaming = false;
             botMessage.isThinking = false;
-            userMessage.isError = !isAborted;
             botMessage.isError = !isAborted;
 
             // Create new message object to trigger React re-render
@@ -590,7 +738,7 @@ export const useChatStore = createPersistStore(
         }
       },
 
-      async getMessagesWithMemory() {
+      getMessagesWithMemory() {
         const session = get().currentSession();
         const modelConfig = session.mask.modelConfig;
         const clearContextIndex = session.clearContextIndex ?? 0;
@@ -599,27 +747,6 @@ export const useChatStore = createPersistStore(
 
         // in-context prompts
         const contextPrompts = session.mask.context.slice();
-
-        const mcpEnabled = await isMcpEnabled();
-        const mcpSystemPrompt = mcpEnabled ? await getMcpSystemPrompt() : "";
-
-        var systemPrompts: ChatMessage[] = [];
-
-        if (mcpEnabled) {
-          systemPrompts = [
-            createMessage({
-              role: "system",
-              content: mcpSystemPrompt,
-            }),
-          ];
-        }
-
-        if (mcpEnabled) {
-          console.log(
-            "[Global System Prompt] ",
-            systemPrompts.at(0)?.content ?? "empty",
-          );
-        }
         const memoryPrompt = get().getMemoryPrompt();
         // long term memory
         const shouldSendLongTermMemory =
@@ -659,12 +786,28 @@ export const useChatStore = createPersistStore(
         ) {
           const msg = messages[i];
           if (!msg || msg.isError) continue;
-          tokenCount += estimateTokenLength(getMessageTextContent(msg));
-          reversedRecentMessages.push(msg);
+
+          // 版本感知：如果消息有历史版本且当前索引指向历史版本，替换 content
+          let msgToSend = msg;
+          if (msg.versions && msg.versions.length > 0) {
+            const idx = msg.currentVersionIndex ?? 0;
+            if (idx >= 0 && idx < msg.versions.length) {
+              // 当前索引指向历史版本，创建副本并替换 content 和 reasoning_content
+              const version = msg.versions[idx];
+              msgToSend = {
+                ...msg,
+                content: version.content,
+                reasoning_content: version.reasoning_content,
+                reasoning_duration: version.reasoning_duration,
+              };
+            }
+          }
+
+          tokenCount += estimateTokenLength(getMessageTextContent(msgToSend));
+          reversedRecentMessages.push(msgToSend);
         }
         // concat all messages
         const recentMessages = [
-          ...systemPrompts,
           ...longTermMemoryPrompts,
           ...contextPrompts,
           ...reversedRecentMessages.reverse(),

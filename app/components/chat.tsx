@@ -87,6 +87,8 @@ import {
 import styles from "./chat.module.scss";
 
 import AutoIcon from "../icons/auto.svg";
+import LeftIcon from "../icons/left.svg";
+import RightIcon from "../icons/right.svg";
 import BottomIcon from "../icons/bottom.svg";
 import BrainIcon from "../icons/brain.svg";
 import BreakIcon from "../icons/break.svg";
@@ -1058,6 +1060,82 @@ function _Chat() {
     { name: string; content: string }[]
   >([]);
   const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Handle drag and drop
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+
+      const currentModel = chatStore.currentSession().mask.modelConfig.model;
+      const files = Array.from(e.dataTransfer.files);
+
+      if (files.length === 0) return;
+
+      setUploading(true);
+
+      // Separate images and other files
+      const imageFiles: File[] = [];
+      const documentFiles: File[] = [];
+
+      files.forEach((file) => {
+        if (file.type.startsWith("image/")) {
+          imageFiles.push(file);
+        } else {
+          documentFiles.push(file);
+        }
+      });
+
+      // Upload images if model supports vision
+      if (imageFiles.length > 0 && isVisionModel(currentModel)) {
+        const newImages: string[] = [...attachImages];
+        for (const file of imageFiles) {
+          try {
+            const dataUrl = await uploadImageRemote(file);
+            newImages.push(dataUrl);
+          } catch (e) {
+            console.error("Failed to upload image:", e);
+            showToast(`上传图片 ${file.name} 失败`);
+          }
+        }
+        setAttachImages(newImages);
+      } else if (imageFiles.length > 0) {
+        showToast("当前模型不支持图片，请切换到支持视觉的模型");
+      }
+
+      // Parse document files
+      if (documentFiles.length > 0) {
+        const newFiles = [...attachFiles];
+        for (const file of documentFiles) {
+          try {
+            const content = await parseFile(file);
+            newFiles.push({ name: file.name, content });
+          } catch (e: any) {
+            showToast(e.message || `解析 ${file.name} 失败`);
+            console.error(e);
+          }
+        }
+        setAttachFiles(newFiles);
+      }
+
+      setUploading(false);
+    },
+    [attachImages, attachFiles, chatStore],
+  );
 
   // prompt hints
   const promptStore = usePromptStore();
@@ -1193,7 +1271,13 @@ function _Chat() {
             m.streaming = false;
           }
 
-          if (m.content.length === 0) {
+          // Check if message is truly empty (no content AND no attached files)
+          const hasContent = typeof m.content === "string"
+            ? m.content.length > 0
+            : Array.isArray(m.content) && m.content.length > 0;
+          const hasFiles = m.attachFiles && m.attachFiles.length > 0;
+
+          if (!hasContent && !hasFiles) {
             m.isError = true;
             m.content = prettyObject({
               error: true,
@@ -1253,12 +1337,7 @@ function _Chat() {
   };
 
   const onResend = (message: ChatMessage) => {
-    // when it is resending a message
-    // 1. for a user's message, find the next bot response
-    // 2. for a bot's message, find the last user's input
-    // 3. delete original user input and bot's message
-    // 4. resend the user's input
-
+    // 重构后的重试逻辑：使用专门的重试方法
     const resendingIndex = session.messages.findIndex(
       (m) => m.id === message.id,
     );
@@ -1296,16 +1375,45 @@ function _Chat() {
       return;
     }
 
-    // delete the original messages
-    deleteMessage(userMessage.id);
-    deleteMessage(botMessage?.id);
+    // 如果是重试 bot 消息，使用专门的重试方法
+    if (botMessage) {
+      setIsLoading(true);
+      chatStore
+        .retryBotMessage(botMessage.id, userMessage)
+        .then(() => {
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error("[Chat] failed to retry bot message", error);
+          setIsLoading(false);
+        });
+      inputRef.current?.focus();
+      return;
+    }
 
-    // resend the message
+    // 如果是重试用户消息，使用原有逻辑（删除后续消息并重新发送）
+    deleteMessage(userMessage.id);
     setIsLoading(true);
     const textContent = getMessageTextContent(userMessage);
     const images = getMessageImages(userMessage);
     chatStore.onUserInput(textContent, images).then(() => setIsLoading(false));
     inputRef.current?.focus();
+  };
+
+  // 切换消息版本 (1 为下一条, -1 为上一条)
+  const onSwitchVersion = (message: ChatMessage, delta: number) => {
+    chatStore.updateTargetSession(session, (session) => {
+      const idx = session.messages.findIndex((m) => m.id === message.id);
+      if (idx >= 0) {
+        const msg = session.messages[idx];
+        if (msg.versions && msg.versions.length >= 1) {
+          const current = msg.currentVersionIndex ?? 0;
+          const max = msg.versions.length;
+          const next = Math.min(Math.max(0, current + delta), max);
+          msg.currentVersionIndex = next;
+        }
+      }
+    });
   };
 
   const onPinMessage = (message: ChatMessage) => {
@@ -1320,6 +1428,66 @@ function _Chat() {
       },
     });
   };
+
+  // 获取当前显示的消息内容
+  const getCurrentMessageContent = (message: ChatMessage): string => {
+    // 若消息没有版本，优先返回字符串；否则从多模态数组里提取文本
+    if (!message.versions || message.versions.length < 1) {
+      return typeof message.content === "string"
+        ? message.content
+        : getMessageTextContent(message);
+    }
+
+    const currentIndex = message.currentVersionIndex ?? 0;
+    if (currentIndex === message.versions.length) {
+      // 显示最新版本（当前消息内容）
+      return typeof message.content === "string"
+        ? message.content
+        : getMessageTextContent(message);
+    } else if (currentIndex >= 0 && currentIndex < message.versions.length) {
+      // 显示历史版本（访问 content 字段）
+      return message.versions[currentIndex].content;
+    }
+
+    return typeof message.content === "string"
+      ? message.content
+      : getMessageTextContent(message);
+  };
+
+  // 获取当前显示的思考内容
+  const getCurrentReasoningContent = (message: ChatMessage): string | undefined => {
+    if (!message.versions || message.versions.length < 1) {
+      return message.reasoning_content;
+    }
+
+    const currentIndex = message.currentVersionIndex ?? 0;
+    if (currentIndex === message.versions.length) {
+      // 显示最新版本的思考内容
+      return message.reasoning_content;
+    } else if (currentIndex >= 0 && currentIndex < message.versions.length) {
+      // 显示历史版本的思考内容
+      return message.versions[currentIndex].reasoning_content;
+    }
+
+    return message.reasoning_content;
+  };
+
+  // 获取当前显示的思考时长
+  const getCurrentReasoningDuration = (message: ChatMessage): number | undefined => {
+    if (!message.versions || message.versions.length < 1) {
+      return message.reasoning_duration;
+    }
+
+    const currentIndex = message.currentVersionIndex ?? 0;
+    if (currentIndex === message.versions.length) {
+      return message.reasoning_duration;
+    } else if (currentIndex >= 0 && currentIndex < message.versions.length) {
+      return message.versions[currentIndex].reasoning_duration;
+    }
+
+    return message.reasoning_duration;
+  };
+
 
   const accessStore = useAccessStore();
   const [speechStatus, setSpeechStatus] = useState(false);
@@ -1388,19 +1556,6 @@ function _Chat() {
     return context
       .concat(session.messages as RenderMessage[])
       .concat(
-        isLoading
-          ? [
-            {
-              ...createMessage({
-                role: "assistant",
-                content: "……",
-              }),
-              preview: true,
-            },
-          ]
-          : [],
-      )
-      .concat(
         userInput.length > 0 && config.sendPreviewBubble
           ? [
             {
@@ -1416,7 +1571,6 @@ function _Chat() {
   }, [
     config.sendPreviewBubble,
     context,
-    isLoading,
     session.messages,
     userInput,
   ]);
@@ -1577,11 +1731,6 @@ function _Chat() {
                   });
               })),
             );
-            const imagesLength = images.length;
-
-            if (imagesLength > 3) {
-              images.splice(3, imagesLength - 3);
-            }
             setAttachImages(images);
           }
         }
@@ -1610,10 +1759,7 @@ function _Chat() {
             uploadImageRemote(file)
               .then((dataUrl) => {
                 imagesData.push(dataUrl);
-                if (
-                  imagesData.length === 3 ||
-                  imagesData.length === files.length
-                ) {
+                if (imagesData.length === files.length) {
                   setUploading(false);
                   res(imagesData);
                 }
@@ -1628,10 +1774,6 @@ function _Chat() {
       })),
     );
 
-    const imagesLength = images.length;
-    if (imagesLength > 3) {
-      images.splice(3, imagesLength - 3);
-    }
     setAttachImages(images);
   }
 
@@ -1639,7 +1781,7 @@ function _Chat() {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.accept =
-      ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md";
+      ".pdf,.docx,.xls,.xlsx,.pptx,.txt,.md";
     fileInput.multiple = true;
     fileInput.onchange = async (event: any) => {
       setUploading(true);
@@ -1650,8 +1792,8 @@ function _Chat() {
         try {
           const content = await parseFile(file);
           newFiles.push({ name: file.name, content });
-        } catch (e) {
-          showToast(`Failed to parse ${file.name}`);
+        } catch (e: any) {
+          showToast(e.message || `解析 ${file.name} 失败`);
           console.error(e);
         }
       }
@@ -1850,7 +1992,11 @@ function _Chat() {
                 .map((message, i) => {
                   const isUser = message.role === "user";
                   const isContext = i < context.length;
-                  const hasContent = message.content.length > 0 || (message.reasoning_content?.length ?? 0) > 0;
+                  // 检查内容时也要考虑版本历史
+                  const hasContent =
+                    message.content.length > 0 ||
+                    (message.reasoning_content?.length ?? 0) > 0 ||
+                    (message.versions?.length ?? 0) > 0;
                   const showActions =
                     i > 0 &&
                     !(message.preview || (!hasContent && !message.streaming && !message.isThinking)) &&
@@ -1998,16 +2144,48 @@ function _Chat() {
                             </div>
                           )}
                           <div className={styles["chat-message-item"]}>
+                            {!isUser &&
+                              message.versions &&
+                              message.versions.length > 0 && (
+                                <div className={styles["chat-message-versions"]}>
+                                  <div
+                                    className={clsx(
+                                      styles["chat-message-version-btn"],
+                                      "clickable",
+                                    )}
+                                    onClick={() => onSwitchVersion(message, -1)}
+                                  >
+                                    <LeftIcon />
+                                  </div>
+                                  <div
+                                    className={
+                                      styles["chat-message-version-index"]
+                                    }
+                                  >
+                                    {(message.currentVersionIndex ?? 0) + 1} /{" "}
+                                    {message.versions.length + 1}
+                                  </div>
+                                  <div
+                                    className={clsx(
+                                      styles["chat-message-version-btn"],
+                                      "clickable",
+                                    )}
+                                    onClick={() => onSwitchVersion(message, 1)}
+                                  >
+                                    <RightIcon />
+                                  </div>
+                                </div>
+                              )}
                             <ThinkingBlock
                               model={message.model}
-                              thinking={message.reasoning_content ?? ""}
-                              duration={message.reasoning_duration}
+                              thinking={getCurrentReasoningContent(message) ?? ""}
+                              duration={getCurrentReasoningDuration(message)}
                               streaming={message.streaming}
                               isThinking={message.isThinking}
                             />
                             <Markdown
                               key={message.streaming ? "loading" : "done"}
-                              content={getMessageTextContent(message)}
+                              content={getCurrentMessageContent(message)}
                               loading={
                                 (message.preview || message.streaming) &&
                                 message.content.length === 0 &&
@@ -2016,7 +2194,7 @@ function _Chat() {
                               //   onContextMenu={(e) => onRightClick(e, message)} // hard to use
                               onDoubleClickCapture={() => {
                                 if (!isMobileScreen) return;
-                                setUserInput(getMessageTextContent(message));
+                                setUserInput(getCurrentMessageContent(message));
                               }}
                               fontSize={fontSize}
                               fontFamily={fontFamily}
@@ -2124,8 +2302,12 @@ function _Chat() {
                 className={clsx(styles["chat-input-panel-inner"], {
                   [styles["chat-input-panel-inner-attach"]]:
                     attachImages.length !== 0 || attachFiles.length !== 0,
+                  [styles["chat-input-panel-dragging"]]: isDragging,
                 })}
                 htmlFor="chat-input"
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
               >
                 <textarea
                   id="chat-input"
