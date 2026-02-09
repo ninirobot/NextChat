@@ -16,6 +16,7 @@ import { isEmpty } from "lodash-es";
 import {
   BOT_HELLO,
   ChatMessage,
+  ChatSession,
   createMessage,
   DEFAULT_TOPIC,
   ModelType,
@@ -34,6 +35,8 @@ import {
   copyToClipboard,
   getMessageImages,
   getMessageTextContent,
+  getMessageTextContentWithoutThinking,
+  getMessageByVersion,
   getModelSizes,
   isDalle3,
   isVisionModel,
@@ -43,6 +46,11 @@ import {
   supportsCustomSize,
   useMobileScreen,
 } from "../utils";
+import {
+  formatTokenCount,
+  getModelContextTokens,
+} from "../config/model-context-tokens";
+import { estimateTokenLength } from "../utils/token";
 import { createTTSPlayer } from "../utils/audio";
 import { uploadImage as uploadImageRemote } from "@/app/utils/chat";
 import { parseFile } from "../utils/file";
@@ -101,6 +109,7 @@ import DeleteIcon from "../icons/clear.svg";
 import EditIcon from "../icons/rename.svg";
 import ExportIcon from "../icons/share.svg";
 import HeadphoneIcon from "../icons/headphone.svg";
+import { ProviderIcon } from "./provider-icon";
 import ImageIcon from "../icons/image.svg";
 import LightIcon from "../icons/light.svg";
 import LoadingButtonIcon from "../icons/loading.svg";
@@ -117,7 +126,6 @@ import ReloadIcon from "../icons/reload.svg";
 import RenameIcon from "../icons/rename.svg";
 import ResetIcon from "../icons/reload.svg";
 import ReturnIcon from "../icons/return.svg";
-import RobotIcon from "../icons/robot.svg";
 import SendWhiteIcon from "../icons/send-white.svg";
 import SettingsIcon from "../icons/chat-settings.svg";
 import ShortcutkeyIcon from "../icons/shortcutkey.svg";
@@ -245,7 +253,7 @@ function PromptToast(props: {
     <div className={styles["prompt-toast"]} key="prompt-toast">
       {props.showToast && context.length > 0 && (
         <div
-          className={clsx(styles["prompt-toast-inner"], "clickable")}
+          className={styles["prompt-toast-inner"]}
           role="button"
           onClick={() => props.setShowModal(true)}
         >
@@ -409,10 +417,7 @@ export function ChatAction(props: {
   onClick: () => void;
 }) {
   return (
-    <div
-      className={clsx(styles["chat-input-action"], "clickable")}
-      onClick={props.onClick}
-    >
+    <div className={styles["chat-input-action"]} onClick={props.onClick}>
       <div className={styles["icon"]}>{props.icon}</div>
       <div className={styles["text"]}>{props.text}</div>
     </div>
@@ -460,6 +465,130 @@ function useScrollToBottom(
   };
 }
 
+export function TokenCounter(props: {
+  session: ChatSession;
+  currentModel: string;
+  userInput?: string;
+}) {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  // Calculate the token count for the current conversation (excluding thinking content)
+  // Calculate the token count for the current conversation (excluding thinking content)
+  const { historyInputTokens, historyOutputTokens } = useMemo(() => {
+    const messages = props.session.messages;
+    const clearContextIndex = props.session.clearContextIndex ?? -1;
+    const contextMessages = messages.slice(
+      clearContextIndex >= 0 ? clearContextIndex : 0,
+    );
+
+    return contextMessages.reduce(
+      (acc, message: ChatMessage) => {
+        // 忽略错误消息
+        if (message.isError) return acc;
+        // 估算文本内容的 token 数
+        const textTokens = estimateTokenLength(
+          getMessageTextContentWithoutThinking(message),
+        );
+        // 估算图片的 token 数（简化估算：每张图 1000 tokens）
+        const images = getMessageImages(message);
+        const imageTokens = images.length * 1000;
+        const tokens = textTokens + imageTokens;
+
+        if (message.role === "user" || message.role === "system") {
+          acc.historyInputTokens += tokens;
+        } else {
+          acc.historyOutputTokens += tokens;
+        }
+        return acc;
+      },
+      { historyInputTokens: 0, historyOutputTokens: 0 },
+    );
+  }, [props.session.messages, props.session.clearContextIndex]);
+
+  // Get the configuration for the current session
+  const modelConfig = props.session.mask.modelConfig;
+  const contextConfig = getModelContextTokens(props.currentModel);
+  const maxTokens = contextConfig?.contextTokens;
+
+  // Calculate the current context count
+  const currentContextCount = props.session.messages.length;
+  const maxContextCount = modelConfig.historyMessageCount;
+
+  // Calculate estimated token count (including user input)
+  const userInputTokens = useMemo(() => {
+    return props.userInput ? estimateTokenLength(props.userInput) : 0;
+  }, [props.userInput]);
+
+  const currentInputTokens = historyInputTokens + userInputTokens;
+  const currentOutputTokens = historyOutputTokens;
+  const totalTokens = currentInputTokens + currentOutputTokens;
+
+  const displayText = maxTokens
+    ? `${formatTokenCount(totalTokens)}/${formatTokenCount(maxTokens)}`
+    : `${formatTokenCount(totalTokens)}/?`;
+
+  // 构建详细的提示框内容
+  const tooltipLines = [
+    `${Locale.Chat.TokenTooltip.Context}: ${currentContextCount} / ${maxContextCount}`,
+    `${Locale.Chat.TokenTooltip.Input}: ${currentInputTokens.toLocaleString()}`,
+    `${
+      Locale.Chat.TokenTooltip.Output
+    }: ${currentOutputTokens.toLocaleString()}`,
+    `${Locale.Chat.TokenTooltip.Total}: ${totalTokens.toLocaleString()}` +
+      (maxTokens ? ` / ${maxTokens.toLocaleString()}` : ` / ?`),
+  ].filter(Boolean) as string[];
+
+  // Calculate progress bar data
+  const progressPercentage = maxTokens ? (totalTokens / maxTokens) * 100 : 0;
+  const getProgressColor = (percentage: number) => {
+    if (percentage >= 90) return "#ef4444"; // Red - Danger
+    if (percentage >= 70) return "#f59e0b"; // Yellow - Warning
+    return "#22c55e"; // Green - Safe
+  };
+
+  return (
+    <div
+      className={styles["chat-action-wrapper"]}
+      style={{ position: "relative" }}
+    >
+      <button
+        className={styles["token-counter-button"]}
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+        onClick={(e) => e.preventDefault()}
+        type="button"
+      >
+        <span className={styles["token-counter-text"]}>{displayText}</span>
+      </button>
+      {showTooltip && (
+        <div className={styles["token-counter-tooltip"]}>
+          {tooltipLines.map((line, index) => (
+            <div key={index}>{line}</div>
+          ))}
+          {maxTokens && (
+            <div className={styles["token-progress-container"]}>
+              <div className={styles["token-progress-info"]}>
+                <span>
+                  {Locale.Chat.TokenUsage}: {progressPercentage.toFixed(1)}%
+                </span>
+              </div>
+              <div className={styles["token-progress-bar"]}>
+                <div
+                  className={styles["token-progress-fill"]}
+                  style={{
+                    width: `${Math.min(progressPercentage, 100)}%`,
+                    backgroundColor: getProgressColor(progressPercentage),
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ChatActions(props: {
   uploadImage: () => void;
   uploadFile: () => void;
@@ -473,6 +602,7 @@ export function ChatActions(props: {
   setShowShortcutKeyModal: React.Dispatch<React.SetStateAction<boolean>>;
   setUserInput: (input: string) => void;
   setShowChatSidePanel: React.Dispatch<React.SetStateAction<boolean>>;
+  userInput?: string;
 }) {
   const config = useAppConfig();
   const navigate = useNavigate();
@@ -496,8 +626,8 @@ export function ChatActions(props: {
   const stopAll = () => {
     ChatControllerPool.stopAll();
 
-    // Manually update all streaming messages to stopped state
-    // This ensures UI updates even if onError callback doesn't fire
+    // 手动更新所有正在流式传输的消息状态为停止
+    // 确保 UI 即使在 onError 回调未触发的情况下也能及时更新
     chatStore.updateTargetSession(session, (session) => {
       session.messages = session.messages.map((m) =>
         m.streaming || m.isThinking
@@ -512,6 +642,7 @@ export function ChatActions(props: {
   const currentProviderName =
     session.mask.modelConfig?.providerName || ServiceProvider.OpenAI;
   const allModels = useAllModels();
+  // 获取所有可用模型，并处理默认模型的排序
   const models = useMemo(() => {
     const filteredModels = allModels.filter((m) => m.available);
     const defaultModel = filteredModels.find((m) => m.isDefault);
@@ -551,6 +682,7 @@ export function ChatActions(props: {
 
   const isMobileScreen = useMobileScreen();
 
+  // 检查当前模型可用性，如果不可用则自动切换到默认模型
   useEffect(() => {
     const show = isVisionModel(currentModel);
     setShowUploadImage(show);
@@ -660,20 +792,15 @@ export function ChatActions(props: {
           }}
         />
 
-        <ChatAction
-          onClick={() => setShowModelSelector(true)}
-          text={currentModelName}
-          icon={<RobotIcon />}
-        />
-
         {showModelSelector && (
           <Selector
             defaultSelectedValue={`${currentModel}@${currentProviderName}`}
             items={models.map((m) => ({
-              title: `${m.displayName}${m?.provider?.providerName
-                ? " (" + m?.provider?.providerName + ")"
-                : ""
-                }`,
+              title: `${m.displayName}${
+                m?.provider?.providerName
+                  ? " (" + m?.provider?.providerName + ")"
+                  : ""
+              }`,
               value: `${m.name}@${m?.provider?.providerName}`,
             }))}
             onClose={() => setShowModelSelector(false)}
@@ -821,6 +948,7 @@ export function ChatActions(props: {
         {!isMobileScreen && <MCPAction />}
       </>
       <div className={styles["chat-input-actions-end"]}>
+        {/* 右侧功能区：实时聊天、模型选择、Token计数 */}
         {config.realtimeConfig.enable && (
           <ChatAction
             onClick={() => props.setShowChatSidePanel(true)}
@@ -828,6 +956,21 @@ export function ChatActions(props: {
             icon={<HeadphoneIcon />}
           />
         )}
+        <div
+          className={clsx(
+            styles["chat-input-action"],
+            styles["model-selector-button"],
+          )}
+          onClick={() => setShowModelSelector(true)}
+        >
+          <ProviderIcon model={currentModel} size={16} />
+          <span className={styles["model-name"]}>{currentModelName}</span>
+        </div>
+        <TokenCounter
+          session={session}
+          currentModel={currentModel}
+          userInput={props.userInput}
+        />
       </div>
     </div>
   );
@@ -1028,9 +1171,9 @@ function _Chat() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isScrolledToBottom = scrollRef?.current
     ? Math.abs(
-      scrollRef.current.scrollHeight -
-      (scrollRef.current.scrollTop + scrollRef.current.clientHeight),
-    ) <= 1
+        scrollRef.current.scrollHeight -
+          (scrollRef.current.scrollTop + scrollRef.current.clientHeight),
+      ) <= 1
     : false;
   const isAttachWithTop = useMemo(() => {
     const lastMessage = scrollRef.current?.lastElementChild as HTMLElement;
@@ -1206,7 +1349,11 @@ function _Chat() {
   };
 
   const doSubmit = (userInput: string) => {
-    if (userInput.trim() === "" && isEmpty(attachImages) && isEmpty(attachFiles))
+    if (
+      userInput.trim() === "" &&
+      isEmpty(attachImages) &&
+      isEmpty(attachFiles)
+    )
       return;
     const matchCommand = chatCommands.match(userInput);
     if (matchCommand.matched) {
@@ -1254,9 +1401,7 @@ function _Chat() {
     // This ensures the action buttons appear even if onError callback doesn't fire
     chatStore.updateTargetSession(session, (session) => {
       session.messages = session.messages.map((m) =>
-        m.id === messageId
-          ? { ...m, streaming: false, isThinking: false }
-          : m,
+        m.id === messageId ? { ...m, streaming: false, isThinking: false } : m,
       );
     });
   };
@@ -1272,9 +1417,10 @@ function _Chat() {
           }
 
           // Check if message is truly empty (no content AND no attached files)
-          const hasContent = typeof m.content === "string"
-            ? m.content.length > 0
-            : Array.isArray(m.content) && m.content.length > 0;
+          const hasContent =
+            typeof m.content === "string"
+              ? m.content.length > 0
+              : Array.isArray(m.content) && m.content.length > 0;
           const hasFiles = m.attachFiles && m.attachFiles.length > 0;
 
           if (!hasContent && !hasFiles) {
@@ -1411,6 +1557,7 @@ function _Chat() {
           const max = msg.versions.length;
           const next = Math.min(Math.max(0, current + delta), max);
           msg.currentVersionIndex = next;
+          session.messages = [...session.messages];
         }
       }
     });
@@ -1431,63 +1578,24 @@ function _Chat() {
 
   // 获取当前显示的消息内容
   const getCurrentMessageContent = (message: ChatMessage): string => {
-    // 若消息没有版本，优先返回字符串；否则从多模态数组里提取文本
-    if (!message.versions || message.versions.length < 1) {
-      return typeof message.content === "string"
-        ? message.content
-        : getMessageTextContent(message);
-    }
-
-    const currentIndex = message.currentVersionIndex ?? 0;
-    if (currentIndex === message.versions.length) {
-      // 显示最新版本（当前消息内容）
-      return typeof message.content === "string"
-        ? message.content
-        : getMessageTextContent(message);
-    } else if (currentIndex >= 0 && currentIndex < message.versions.length) {
-      // 显示历史版本（访问 content 字段）
-      return message.versions[currentIndex].content;
-    }
-
-    return typeof message.content === "string"
-      ? message.content
-      : getMessageTextContent(message);
+    return getMessageTextContent(message);
   };
 
   // 获取当前显示的思考内容
-  const getCurrentReasoningContent = (message: ChatMessage): string | undefined => {
-    if (!message.versions || message.versions.length < 1) {
-      return message.reasoning_content;
-    }
-
-    const currentIndex = message.currentVersionIndex ?? 0;
-    if (currentIndex === message.versions.length) {
-      // 显示最新版本的思考内容
-      return message.reasoning_content;
-    } else if (currentIndex >= 0 && currentIndex < message.versions.length) {
-      // 显示历史版本的思考内容
-      return message.versions[currentIndex].reasoning_content;
-    }
-
-    return message.reasoning_content;
+  const getCurrentReasoningContent = (
+    message: ChatMessage,
+  ): string | undefined => {
+    const msg = getMessageByVersion(message) as ChatMessage;
+    return msg.reasoning_content;
   };
 
   // 获取当前显示的思考时长
-  const getCurrentReasoningDuration = (message: ChatMessage): number | undefined => {
-    if (!message.versions || message.versions.length < 1) {
-      return message.reasoning_duration;
-    }
-
-    const currentIndex = message.currentVersionIndex ?? 0;
-    if (currentIndex === message.versions.length) {
-      return message.reasoning_duration;
-    } else if (currentIndex >= 0 && currentIndex < message.versions.length) {
-      return message.versions[currentIndex].reasoning_duration;
-    }
-
-    return message.reasoning_duration;
+  const getCurrentReasoningDuration = (
+    message: ChatMessage,
+  ): number | undefined => {
+    const msg = getMessageByVersion(message) as ChatMessage;
+    return msg.reasoning_duration;
   };
-
 
   const accessStore = useAccessStore();
   const [speechStatus, setSpeechStatus] = useState(false);
@@ -1553,11 +1661,9 @@ function _Chat() {
 
   // preview messages
   const renderMessages = useMemo(() => {
-    return context
-      .concat(session.messages as RenderMessage[])
-      .concat(
-        userInput.length > 0 && config.sendPreviewBubble
-          ? [
+    return context.concat(session.messages as RenderMessage[]).concat(
+      userInput.length > 0 && config.sendPreviewBubble
+        ? [
             {
               ...createMessage({
                 role: "user",
@@ -1566,14 +1672,9 @@ function _Chat() {
               preview: true,
             },
           ]
-          : [],
-      );
-  }, [
-    config.sendPreviewBubble,
-    context,
-    session.messages,
-    userInput,
-  ]);
+        : [],
+    );
+  }, [config.sendPreviewBubble, context, session.messages, userInput]);
 
   const [msgRenderIndex, _setMsgRenderIndex] = useState(
     Math.max(0, renderMessages.length - CHAT_PAGE_SIZE),
@@ -1661,7 +1762,7 @@ function _Chat() {
         if (payload.key || payload.url) {
           showConfirm(
             Locale.URLCommand.Settings +
-            `\n${JSON.stringify(payload, null, 4)}`,
+              `\n${JSON.stringify(payload, null, 4)}`,
           ).then((res) => {
             if (!res) return;
             if (payload.key) {
@@ -1780,8 +1881,7 @@ function _Chat() {
   async function uploadFile() {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
-    fileInput.accept =
-      ".pdf,.docx,.xls,.xlsx,.pptx,.txt,.md";
+    fileInput.accept = ".pdf,.docx,.xls,.xlsx,.pptx,.txt,.md";
     fileInput.multiple = true;
     fileInput.onchange = async (event: any) => {
       setUploading(true);
@@ -1999,7 +2099,10 @@ function _Chat() {
                     (message.versions?.length ?? 0) > 0;
                   const showActions =
                     i > 0 &&
-                    !(message.preview || (!hasContent && !message.streaming && !message.isThinking)) &&
+                    !(
+                      message.preview ||
+                      (!hasContent && !message.streaming && !message.isThinking)
+                    ) &&
                     !isContext;
                   const showTyping = message.preview || message.streaming;
 
@@ -2147,12 +2250,13 @@ function _Chat() {
                             {!isUser &&
                               message.versions &&
                               message.versions.length > 0 && (
-                                <div className={styles["chat-message-versions"]}>
+                                <div
+                                  className={styles["chat-message-versions"]}
+                                >
                                   <div
-                                    className={clsx(
-                                      styles["chat-message-version-btn"],
-                                      "clickable",
-                                    )}
+                                    className={
+                                      styles["chat-message-version-btn"]
+                                    }
                                     onClick={() => onSwitchVersion(message, -1)}
                                   >
                                     <LeftIcon />
@@ -2166,10 +2270,9 @@ function _Chat() {
                                     {message.versions.length + 1}
                                   </div>
                                   <div
-                                    className={clsx(
-                                      styles["chat-message-version-btn"],
-                                      "clickable",
-                                    )}
+                                    className={
+                                      styles["chat-message-version-btn"]
+                                    }
                                     onClick={() => onSwitchVersion(message, 1)}
                                   >
                                     <RightIcon />
@@ -2178,7 +2281,9 @@ function _Chat() {
                               )}
                             <ThinkingBlock
                               model={message.model}
-                              thinking={getCurrentReasoningContent(message) ?? ""}
+                              thinking={
+                                getCurrentReasoningContent(message) ?? ""
+                              }
                               duration={getCurrentReasoningDuration(message)}
                               streaming={message.streaming}
                               isThinking={message.isThinking}
@@ -2224,7 +2329,7 @@ function _Chat() {
                                       <img
                                         className={
                                           styles[
-                                          "chat-message-item-image-multi"
+                                            "chat-message-item-image-multi"
                                           ]
                                         }
                                         key={index}
@@ -2242,19 +2347,24 @@ function _Chat() {
                               <audio src={message.audio_url} controls />
                             </div>
                           )}
-                          {message.attachFiles && message.attachFiles.length > 0 && (
-                            <div className={styles["chat-message-attachments"]}>
-                              {message.attachFiles.map((file, index) => (
-                                <div
-                                  key={index}
-                                  className={styles["chat-message-attachment"]}
-                                >
-                                  <FileIcon name={file.name} />
-                                  <span>{file.name}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                          {message.attachFiles &&
+                            message.attachFiles.length > 0 && (
+                              <div
+                                className={styles["chat-message-attachments"]}
+                              >
+                                {message.attachFiles.map((file, index) => (
+                                  <div
+                                    key={index}
+                                    className={
+                                      styles["chat-message-attachment"]
+                                    }
+                                  >
+                                    <FileIcon name={file.name} />
+                                    <span>{file.name}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
 
                           <div className={styles["chat-message-action-date"]}>
                             {isContext
@@ -2297,6 +2407,7 @@ function _Chat() {
                 setShowShortcutKeyModal={setShowShortcutKeyModal}
                 setUserInput={setUserInput}
                 setShowChatSidePanel={setShowChatSidePanel}
+                userInput={userInput}
               />
               <label
                 className={clsx(styles["chat-input-panel-inner"], {
@@ -2395,27 +2506,22 @@ function _Chat() {
             )}
           </div>
         </div>
-      </div >
+      </div>
       {showExport && (
         <ExportMessageModal onClose={() => setShowExport(false)} />
-      )
-      }
+      )}
 
-      {
-        isEditingMessage && (
-          <EditMessageModal
-            onClose={() => {
-              setIsEditingMessage(false);
-            }}
-          />
-        )
-      }
+      {isEditingMessage && (
+        <EditMessageModal
+          onClose={() => {
+            setIsEditingMessage(false);
+          }}
+        />
+      )}
 
-      {
-        showShortcutKeyModal && (
-          <ShortcutKeyModal onClose={() => setShowShortcutKeyModal(false)} />
-        )
-      }
+      {showShortcutKeyModal && (
+        <ShortcutKeyModal onClose={() => setShowShortcutKeyModal(false)} />
+      )}
     </>
   );
 }

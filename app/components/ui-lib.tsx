@@ -26,6 +26,7 @@ import { IconButton } from "./button";
 import { Avatar } from "./emoji";
 import clsx from "clsx";
 
+// 一个通用的气泡弹出层组件
 export function Popover(props: {
   children: JSX.Element;
   content: JSX.Element;
@@ -51,6 +52,7 @@ export function Card(props: { children: JSX.Element[]; className?: string }) {
   );
 }
 
+// 列表项组件，支持图标、标题、副标题
 export function ListItem(props: {
   title?: string;
   subTitle?: string | JSX.Element;
@@ -119,6 +121,7 @@ interface ModalProps {
   footer?: React.ReactNode;
   onClose?: () => void;
 }
+// 通用模态框组件
 export function Modal(props: ModalProps) {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -229,6 +232,7 @@ export function Toast(props: ToastProps) {
   );
 }
 
+// 显示全局 Toast 提示
 export function showToast(
   content: string,
   action?: ToastProps["action"],
@@ -269,6 +273,7 @@ export function Input(props: InputProps) {
   );
 }
 
+// 密码输入框，带显示/隐藏切换功能
 export function PasswordInput(
   props: HTMLProps<HTMLInputElement> & { aria?: string },
 ) {
@@ -294,6 +299,7 @@ export function PasswordInput(
   );
 }
 
+// 带图标的下拉选择框
 export function Select(
   props: React.DetailedHTMLProps<
     React.SelectHTMLAttributes<HTMLSelectElement> & {
@@ -321,6 +327,7 @@ export function Select(
   );
 }
 
+// 显示确认对话框
 export function showConfirm(content: any) {
   const div = document.createElement("div");
   div.className = "modal-mask";

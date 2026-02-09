@@ -24,7 +24,6 @@ export function IconButton(props: {
   return (
     <button
       className={clsx(
-        "clickable",
         styles["icon-button"],
         {
           [styles.border]: props.bordered,
@@ -42,6 +41,7 @@ export function IconButton(props: {
       style={props.style}
       aria-label={props.aria}
     >
+      {/* 图标部分 */}
       {props.icon && (
         <div
           aria-label={props.text || props.title}
@@ -53,6 +53,7 @@ export function IconButton(props: {
         </div>
       )}
 
+      {/* 文本部分 */}
       {props.text && (
         <div
           aria-label={props.text || props.title}

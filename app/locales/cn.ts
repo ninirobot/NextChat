@@ -114,6 +114,16 @@ const cn = {
     Thinking: "思考中",
     Thought: "已深度思考",
     ThinkingDuration: (d: number) => `用时 ${d} 秒`,
+    TokenUsage: "Token 使用量",
+    TokenTooltip: {
+      Context: "上下文消息数",
+      CurrentToken: "当前 Token 数",
+      EstimatedToken: "预估总 Token 数",
+      Input: "输入 Token",
+      Output: "输出 Token",
+      Total: "当前对话总 Token",
+      Unknown: "未知",
+    },
   },
   Export: {
     Title: "分享聊天记录",
@@ -584,7 +594,6 @@ const cn = {
           SubTitle: "样例：",
         },
       },
-
     },
 
     Model: "模型 (model)",
@@ -932,8 +941,8 @@ const cn = {
 
 type DeepPartial<T> = T extends object
   ? {
-    [P in keyof T]?: DeepPartial<T[P]>;
-  }
+      [P in keyof T]?: DeepPartial<T[P]>;
+    }
   : T;
 
 export type LocaleType = typeof cn;
