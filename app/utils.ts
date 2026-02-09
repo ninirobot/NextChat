@@ -268,7 +268,7 @@ export function getMessageTextContentWithoutThinking(message: RequestMessage) {
   // Filter out thinking lines (starting with "> ")
   return content
     .split("\n")
-    .filter((line) => !line.startsWith("> ") && line.trim() !== "")
+    .filter((line: string) => !line.startsWith("> ") && line.trim() !== "")
     .join("\n")
     .trim();
 }
