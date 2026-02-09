@@ -1,5 +1,9 @@
 @import "../styles/animation.scss";
 
+/* ==========================================================================
+   附件与上传相关样式
+   Attachment & Upload Styles
+   ========================================================================== */
 .attach-items {
   position: absolute;
   left: 30px;
@@ -87,6 +91,10 @@
 
 // Consolidated into .attach-items above
 
+/* ==========================================================================
+   聊天输入框操作栏样式
+   Chat Input Action Bar Styles
+   ========================================================================== */
 .chat-input-actions {
   display: flex;
   flex-wrap: wrap;
@@ -109,6 +117,7 @@
     padding: 4px 10px;
     animation: slide-in ease 0.3s;
     box-shadow: var(--card-shadow);
+    cursor: pointer;
     align-items: center;
     height: 16px;
     position: relative;
@@ -127,8 +136,9 @@
       white-space: nowrap;
       padding: 6px 10px;
       margin-bottom: 8px;
+      margin-bottom: 8px;
       color: var(--black);
-      background-color: var(--white);
+      background-color: var(--hover-color);
       border: var(--border-in-light);
       border-radius: 6px;
       pointer-events: none;
@@ -139,10 +149,45 @@
     }
 
     &:hover {
+      background-color: var(--hover-color);
+
       .text {
         opacity: 1;
       }
     }
+  }
+}
+
+/* ==========================================================================
+   模型选择器按钮样式
+   Model Selector Button Styles
+   ========================================================================== */
+.model-selector-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  border-radius: 20px;
+  font-size: 11px;
+  background-color: var(--white);
+  color: var(--black);
+  border: var(--border-in-light);
+  padding: 4px 12px;
+  animation: slide-in ease 0.3s;
+  box-shadow: var(--card-shadow);
+  height: min-content;
+
+  &:hover {
+    background-color: var(--hover-color);
+  }
+
+
+  .model-name {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -165,12 +210,17 @@
     border: var(--border-in-light);
     box-shadow: var(--card-shadow);
     padding: 10px 20px;
+    cursor: pointer;
     border-radius: 100px;
 
     animation: slide-in-from-top ease 0.3s;
 
     .prompt-toast-content {
       margin-left: 10px;
+    }
+
+    &:hover {
+      background-color: var(--hover-color);
     }
   }
 }
@@ -325,6 +375,10 @@
   }
 }
 
+/* ==========================================================================
+   聊天主界面布局
+   Chat Main Layout
+   ========================================================================== */
 .chat {
   display: flex;
   flex-direction: column;
@@ -356,6 +410,10 @@
   }
 }
 
+/* ==========================================================================
+   聊天消息气泡样式
+   Chat Message Bubble Styles
+   ========================================================================== */
 .chat-message {
   display: flex;
   flex-direction: row;
@@ -604,14 +662,8 @@
     justify-content: center;
     opacity: 0.5;
     transition: all ease 0.2s;
-    width: 20px;
-    height: 20px;
-
-    /* Increase hit area */
-    &.clickable {
-      width: 24px;
-      height: 24px;
-    }
+    width: 24px;
+    height: 24px;
 
     &:hover {
       opacity: 1;
@@ -635,6 +687,10 @@
   }
 }
 
+/* ==========================================================================
+   输入面板区域
+   Input Panel Area
+   ========================================================================== */
 .chat-input-panel {
   position: relative;
   width: 100%;
@@ -745,7 +801,6 @@
   min-height: 68px;
 }
 
-.chat-input:focus {}
 
 .chat-input-send {
   background-color: var(--primary);
@@ -754,6 +809,7 @@
   position: absolute;
   right: 30px;
   bottom: 32px;
+  cursor: pointer;
 }
 
 @media only screen and (max-width: 600px) {
@@ -1035,4 +1091,137 @@
   font-size: 14px;
   color: var(--black);
   animation: slide-in ease 0.3s;
+}
+
+@keyframes progress-shine {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.token-counter-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: var(--border-in-light);
+  background-color: var(--white);
+  color: var(--black);
+  cursor: pointer;
+  font-size: 12px;
+  box-shadow: var(--card-shadow);
+  animation: slide-in ease 0.3s;
+  outline: none;
+  height: 16px;
+  justify-content: center;
+  width: auto;
+  min-width: fit-content;
+  position: relative;
+  box-sizing: content-box;
+
+  .token-counter-text {
+    white-space: nowrap;
+    font-weight: 500;
+    color: var(--black);
+    font-size: 12px;
+    font-family: inherit;
+    pointer-events: none;
+  }
+
+  &:hover {
+    background-color: var(--hover-color);
+  }
+
+  &:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+  }
+
+  &:active {
+    transform: none;
+  }
+}
+
+.token-counter-tooltip {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 8px;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background-color: var(--hover-color);
+  color: var(--black);
+  font-size: 12px;
+  border-radius: 6px;
+  border: var(--border-in-light);
+  z-index: 1000;
+  pointer-events: none;
+  white-space: normal;
+  min-width: 200px;
+
+  div {
+    margin-bottom: 2px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .token-progress-container {
+    border-top: 1px solid var(--border-in-light);
+    margin-top: 6px;
+    padding-top: 6px;
+
+    .token-progress-info {
+      display: flex;
+      margin-bottom: 6px;
+
+      span {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--black);
+      }
+    }
+
+    .token-progress-bar {
+      width: 100%;
+      height: 6px;
+      background-color: rgba(0, 0, 0, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+
+      .token-progress-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition:
+          width 0.3s ease-in-out,
+          background-color 0.3s ease-in-out;
+        position: relative;
+        min-width: 2px;
+
+        &::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(90deg,
+              transparent 0%,
+              transparent 20%,
+              rgba(255, 255, 255, 0.4) 50%,
+              transparent 80%,
+              transparent 100%);
+          animation: progress-shine 3s ease-in-out infinite;
+          opacity: 0.8;
+        }
+      }
+    }
+  }
 }

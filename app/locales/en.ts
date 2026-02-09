@@ -115,6 +115,13 @@ const en: LocaleType = {
     Thinking: "Thinking",
     Thought: "Thought",
     ThinkingDuration: (d: number) => `took ${d} seconds`,
+    TokenUsage: "Token Usage",
+    TokenTooltip: {
+      Context: "Context Messages",
+      CurrentToken: "Current Tokens",
+      EstimatedToken: "Estimated Total Tokens",
+      Unknown: "Unknown",
+    },
   },
   Export: {
     Title: "Export Messages",
@@ -589,7 +596,6 @@ const en: LocaleType = {
           Placeholder: "Nvidia API Key",
         },
       },
-
     },
 
     Model: "Model",
@@ -649,7 +655,8 @@ const en: LocaleType = {
     },
     ReasoningEffort: {
       Title: "Reasoning Effort (reasoning_effort)",
-      SubTitle: "Control reasoning model's thinking depth (GPT-OSS series only)",
+      SubTitle:
+        "Control reasoning model's thinking depth (GPT-OSS series only)",
     },
     TTS: {
       Enable: {
