@@ -14,6 +14,9 @@ export const MODEL_CONTEXT_TOKENS: Record<string, ModelContextConfig> = {
   "LongCat-Flash-Chat": { contextTokens: 262144 },
   "LongCat-Flash-Thinking": { contextTokens: 262144 },
   "LongCat-Flash-Thinking-2601": { contextTokens: 262144 },
+
+  // GPT OSS
+  "gpt-oss-120b": { contextTokens: 131072 },
 };
 
 export function getModelContextTokens(
@@ -85,6 +88,11 @@ export function getModelContextTokens(
   // DeepSeek R1 0528 Free variant
   if (lowerName.includes("deepseek-r1")) {
     return { contextTokens: 163840 };
+  }
+
+  // GPT OSS
+  if (lowerName.includes("gpt-oss")) {
+    return { contextTokens: 131072 };
   }
 
   return null;

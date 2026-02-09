@@ -236,30 +236,34 @@ export function isMacOS(): boolean {
   return false;
 }
 
-export function getMessageTextContent(message: RequestMessage) {
+export function getMessageByVersion(message: RequestMessage): RequestMessage {
   const msg = message as any;
   const v = msg.versions;
   const i = msg.currentVersionIndex ?? 0;
-  // 若存在合法历史版本，返回它的 content
-  if (v?.length > 0 && i >= 0 && i < v.length) return v[i].content;
-  // 否则返回当前内容
-  if (typeof message.content === "string") return message.content;
-  return message.content?.find((c) => c.type === "text")?.text ?? "";
+
+  // 若存在合法历史版本，返回它的 content 的副本
+  if (v?.length > 0 && i >= 0 && i < v.length) {
+    const version = v[i];
+    return {
+      ...msg,
+      content: version.content,
+      reasoning_content: version.reasoning_content,
+      reasoning_duration: version.reasoning_duration,
+    };
+  }
+
+  // 否则返回原始消息
+  return msg;
+}
+
+export function getMessageTextContent(message: RequestMessage) {
+  const msg = getMessageByVersion(message);
+  if (typeof msg.content === "string") return msg.content;
+  return (msg.content as any)?.find((c: any) => c.type === "text")?.text ?? "";
 }
 
 export function getMessageTextContentWithoutThinking(message: RequestMessage) {
-  let content = "";
-
-  if (typeof message.content === "string") {
-    content = message.content;
-  } else {
-    for (const c of message.content) {
-      if (c.type === "text") {
-        content = c.text ?? "";
-        break;
-      }
-    }
-  }
+  const content = getMessageTextContent(message);
 
   // Filter out thinking lines (starting with "> ")
   return content

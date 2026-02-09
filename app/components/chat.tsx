@@ -36,6 +36,7 @@ import {
   getMessageImages,
   getMessageTextContent,
   getMessageTextContentWithoutThinking,
+  getMessageByVersion,
   getModelSizes,
   isDalle3,
   isVisionModel,
@@ -471,23 +472,38 @@ export function TokenCounter(props: {
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
 
-  // 计算当前会话的 token 数量（不包含思考过程的内容）
   // Calculate the token count for the current conversation (excluding thinking content)
-  const usedTokens = useMemo(() => {
+  // Calculate the token count for the current conversation (excluding thinking content)
+  const { historyInputTokens, historyOutputTokens } = useMemo(() => {
     const messages = props.session.messages;
-    return messages.reduce((total: number, message: ChatMessage) => {
-      // 忽略错误消息
-      if (message.isError) return total;
-      // 估算文本内容的 token 数
-      const textTokens = estimateTokenLength(
-        getMessageTextContentWithoutThinking(message),
-      );
-      // 估算图片的 token 数（简化估算：每张图 1000 tokens）
-      const images = getMessageImages(message);
-      const imageTokens = images.length * 1000;
-      return total + textTokens + imageTokens;
-    }, 0);
-  }, [props.session.messages]);
+    const clearContextIndex = props.session.clearContextIndex ?? -1;
+    const contextMessages = messages.slice(
+      clearContextIndex >= 0 ? clearContextIndex : 0,
+    );
+
+    return contextMessages.reduce(
+      (acc, message: ChatMessage) => {
+        // 忽略错误消息
+        if (message.isError) return acc;
+        // 估算文本内容的 token 数
+        const textTokens = estimateTokenLength(
+          getMessageTextContentWithoutThinking(message),
+        );
+        // 估算图片的 token 数（简化估算：每张图 1000 tokens）
+        const images = getMessageImages(message);
+        const imageTokens = images.length * 1000;
+        const tokens = textTokens + imageTokens;
+
+        if (message.role === "user" || message.role === "system") {
+          acc.historyInputTokens += tokens;
+        } else {
+          acc.historyOutputTokens += tokens;
+        }
+        return acc;
+      },
+      { historyInputTokens: 0, historyOutputTokens: 0 },
+    );
+  }, [props.session.messages, props.session.clearContextIndex]);
 
   // Get the configuration for the current session
   const modelConfig = props.session.mask.modelConfig;
@@ -499,37 +515,31 @@ export function TokenCounter(props: {
   const maxContextCount = modelConfig.historyMessageCount;
 
   // Calculate estimated token count (including user input)
-  const inputTokens = useMemo(() => {
+  const userInputTokens = useMemo(() => {
     return props.userInput ? estimateTokenLength(props.userInput) : 0;
   }, [props.userInput]);
 
-  const estimatedTokens = usedTokens + inputTokens;
+  const currentInputTokens = historyInputTokens + userInputTokens;
+  const currentOutputTokens = historyOutputTokens;
+  const totalTokens = currentInputTokens + currentOutputTokens;
 
   const displayText = maxTokens
-    ? `${formatTokenCount(usedTokens)}/${formatTokenCount(maxTokens)}`
-    : `${formatTokenCount(usedTokens)}/?`;
+    ? `${formatTokenCount(totalTokens)}/${formatTokenCount(maxTokens)}`
+    : `${formatTokenCount(totalTokens)}/?`;
 
   // 构建详细的提示框内容
   const tooltipLines = [
     `${Locale.Chat.TokenTooltip.Context}: ${currentContextCount} / ${maxContextCount}`,
-    maxTokens
-      ? `${
-          Locale.Chat.TokenTooltip.CurrentToken
-        }: ${usedTokens.toLocaleString()} / ${maxTokens.toLocaleString()}`
-      : `${
-          Locale.Chat.TokenTooltip.CurrentToken
-        }: ${usedTokens.toLocaleString()} / ${
-          Locale.Chat.TokenTooltip.Unknown
-        }`,
-    inputTokens > 0
-      ? `${
-          Locale.Chat.TokenTooltip.EstimatedToken
-        }: ${estimatedTokens.toLocaleString()}`
-      : null,
+    `${Locale.Chat.TokenTooltip.Input}: ${currentInputTokens.toLocaleString()}`,
+    `${
+      Locale.Chat.TokenTooltip.Output
+    }: ${currentOutputTokens.toLocaleString()}`,
+    `${Locale.Chat.TokenTooltip.Total}: ${totalTokens.toLocaleString()}` +
+      (maxTokens ? ` / ${maxTokens.toLocaleString()}` : ` / ?`),
   ].filter(Boolean) as string[];
 
   // Calculate progress bar data
-  const progressPercentage = maxTokens ? (usedTokens / maxTokens) * 100 : 0;
+  const progressPercentage = maxTokens ? (totalTokens / maxTokens) * 100 : 0;
   const getProgressColor = (percentage: number) => {
     if (percentage >= 90) return "#ef4444"; // Red - Danger
     if (percentage >= 70) return "#f59e0b"; // Yellow - Warning
@@ -1547,6 +1557,7 @@ function _Chat() {
           const max = msg.versions.length;
           const next = Math.min(Math.max(0, current + delta), max);
           msg.currentVersionIndex = next;
+          session.messages = [...session.messages];
         }
       }
     });
@@ -1567,65 +1578,23 @@ function _Chat() {
 
   // 获取当前显示的消息内容
   const getCurrentMessageContent = (message: ChatMessage): string => {
-    // 若消息没有版本，优先返回字符串；否则从多模态数组里提取文本
-    if (!message.versions || message.versions.length < 1) {
-      return typeof message.content === "string"
-        ? message.content
-        : getMessageTextContent(message);
-    }
-
-    const currentIndex = message.currentVersionIndex ?? 0;
-    if (currentIndex === message.versions.length) {
-      // 显示最新版本（当前消息内容）
-      return typeof message.content === "string"
-        ? message.content
-        : getMessageTextContent(message);
-    } else if (currentIndex >= 0 && currentIndex < message.versions.length) {
-      // 显示历史版本（访问 content 字段）
-      return message.versions[currentIndex].content;
-    }
-
-    return typeof message.content === "string"
-      ? message.content
-      : getMessageTextContent(message);
+    return getMessageTextContent(message);
   };
 
   // 获取当前显示的思考内容
   const getCurrentReasoningContent = (
     message: ChatMessage,
   ): string | undefined => {
-    if (!message.versions || message.versions.length < 1) {
-      return message.reasoning_content;
-    }
-
-    const currentIndex = message.currentVersionIndex ?? 0;
-    if (currentIndex === message.versions.length) {
-      // 显示最新版本的思考内容
-      return message.reasoning_content;
-    } else if (currentIndex >= 0 && currentIndex < message.versions.length) {
-      // 显示历史版本的思考内容
-      return message.versions[currentIndex].reasoning_content;
-    }
-
-    return message.reasoning_content;
+    const msg = getMessageByVersion(message) as ChatMessage;
+    return msg.reasoning_content;
   };
 
   // 获取当前显示的思考时长
   const getCurrentReasoningDuration = (
     message: ChatMessage,
   ): number | undefined => {
-    if (!message.versions || message.versions.length < 1) {
-      return message.reasoning_duration;
-    }
-
-    const currentIndex = message.currentVersionIndex ?? 0;
-    if (currentIndex === message.versions.length) {
-      return message.reasoning_duration;
-    } else if (currentIndex >= 0 && currentIndex < message.versions.length) {
-      return message.versions[currentIndex].reasoning_duration;
-    }
-
-    return message.reasoning_duration;
+    const msg = getMessageByVersion(message) as ChatMessage;
+    return msg.reasoning_duration;
   };
 
   const accessStore = useAccessStore();

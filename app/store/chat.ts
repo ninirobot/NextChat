@@ -1,4 +1,5 @@
 import {
+  getMessageByVersion,
   getMessageTextContent,
   isDalle3,
   safeLocalStorage,
@@ -18,7 +19,6 @@ import { showToast } from "../components/ui-lib";
 import {
   DEFAULT_INPUT_TEMPLATE,
   DEFAULT_MODELS,
-  DEFAULT_SYSTEM_TEMPLATE,
   GEMINI_SUMMARIZE_MODEL,
   DEEPSEEK_SUMMARIZE_MODEL,
   KnowledgeCutOffDate,
@@ -452,13 +452,16 @@ export const useChatStore = createPersistStore(
             const contentCopy = [...mContent];
 
             // Add file content to existing text part, or create new text part
-            const textPartIndex = contentCopy.findIndex((c) => c.type === "text");
+            const textPartIndex = contentCopy.findIndex(
+              (c) => c.type === "text",
+            );
             if (textPartIndex >= 0 && "text" in contentCopy[textPartIndex]) {
               // Append to existing text (create new object to avoid mutation)
               contentCopy[textPartIndex] = {
                 type: "text" as const,
-                text: (contentCopy[textPartIndex] as { type: "text"; text: string }).text +
-                  `\n\nProcessed files:\n${fileContent}`,
+                text:
+                  (contentCopy[textPartIndex] as { type: "text"; text: string })
+                    .text + `\n\nProcessed files:\n${fileContent}`,
               };
             } else {
               // No text part - add one at the beginning
@@ -514,10 +517,7 @@ export const useChatStore = createPersistStore(
         get().doRequest(sendMessages, session, botMessage, messageIndex);
       },
 
-      async retryBotMessage(
-        botMessageId: string,
-        userMessage: ChatMessage,
-      ) {
+      async retryBotMessage(botMessageId: string, userMessage: ChatMessage) {
         const session = get().currentSession();
         const modelConfig = session.mask.modelConfig;
 
@@ -563,10 +563,13 @@ export const useChatStore = createPersistStore(
         // get context messages up to the user message
         const recentMessages = get().getMessagesWithMemory();
         // remove messages after the user message (including the bot message being retried)
-        const userMessageIndex = recentMessages.findIndex(m => m.id === userMessage.id);
-        const validRecentMessages = userMessageIndex >= 0
-          ? recentMessages.slice(0, userMessageIndex) // Messages before user message
-          : recentMessages.filter(m => m.id !== botMessageId); // Fallback: just remove bot message
+        const userMessageIndex = recentMessages.findIndex(
+          (m) => m.id === userMessage.id,
+        );
+        const validRecentMessages =
+          userMessageIndex >= 0
+            ? recentMessages.slice(0, userMessageIndex) // Messages before user message
+            : recentMessages.filter((m) => m.id !== botMessageId); // Fallback: just remove bot message
 
         const fileContent = userMessage.attachFiles
           ?.map((f) => `File: ${f.name}\nContent:\n${f.content}`)
@@ -581,12 +584,15 @@ export const useChatStore = createPersistStore(
           if (fileContent) {
             // Create a copy to avoid modifying the original
             const contentCopy = [...originalContent];
-            const textPartIndex = contentCopy.findIndex((c) => c.type === "text");
+            const textPartIndex = contentCopy.findIndex(
+              (c) => c.type === "text",
+            );
             if (textPartIndex >= 0 && "text" in contentCopy[textPartIndex]) {
               contentCopy[textPartIndex] = {
                 type: "text" as const,
-                text: (contentCopy[textPartIndex] as { type: "text"; text: string }).text +
-                  `\n\nProcessed files:\n${fileContent}`,
+                text:
+                  (contentCopy[textPartIndex] as { type: "text"; text: string })
+                    .text + `\n\nProcessed files:\n${fileContent}`,
               };
             } else {
               contentCopy.unshift({
@@ -661,8 +667,8 @@ export const useChatStore = createPersistStore(
             get().updateTargetSession(session, (session) => {
               session.messages = session.messages.map((m) =>
                 m.id === botMessage.id
-                  ? { ...botMessage }  // Create new object reference
-                  : m
+                  ? { ...botMessage } // Create new object reference
+                  : m,
               );
             });
             get().onNewMessage(botMessage, session);
@@ -703,9 +709,7 @@ export const useChatStore = createPersistStore(
             // Create new message object to trigger React re-render
             get().updateTargetSession(session, (session) => {
               session.messages = session.messages.map((m) =>
-                m.id === botMessage.id
-                  ? { ...botMessage }
-                  : m
+                m.id === botMessage.id ? { ...botMessage } : m,
               );
             });
             ChatControllerPool.remove(
@@ -788,20 +792,7 @@ export const useChatStore = createPersistStore(
           if (!msg || msg.isError) continue;
 
           // 版本感知：如果消息有历史版本且当前索引指向历史版本，替换 content
-          let msgToSend = msg;
-          if (msg.versions && msg.versions.length > 0) {
-            const idx = msg.currentVersionIndex ?? 0;
-            if (idx >= 0 && idx < msg.versions.length) {
-              // 当前索引指向历史版本，创建副本并替换 content 和 reasoning_content
-              const version = msg.versions[idx];
-              msgToSend = {
-                ...msg,
-                content: version.content,
-                reasoning_content: version.reasoning_content,
-                reasoning_duration: version.reasoning_duration,
-              };
-            }
-          }
+          const msgToSend = getMessageByVersion(msg) as ChatMessage;
 
           tokenCount += estimateTokenLength(getMessageTextContent(msgToSend));
           reversedRecentMessages.push(msgToSend);
@@ -851,9 +842,9 @@ export const useChatStore = createPersistStore(
         const [model, providerName] = modelConfig.compressModel
           ? [modelConfig.compressModel, modelConfig.compressProviderName]
           : getSummarizeModel(
-            session.mask.modelConfig.model,
-            session.mask.modelConfig.providerName,
-          );
+              session.mask.modelConfig.model,
+              session.mask.modelConfig.providerName,
+            );
         const api: ClientApi = getClientApi(providerName as ServiceProvider);
 
         // remove error messages if any
@@ -891,13 +882,11 @@ export const useChatStore = createPersistStore(
             },
             onFinish(message, responseRes) {
               if (responseRes?.status === 200) {
-                get().updateTargetSession(
-                  session,
-                  (session) => {
-                    const topic = message.length > 0 ? trimTopic(message) : DEFAULT_TOPIC;
-                    session.topic = topic.length > 0 ? topic : DEFAULT_TOPIC;
-                  },
-                );
+                get().updateTargetSession(session, (session) => {
+                  const topic =
+                    message.length > 0 ? trimTopic(message) : DEFAULT_TOPIC;
+                  session.topic = topic.length > 0 ? topic : DEFAULT_TOPIC;
+                });
               }
             },
           });
