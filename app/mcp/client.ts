@@ -51,5 +51,5 @@ export async function executeRequest(
   client: Client,
   request: McpRequestMessage,
 ) {
-  return client.request(request, z.any());
+  return (client as any).request(request, z.any());
 }
