@@ -1,3 +1,4 @@
+/* eslint-disable unused-imports/no-unused-imports */
 export const OWNER = "ChatGPTNextWeb";
 export const REPO = "ChatGPT-Next-Web";
 export const REPO_URL = `https://github.com/${OWNER}/${REPO}`;
@@ -41,7 +42,6 @@ export const MEITUAN_BASE_URL = "https://api.longcat.chat/openai";
 export const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 export const NVIDIA_BASE_URL = "https://integrate.api.nvidia.com";
 
-
 export const CACHE_URL_PREFIX = "/api/cache";
 export const UPLOAD_URL = `${CACHE_URL_PREFIX}/upload`;
 
@@ -83,7 +83,6 @@ export enum ApiPath {
   OpenRouter = "/api/openrouter",
   Nvidia = "/api/nvidia",
 }
-
 
 export enum SlotID {
   AppBody = "app-body",
@@ -147,7 +146,6 @@ export enum ServiceProvider {
   Nvidia = "Nvidia",
 }
 
-
 // Google API safety settings, see https://ai.google.dev/gemini-api/docs/safety-settings
 // BLOCK_NONE will not block any content, and BLOCK_ONLY_HIGH will block only high-risk content.
 export enum GoogleSafetySettingsThreshold {
@@ -177,7 +175,6 @@ export enum ModelProvider {
   OpenRouter = "OpenRouter",
   Nvidia = "Nvidia",
 }
-
 
 export const Stability = {
   GeneratePath: "v2beta/stable-image/generate",
@@ -308,7 +305,6 @@ export const Nvidia = {
   ExampleEndpoint: NVIDIA_BASE_URL,
   ChatPath: "v1/chat/completions",
 };
-
 
 export const DEFAULT_INPUT_TEMPLATE = ``; // input / time / model / lang
 // export const DEFAULT_SYSTEM_TEMPLATE = `
@@ -598,7 +594,7 @@ const googleModels = [
   "gemini-2.0-pro-exp",
   "gemini-2.0-pro-exp-02-05",
   "gemini-2.5-pro-preview-06-05",
-  "gemini-2.5-pro"
+  "gemini-2.5-pro",
 ];
 
 const anthropicModels = [
@@ -687,7 +683,12 @@ const iflytekModels = [
   "4.0Ultra",
 ];
 
-const deepseekModels = ["deepseek-chat", "deepseek-coder", "deepseek-reasoner", "deepseek-r1-0528:free"];
+const deepseekModels = [
+  "deepseek-chat",
+  "deepseek-coder",
+  "deepseek-reasoner",
+  "deepseek-r1-0528:free",
+];
 
 const xAIModes = [
   "grok-beta",
@@ -783,6 +784,7 @@ const longcatModels = [
   "LongCat-Flash-Chat",
   "LongCat-Flash-Thinking",
   "LongCat-Flash-Thinking-2601",
+  "LongCat-Flash-Lite",
 ];
 
 const openrouterModels = [
@@ -983,8 +985,6 @@ const nvidiaModels = [
   "yentinglin/llama-3-taiwan-70b-instruct",
   "z-ai/glm4.7",
 ];
-
-
 
 let seq = 1000; // 内置的模型序号生成器从1000开始
 export const DEFAULT_MODELS = [
