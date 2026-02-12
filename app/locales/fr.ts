@@ -179,6 +179,13 @@ const fr: PartialLocaleType = {
     Title: "Paramètres",
     SubTitle: "Toutes les options de configuration",
     ShowPassword: "Afficher le mot de passe",
+    Tab: {
+      General: "Général",
+      Sync: "Synchronisation",
+      Mask: "Assistants",
+      ModelService: "Service de modèle",
+      ModelVoice: "Modèle et voix",
+    },
 
     Danger: {
       Reset: {

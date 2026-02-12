@@ -177,6 +177,13 @@ const jp: PartialLocaleType = {
     Title: "設定",
     SubTitle: "すべての設定オプション",
     ShowPassword: "パスワードを表示",
+    Tab: {
+      General: "一般",
+      Sync: "同期",
+      Mask: "アシスタント",
+      ModelService: "モデルサービス",
+      ModelVoice: "モデルと音声",
+    },
 
     Danger: {
       Reset: {

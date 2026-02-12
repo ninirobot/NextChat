@@ -1,6 +1,62 @@
 .settings {
   padding: 20px;
   overflow: auto;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: var(--second);
+  border-radius: 12px;
+  border: var(--border-in-light);
+}
+
+.settings-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--black);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--hover-color);
+  }
+}
+
+.settings-tab-active {
+  background: var(--primary);
+  color: white;
+
+  &:hover {
+    background: var(--primary);
+  }
+}
+
+.tab-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.tab-label {
+  font-weight: 500;
+}
+
+.settings-content {
+  flex: 1;
+  overflow: auto;
 }
 
 .avatar {
@@ -18,6 +74,7 @@
     margin-bottom: 20px;
     text-align: left;
   }
+
   .edit-prompt-content {
     max-width: unset;
   }
@@ -54,6 +111,7 @@
           line-height: 2;
           font-weight: bold;
         }
+
         .user-prompt-content {
           font-size: 12px;
         }
@@ -75,6 +133,6 @@
 
 .subtitle-button {
   button {
-    overflow:visible ;
+    overflow: visible;
   }
 }
