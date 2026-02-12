@@ -11,7 +11,6 @@ import {
   useAppConfig,
   useChatStore,
   ChatMessageTool,
-  usePluginStore,
 } from "@/app/store";
 import { stream } from "@/app/utils/chat";
 import {
@@ -114,11 +113,8 @@ export class MoonshotApi implements LLMApi {
       );
 
       if (shouldStream) {
-        const [tools, funcs] = usePluginStore
-          .getState()
-          .getAsTools(
-            useChatStore.getState().currentSession().mask?.plugin || [],
-          );
+        const tools: any[] = [];
+        const funcs = {};
         return stream(
           chatPath,
           requestPayload,

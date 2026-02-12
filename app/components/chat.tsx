@@ -25,7 +25,6 @@ import {
   useAccessStore,
   useAppConfig,
   useChatStore,
-  usePluginStore,
 } from "../store";
 import { useMaskStore } from "../store/mask";
 import { Prompt, usePromptStore } from "../store/prompt";
@@ -42,7 +41,6 @@ import {
   isVisionModel,
   safeLocalStorage,
   selectOrCopy,
-  showPlugins,
   supportsCustomSize,
   useMobileScreen,
 } from "../utils";
@@ -119,7 +117,7 @@ import MaxIcon from "../icons/max.svg";
 import McpToolIcon from "../icons/tool.svg";
 import MinIcon from "../icons/min.svg";
 import PinIcon from "../icons/pin.svg";
-import PluginIcon from "../icons/plugin.svg";
+
 import PromptIcon from "../icons/prompt.svg";
 import QualityIcon from "../icons/hd.svg";
 import ReloadIcon from "../icons/reload.svg";
@@ -607,7 +605,7 @@ export function ChatActions(props: {
   const config = useAppConfig();
   const navigate = useNavigate();
   const chatStore = useChatStore();
-  const pluginStore = usePluginStore();
+
   const session = chatStore.currentSession();
 
   // switch themes
@@ -666,7 +664,7 @@ export function ChatActions(props: {
     return model?.displayName ?? "";
   }, [models, currentModel, currentProviderName]);
   const [showModelSelector, setShowModelSelector] = useState(false);
-  const [showPluginSelector, setShowPluginSelector] = useState(false);
+
   const [showUploadImage, setShowUploadImage] = useState(false);
 
   const [showSizeSelector, setShowSizeSelector] = useState(false);
@@ -904,36 +902,6 @@ export function ChatActions(props: {
                 session.mask.modelConfig.style = style;
               });
               showToast(style);
-            }}
-          />
-        )}
-
-        {showPlugins(currentProviderName, currentModel) && (
-          <ChatAction
-            onClick={() => {
-              if (pluginStore.getAll().length == 0) {
-                navigate(Path.Plugins);
-              } else {
-                setShowPluginSelector(true);
-              }
-            }}
-            text={Locale.Plugin.Name}
-            icon={<PluginIcon />}
-          />
-        )}
-        {showPluginSelector && (
-          <Selector
-            multiple
-            defaultSelectedValue={chatStore.currentSession().mask?.plugin}
-            items={pluginStore.getAll().map((item) => ({
-              title: `${item?.title}@${item?.version}`,
-              value: item?.id,
-            }))}
-            onClose={() => setShowPluginSelector(false)}
-            onSelection={(s) => {
-              chatStore.updateTargetSession(session, (session) => {
-                session.mask.plugin = s as string[];
-              });
             }}
           />
         )}

@@ -4,7 +4,6 @@ import {
   useAccessStore,
   useAppConfig,
   useChatStore,
-  usePluginStore,
   ChatMessageTool,
 } from "@/app/store";
 
@@ -115,11 +114,8 @@ export class NvidiaApi implements LLMApi {
 
       if (shouldStream) {
         let index = -1;
-        const [tools, funcs] = usePluginStore
-          .getState()
-          .getAsTools(
-            useChatStore.getState().currentSession().mask?.plugin || [],
-          );
+        const tools: any[] = [];
+        const funcs = {};
 
         streamWithThink(
           chatPath,

@@ -744,9 +744,7 @@ const en: LocaleType = {
     Clear: "Context Cleared",
     Revert: "Revert",
   },
-  Discovery: {
-    Name: "Discovery",
-  },
+
   Mcp: {
     Name: "MCP",
   },
@@ -768,47 +766,7 @@ const en: LocaleType = {
       View: "View",
     },
   },
-  Plugin: {
-    Name: "Plugin",
-    Page: {
-      Title: "Plugins",
-      SubTitle: (count: number) => `${count} plugins`,
-      Search: "Search Plugin",
-      Create: "Create",
-      Find: "You can find awesome plugins on github: ",
-    },
-    Item: {
-      Info: (count: number) => `${count} method`,
-      View: "View",
-      Edit: "Edit",
-      Delete: "Delete",
-      DeleteConfirm: "Confirm to delete?",
-    },
-    Auth: {
-      None: "None",
-      Basic: "Basic",
-      Bearer: "Bearer",
-      Custom: "Custom",
-      CustomHeader: "Parameter Name",
-      Token: "Token",
-      Proxy: "Using Proxy",
-      ProxyDescription: "Using proxies to solve CORS error",
-      Location: "Location",
-      LocationHeader: "Header",
-      LocationQuery: "Query",
-      LocationBody: "Body",
-    },
-    EditModal: {
-      Title: (readonly: boolean) =>
-        `Edit Plugin ${readonly ? "(readonly)" : ""}`,
-      Download: "Download",
-      Auth: "Authentication Type",
-      Content: "OpenAPI Schema",
-      Load: "Load From URL",
-      Method: "Method",
-      Error: "OpenAPI Schema Error",
-    },
-  },
+
   Mask: {
     Name: "Mask",
     Page: {
@@ -892,61 +850,6 @@ const en: LocaleType = {
   URLCommand: {
     Code: "Detected access code from url, confirm to apply? ",
     Settings: "Detected settings from url, confirm to apply?",
-  },
-  SdPanel: {
-    Prompt: "Prompt",
-    NegativePrompt: "Negative Prompt",
-    PleaseInput: (name: string) => `Please input ${name}`,
-    AspectRatio: "Aspect Ratio",
-    ImageStyle: "Image Style",
-    OutFormat: "Output Format",
-    AIModel: "AI Model",
-    ModelVersion: "Model Version",
-    Submit: "Submit",
-    ParamIsRequired: (name: string) => `${name} is required`,
-    Styles: {
-      D3Model: "3d-model",
-      AnalogFilm: "analog-film",
-      Anime: "anime",
-      Cinematic: "cinematic",
-      ComicBook: "comic-book",
-      DigitalArt: "digital-art",
-      Enhance: "enhance",
-      FantasyArt: "fantasy-art",
-      Isometric: "isometric",
-      LineArt: "line-art",
-      LowPoly: "low-poly",
-      ModelingCompound: "modeling-compound",
-      NeonPunk: "neon-punk",
-      Origami: "origami",
-      Photographic: "photographic",
-      PixelArt: "pixel-art",
-      TileTexture: "tile-texture",
-    },
-  },
-  Sd: {
-    SubTitle: (count: number) => `${count} images`,
-    Actions: {
-      Params: "See Params",
-      Copy: "Copy Prompt",
-      Delete: "Delete",
-      Retry: "Retry",
-      ReturnHome: "Return Home",
-      History: "History",
-    },
-    EmptyRecord: "No images yet",
-    Status: {
-      Name: "Status",
-      Success: "Success",
-      Error: "Error",
-      Wait: "Waiting",
-      Running: "Running",
-    },
-    Danger: {
-      Delete: "Confirm to delete?",
-    },
-    GenerateParams: "Generate Params",
-    Detail: "Detail",
   },
 };
 

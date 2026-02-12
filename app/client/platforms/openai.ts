@@ -14,7 +14,6 @@ import {
   useAccessStore,
   useAppConfig,
   useChatStore,
-  usePluginStore,
 } from "@/app/store";
 import { collectModelsWithDefaultModel } from "@/app/utils/model";
 import {
@@ -232,7 +231,7 @@ export class ChatGPTApi implements LLMApi {
         messages,
         stream: options.config.stream,
         model: modelConfig.model,
-        temperature: (!isO1OrO3 && !isGpt5) ? modelConfig.temperature : 1,
+        temperature: !isO1OrO3 && !isGpt5 ? modelConfig.temperature : 1,
         presence_penalty: !isO1OrO3 ? modelConfig.presence_penalty : 0,
         frequency_penalty: !isO1OrO3 ? modelConfig.frequency_penalty : 0,
         top_p: !isO1OrO3 ? modelConfig.top_p : 1,
@@ -247,7 +246,6 @@ export class ChatGPTApi implements LLMApi {
         if (modelConfig.max_tokens && modelConfig.max_tokens < 65536) {
           requestPayload["max_completion_tokens"] = modelConfig.max_tokens;
         }
-
       } else if (isO1OrO3) {
         // by default the o1/o3 models will not attempt to produce output that includes markdown formatting
         // manually add "Formatting re-enabled" developer message to encourage markdown inclusion in model responses
@@ -262,7 +260,6 @@ export class ChatGPTApi implements LLMApi {
           requestPayload["max_completion_tokens"] = modelConfig.max_tokens;
         }
       }
-
 
       // add max_tokens to vision model
       if (visionModel && !isO1OrO3 && !isGpt5) {
@@ -313,11 +310,8 @@ export class ChatGPTApi implements LLMApi {
       }
       if (shouldStream) {
         let index = -1;
-        const [tools, funcs] = usePluginStore
-          .getState()
-          .getAsTools(
-            useChatStore.getState().currentSession().mask?.plugin || [],
-          );
+        const tools: any[] = [];
+        const funcs = {};
         // console.log("getAsTools", tools, funcs);
         streamWithThink(
           chatPath,
