@@ -64,7 +64,7 @@ const en: LocaleType = {
     },
     Commands: {
       new: "Start a new chat",
-      newm: "Start a new chat with mask",
+      newm: "Start a new chat with assistant",
       next: "Next Chat",
       prev: "Previous Chat",
       clear: "Clear Context",
@@ -80,7 +80,7 @@ const en: LocaleType = {
         dark: "Dark Theme",
       },
       Prompt: "Prompts",
-      Masks: "Masks",
+      Masks: "Assistants",
       Clear: "Clear Context",
       Settings: "Settings",
       UploadImage: "Upload Images",
@@ -100,7 +100,7 @@ const en: LocaleType = {
     StopSpeak: "Stop Speak",
     Config: {
       Reset: "Reset to Default",
-      SaveAs: "Save as Mask",
+      SaveAs: "Save as Assistant",
     },
     IsContext: "Contextual Prompt",
     ShortcutKey: {
@@ -139,7 +139,7 @@ const en: LocaleType = {
     },
     IncludeContext: {
       Title: "Including Context",
-      SubTitle: "Export context prompts in mask or not",
+      SubTitle: "Export context prompts in assistant or not",
     },
     Steps: {
       Select: "Select",
@@ -274,18 +274,18 @@ const en: LocaleType = {
 
       LocalState: "Local Data",
       Overview: (overview: any) => {
-        return `${overview.chat} chats，${overview.message} messages，${overview.prompt} prompts，${overview.mask} masks`;
+        return `${overview.chat} chats，${overview.message} messages，${overview.prompt} prompts，${overview.mask} assistants`;
       },
       ImportFailed: "Failed to import from file",
     },
     Mask: {
       Splash: {
-        Title: "Mask Splash Screen",
-        SubTitle: "Show a mask splash screen before starting new chat",
+        Title: "Assistant Splash Screen",
+        SubTitle: "Show an assistant splash screen before starting new chat",
       },
       Builtin: {
-        Title: "Hide Builtin Masks",
-        SubTitle: "Hide builtin masks in mask list",
+        Title: "Hide Builtin Assistants",
+        SubTitle: "Hide builtin assistants in assistant list",
       },
     },
     Prompt: {
@@ -768,7 +768,7 @@ const en: LocaleType = {
   },
 
   Mask: {
-    Name: "Mask",
+    Name: "Assistant",
     Page: {
       Title: "Prompt Template",
       SubTitle: (count: number) => `${count} prompt templates`,
