@@ -59,6 +59,8 @@ const fr: PartialLocaleType = {
       FullScreen: "Plein écran",
       Speech: "Lecture",
       StopSpeech: "Arrêter",
+      PreviousVersion: "Version précédente",
+      NextVersion: "Version suivante",
     },
     Commands: {
       new: "Nouvelle discussion",
@@ -82,6 +84,7 @@ const fr: PartialLocaleType = {
       Clear: "Effacer la discussion",
       Settings: "Paramètres de la discussion",
       UploadImage: "Télécharger une image",
+      UploadFile: "Télécharger un fichier",
     },
     Rename: "Renommer la discussion",
     Typing: "En train d'écrire…",
@@ -112,6 +115,16 @@ const fr: PartialLocaleType = {
     Thinking: "Réflexion",
     Thought: "Pensée",
     ThinkingDuration: (d: number) => `a pris ${d} secondes`,
+    TokenUsage: "Utilisation des tokens",
+    TokenTooltip: {
+      Context: "Messages contextuels",
+      CurrentToken: "Tokens actuels",
+      EstimatedToken: "Tokens totaux estimés",
+      Input: "Tokens d'entrée",
+      Output: "Tokens de sortie",
+      Total: "Total des tokens de la discussion",
+      Unknown: "Inconnu",
+    },
   },
   Export: {
     Title: "Partager l'historique des discussions",
@@ -527,17 +540,6 @@ const fr: PartialLocaleType = {
           SubTitle: "Example: ",
         },
       },
-      Stability: {
-        ApiKey: {
-          Title: "Stability API Key",
-          SubTitle: "Use a custom Stability API Key",
-          Placeholder: "Stability API Key",
-        },
-        Endpoint: {
-          Title: "Endpoint Address",
-          SubTitle: "Example: ",
-        },
-      },
       Iflytek: {
         ApiKey: {
           Title: "Iflytek API Key",
@@ -548,6 +550,17 @@ const fr: PartialLocaleType = {
           Title: "Iflytek API Secret",
           SubTitle: "Use a Iflytek API Secret",
           Placeholder: "Iflytek API Secret",
+        },
+        Endpoint: {
+          Title: "Endpoint Address",
+          SubTitle: "Example: ",
+        },
+      },
+      AI302: {
+        ApiKey: {
+          Title: "AI302 API Key",
+          SubTitle: "Use a custom AI302 API Key",
+          Placeholder: "AI302 API Key",
         },
         Endpoint: {
           Title: "Endpoint Address",
@@ -574,6 +587,17 @@ const fr: PartialLocaleType = {
           Title: "API Key",
           SubTitle: "Use a custom OpenRouter API Key",
           Placeholder: "OpenRouter API Key",
+        },
+      },
+      Nvidia: {
+        ApiKey: {
+          Title: "Nvidia API Key",
+          SubTitle: "Use a custom Nvidia API Key",
+          Placeholder: "Nvidia API Key",
+        },
+        Endpoint: {
+          Title: "Endpoint Address",
+          SubTitle: "Example: ",
         },
       },
       CustomModel: {
@@ -638,6 +662,11 @@ const fr: PartialLocaleType = {
     ThinkingLevel: {
       Title: "Thinking Level",
       SubTitle: "Control the depth of thought (Gemini 3 only)",
+    },
+    ReasoningEffort: {
+      Title: "Effort de raisonnement (reasoning_effort)",
+      SubTitle:
+        "Contrôler la profondeur de réflexion pour les modèles de raisonnement (série GPT-OSS uniquement)",
     },
     TTS: {
       Enable: {
@@ -781,6 +810,14 @@ const fr: PartialLocaleType = {
         Title: "Masquer les discussions prédéfinies",
         SubTitle:
           "Les discussions prédéfinies ne seront pas affichées dans l'interface de discussion après masquage",
+      },
+      Artifacts: {
+        Title: "Partager les artefacts",
+        SubTitle: "Partager les artefacts de cette discussion",
+      },
+      CodeFold: {
+        Title: "Pliage du code",
+        SubTitle: "Activer le pliage du bloc de code",
       },
       Share: {
         Title: "Partager ce masque",
