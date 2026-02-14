@@ -184,7 +184,8 @@ const en: LocaleType = {
       Sync: "Sync",
       Mask: "Masks",
       ModelService: "Model Service",
-      ModelVoice: "Model & Voice",
+      Model: "Model Config",
+      TTS: "Text to Speech",
     },
     Danger: {
       Reset: {

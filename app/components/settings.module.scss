@@ -7,8 +7,9 @@
 }
 
 .settings-tabs {
-  display: flex;
-  flex-wrap: wrap;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  justify-content: space-between;
   gap: 8px;
   margin-bottom: 20px;
   padding: 12px;
@@ -18,7 +19,11 @@
 }
 
 .settings-tab {
+  flex: 1;
+  min-width: 0;
+  /* Allow shrinking below content size if needed */
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 6px;
   padding: 8px 14px;

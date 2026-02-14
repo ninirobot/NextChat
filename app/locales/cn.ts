@@ -182,7 +182,8 @@ const cn = {
       Sync: "云同步",
       Mask: "助手",
       ModelService: "模型服务",
-      ModelVoice: "模型与语音",
+      Model: "模型设置",
+      TTS: "语音合成",
     },
 
     Danger: {
