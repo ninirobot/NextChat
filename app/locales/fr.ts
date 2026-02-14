@@ -184,7 +184,8 @@ const fr: PartialLocaleType = {
       Sync: "Synchronisation",
       Mask: "Assistants",
       ModelService: "Service de modèle",
-      ModelVoice: "Modèle et voix",
+      Model: "Modèle",
+      TTS: "Voix",
     },
 
     Danger: {
@@ -645,6 +646,10 @@ const fr: PartialLocaleType = {
     ThinkingBudget: {
       Title: "Budget de Réflexion (thinking_budget)",
       SubTitle: "Max tokens pour LongCat-Thinking",
+    },
+    Thinking: {
+      Title: "Activer la réflexion",
+      SubTitle: "Activer la réflexion profonde pour les modèles",
     },
     KimiThinking: {
       Title: "Activer la Réflexion",

@@ -29,7 +29,6 @@ import { MeituanApi } from "./platforms/meituan";
 import { NvidiaApi } from "./platforms/nvidia";
 import { OpenRouterApi } from "./platforms/openrouter";
 
-
 export const ROLES = ["system", "user", "assistant"] as const;
 export type MessageRole = (typeof ROLES)[number];
 
@@ -47,7 +46,6 @@ export interface MultimodalContent {
     url: string;
   };
 }
-
 
 export interface MultimodalContentForAlibaba {
   text?: string;
@@ -75,7 +73,6 @@ export interface LLMConfig {
   quality?: DalleRequestPayload["quality"];
   style?: DalleRequestPayload["style"];
 }
-
 
 export interface SpeechOptions {
   model: string;
@@ -206,11 +203,11 @@ export class ClientApi {
     }
   }
 
-  config() { }
+  config() {}
 
-  prompts() { }
+  prompts() {}
 
-  masks() { }
+  masks() {}
 
   async share(messages: ChatMessage[], avatarUrl: string | null = null) {
     const msgs = messages
@@ -295,7 +292,9 @@ export function getHeaders(ignoreHeaders: boolean = false) {
       modelConfig.providerName === ServiceProvider.SiliconFlow;
     const isAI302 = modelConfig.providerName === ServiceProvider["302.AI"];
     const isMeituan = modelConfig.providerName === ServiceProvider.Meituan;
-    const isOpenRouter = modelConfig.providerName === ServiceProvider.OpenRouter;
+    const isOpenRouter =
+      modelConfig.providerName === ServiceProvider.OpenRouter;
+    const isNvidia = modelConfig.providerName === ServiceProvider.Nvidia;
     const isEnabledAccessControl = accessStore.enabledAccessControl();
     const apiKey = isGoogle
       ? accessStore.googleApiKey
@@ -318,8 +317,11 @@ export function getHeaders(ignoreHeaders: boolean = false) {
                       : isSiliconFlow
                         ? accessStore.siliconflowApiKey
                         : isIflytek
-                          ? accessStore.iflytekApiKey && accessStore.iflytekApiSecret
-                            ? accessStore.iflytekApiKey + ":" + accessStore.iflytekApiSecret
+                          ? accessStore.iflytekApiKey &&
+                            accessStore.iflytekApiSecret
+                            ? accessStore.iflytekApiKey +
+                              ":" +
+                              accessStore.iflytekApiSecret
                             : ""
                           : isAI302
                             ? accessStore.ai302ApiKey
@@ -327,7 +329,9 @@ export function getHeaders(ignoreHeaders: boolean = false) {
                               ? accessStore.meituanApiKey
                               : isOpenRouter
                                 ? accessStore.openRouterApiKey
-                                : accessStore.openaiApiKey;
+                                : isNvidia
+                                  ? accessStore.nvidiaApiKey
+                                  : accessStore.openaiApiKey;
     return {
       isGoogle,
       isAzure,
@@ -344,6 +348,7 @@ export function getHeaders(ignoreHeaders: boolean = false) {
       isAI302,
       isMeituan,
       isOpenRouter,
+      isNvidia,
       apiKey,
       isEnabledAccessControl,
     };
@@ -374,6 +379,7 @@ export function getHeaders(ignoreHeaders: boolean = false) {
     isSiliconFlow,
     isMeituan,
     isOpenRouter,
+    isNvidia,
     apiKey,
     isEnabledAccessControl,
   } = getConfig();
