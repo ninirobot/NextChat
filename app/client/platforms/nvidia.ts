@@ -63,22 +63,17 @@ export class NvidiaApi implements LLMApi {
       },
     };
 
-    const isKimiK25 = modelConfig.model === "moonshotai/kimi-k2.5";
-    const isGPTOSS120B = modelConfig.model === "openai/gpt-oss-120b";
     const enableThinking = options.config.enable_thinking ?? true;
+    const isKimi = modelConfig.model.toLowerCase().includes("kimi");
 
     const requestPayload: any = {
       messages,
       stream: options.config.stream,
       model: modelConfig.model,
-      temperature: isKimiK25
-        ? enableThinking
-          ? 1.0
-          : 0.6
-        : modelConfig.temperature,
-      presence_penalty: isKimiK25 ? 0.0 : modelConfig.presence_penalty,
-      frequency_penalty: isKimiK25 ? 0.0 : modelConfig.frequency_penalty,
-      top_p: isKimiK25 ? 0.95 : modelConfig.top_p,
+      temperature: modelConfig.temperature,
+      presence_penalty: modelConfig.presence_penalty,
+      frequency_penalty: modelConfig.frequency_penalty,
+      top_p: modelConfig.top_p,
       // Omit max_tokens to avoid compatibility issues
     };
 
@@ -87,19 +82,11 @@ export class NvidiaApi implements LLMApi {
       requestPayload.reasoning_effort = modelConfig.reasoning_effort;
     }
 
-    // Add thinking parameter for Kimi 2.5 models
-    if (isKimiK25) {
-      requestPayload.thinking = {
-        type: enableThinking ? "enabled" : "disabled",
-      };
-    }
-
-    // Add thinking for DeepSeek models on Nvidia
-    if (modelConfig.model.includes("deepseek") && enableThinking) {
-      requestPayload.extra_body = {
-        chat_template_kwargs: {
-          thinking: true,
-        },
+    // Generic Thinking Logic for Nvidia
+    if (enableThinking) {
+      requestPayload.chat_template_kwargs = {
+        thinking: true, // for DeepSeek, Kimi
+        enable_thinking: true, // for GLM
       };
     }
 

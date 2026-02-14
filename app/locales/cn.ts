@@ -622,6 +622,10 @@ const cn = {
       Title: "思考预算 (thinking_budget)",
       SubTitle: "用于 LongCat 模型的深度思考 Token 数",
     },
+    Thinking: {
+      Title: "启用思考 (Thinking)",
+      SubTitle: "启用模型的深度思考功能",
+    },
     KimiThinking: {
       Title: "启用思考 (Thinking)",
       SubTitle: "启用 Kimi 2.5 模型的深度思考功能",

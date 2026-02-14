@@ -973,6 +973,7 @@ const nvidiaModels = [
   "utter-project/eurollm-9b-instruct",
   "yentinglin/llama-3-taiwan-70b-instruct",
   "z-ai/glm4.7",
+  "z-ai/glm5",
 ];
 
 let seq = 1000; // 内置的模型序号生成器从1000开始

@@ -629,6 +629,10 @@ const en: LocaleType = {
       Title: "Thinking Budget (thinking_budget)",
       SubTitle: "Max tokens for LongCat-Thinking",
     },
+    Thinking: {
+      Title: "Enable Thinking",
+      SubTitle: "Enable deep thinking for models",
+    },
     KimiThinking: {
       Title: "Enable Thinking",
       SubTitle: "Enable deep thinking for Kimi 2.5 models",

@@ -62,9 +62,9 @@ export function ModelConfigList(props: {
           onChange={(e) => {
             props.updateConfig(
               (config) =>
-              (config.temperature = ModalConfigValidator.temperature(
-                e.currentTarget.valueAsNumber,
-              )),
+                (config.temperature = ModalConfigValidator.temperature(
+                  e.currentTarget.valueAsNumber,
+                )),
             );
           }}
         ></InputRange>
@@ -82,9 +82,9 @@ export function ModelConfigList(props: {
           onChange={(e) => {
             props.updateConfig(
               (config) =>
-              (config.top_p = ModalConfigValidator.top_p(
-                e.currentTarget.valueAsNumber,
-              )),
+                (config.top_p = ModalConfigValidator.top_p(
+                  e.currentTarget.valueAsNumber,
+                )),
             );
           }}
         ></InputRange>
@@ -102,9 +102,9 @@ export function ModelConfigList(props: {
           onChange={(e) =>
             props.updateConfig(
               (config) =>
-              (config.max_tokens = ModalConfigValidator.max_tokens(
-                e.currentTarget.valueAsNumber,
-              )),
+                (config.max_tokens = ModalConfigValidator.max_tokens(
+                  e.currentTarget.valueAsNumber,
+                )),
             )
           }
         ></InputRange>
@@ -130,10 +130,10 @@ export function ModelConfigList(props: {
               onChange={(e) =>
                 props.updateConfig(
                   (config) =>
-                  (config.gemini_thinking_budget =
-                    ModalConfigValidator.gemini_thinking_budget(
-                      e.currentTarget.valueAsNumber,
-                    )),
+                    (config.gemini_thinking_budget =
+                      ModalConfigValidator.gemini_thinking_budget(
+                        e.currentTarget.valueAsNumber,
+                      )),
                 )
               }
             ></InputRange>
@@ -158,7 +158,7 @@ export function ModelConfigList(props: {
               aria={Locale.Settings.GeminiProThinkingBudget.Title}
               value={
                 props.modelConfig.gemini_thinking_budget === -1 ||
-                  props.modelConfig.gemini_thinking_budget < 128
+                props.modelConfig.gemini_thinking_budget < 128
                   ? -1
                   : props.modelConfig.gemini_thinking_budget
               }
@@ -185,7 +185,10 @@ export function ModelConfigList(props: {
       {props.modelConfig.model.includes("3") && (
         <ListItem
           title={Locale.Settings.ThinkingLevel?.Title || "Thinking Level"}
-          subTitle={Locale.Settings.ThinkingLevel?.SubTitle || "Control the depth of thought"}
+          subTitle={
+            Locale.Settings.ThinkingLevel?.SubTitle ||
+            "Control the depth of thought"
+          }
         >
           <Select
             value={props.modelConfig.thinking_level || "high"}
@@ -225,10 +228,10 @@ export function ModelConfigList(props: {
               onChange={(e) =>
                 props.updateConfig(
                   (config) =>
-                  (config.thinking_budget =
-                    ModalConfigValidator.thinking_budget(
-                      e.currentTarget.valueAsNumber,
-                    )),
+                    (config.thinking_budget =
+                      ModalConfigValidator.thinking_budget(
+                        e.currentTarget.valueAsNumber,
+                      )),
                 )
               }
             ></InputRange>
@@ -245,7 +248,10 @@ export function ModelConfigList(props: {
             value={props.modelConfig.reasoning_effort || "medium"}
             onChange={(e) => {
               props.updateConfig((config) => {
-                config.reasoning_effort = e.currentTarget.value as "low" | "medium" | "high";
+                config.reasoning_effort = e.currentTarget.value as
+                  | "low"
+                  | "medium"
+                  | "high";
               });
             }}
           >
@@ -256,46 +262,46 @@ export function ModelConfigList(props: {
         </ListItem>
       )}
 
-
       {/* Thought Summary Toggle - Only for Gemini 2.5 and 3 */}
       {(props.modelConfig.model.toLowerCase().includes("gemini-2.5") ||
         props.modelConfig.model.toLowerCase().includes("gemini-3") ||
         props.modelConfig.model.toLowerCase().includes("gemini_2.5") ||
         props.modelConfig.model.toLowerCase().includes("gemini_3")) && (
-          <ListItem
-            title={Locale.Settings.ThoughtSummary.Title}
-            subTitle={Locale.Settings.ThoughtSummary.SubTitle}
-          >
-            <input
-              type="checkbox"
-              checked={props.modelConfig.include_thoughts}
-              onChange={(e) =>
-                props.updateConfig(
-                  (config) => (config.include_thoughts = e.currentTarget.checked),
-                )
-              }
-            ></input>
-          </ListItem>
-        )}
+        <ListItem
+          title={Locale.Settings.ThoughtSummary.Title}
+          subTitle={Locale.Settings.ThoughtSummary.SubTitle}
+        >
+          <input
+            type="checkbox"
+            checked={props.modelConfig.include_thoughts}
+            onChange={(e) =>
+              props.updateConfig(
+                (config) => (config.include_thoughts = e.currentTarget.checked),
+              )
+            }
+          ></input>
+        </ListItem>
+      )}
 
-      {/* Kimi 2.5 Thinking Toggle */}
-      {(props.modelConfig.model.toLowerCase().includes("kimi") &&
-        props.modelConfig.model.includes("2.5")) && (
-          <ListItem
-            title={Locale.Settings.KimiThinking.Title}
-            subTitle={Locale.Settings.KimiThinking.SubTitle}
-          >
-            <input
-              type="checkbox"
-              checked={props.modelConfig.enable_thinking ?? true}
-              onChange={(e) =>
-                props.updateConfig(
-                  (config) => (config.enable_thinking = e.currentTarget.checked),
-                )
-              }
-            ></input>
-          </ListItem>
-        )}
+      {/* Thinking Toggle for Nvidia or Kimi 2.5 */}
+      {(props.modelConfig.providerName === "Nvidia" ||
+        (props.modelConfig.model.toLowerCase().includes("kimi") &&
+          props.modelConfig.model.includes("2.5"))) && (
+        <ListItem
+          title={Locale.Settings.Thinking.Title} // Using a more generic title key if available, or falling back to reuse Kimi's if necessary, but "Enable Thinking" is better. Let's check locale keys. relying on existing keys.
+          subTitle={Locale.Settings.Thinking.SubTitle}
+        >
+          <input
+            type="checkbox"
+            checked={props.modelConfig.enable_thinking ?? true}
+            onChange={(e) =>
+              props.updateConfig(
+                (config) => (config.enable_thinking = e.currentTarget.checked),
+              )
+            }
+          ></input>
+        </ListItem>
+      )}
       <ListItem
         title={Locale.Settings.AspectRatio.Title}
         subTitle={Locale.Settings.AspectRatio.SubTitle}
@@ -340,10 +346,10 @@ export function ModelConfigList(props: {
           onChange={(e) => {
             props.updateConfig(
               (config) =>
-              (config.presence_penalty =
-                ModalConfigValidator.presence_penalty(
-                  e.currentTarget.valueAsNumber,
-                )),
+                (config.presence_penalty =
+                  ModalConfigValidator.presence_penalty(
+                    e.currentTarget.valueAsNumber,
+                  )),
             );
           }}
         ></InputRange>
@@ -362,10 +368,10 @@ export function ModelConfigList(props: {
           onChange={(e) => {
             props.updateConfig(
               (config) =>
-              (config.frequency_penalty =
-                ModalConfigValidator.frequency_penalty(
-                  e.currentTarget.valueAsNumber,
-                )),
+                (config.frequency_penalty =
+                  ModalConfigValidator.frequency_penalty(
+                    e.currentTarget.valueAsNumber,
+                  )),
             );
           }}
         ></InputRange>
@@ -418,8 +424,8 @@ export function ModelConfigList(props: {
           onChange={(e) =>
             props.updateConfig(
               (config) =>
-              (config.compressMessageLengthThreshold =
-                e.currentTarget.valueAsNumber),
+                (config.compressMessageLengthThreshold =
+                  e.currentTarget.valueAsNumber),
             )
           }
         ></input>
