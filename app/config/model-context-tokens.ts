@@ -8,6 +8,9 @@ export const MODEL_CONTEXT_TOKENS: Record<string, ModelContextConfig> = {
   "deepseek/deepseek-r1-0528:free": { contextTokens: 163840 },
   "deepseek-ai/deepseek-v3.2": { contextTokens: 163840 },
 
+  // GLM
+  "z-ai/glm5": { contextTokens: 209920 },
+
   // Moonshot
   "moonshotai/kimi-k2.5": { contextTokens: 262144 },
 
