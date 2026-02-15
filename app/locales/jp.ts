@@ -182,7 +182,8 @@ const jp: PartialLocaleType = {
       Sync: "同期",
       Mask: "アシスタント",
       ModelService: "モデルサービス",
-      ModelVoice: "モデルと音声",
+      Model: "モデル設定",
+      TTS: "音声合成",
     },
 
     Danger: {
@@ -627,6 +628,10 @@ const jp: PartialLocaleType = {
     ThinkingBudget: {
       Title: "思考予算 (thinking_budget)",
       SubTitle: "LongCat-Thinkingの最大トークン数",
+    },
+    Thinking: {
+      Title: "思考を有効化",
+      SubTitle: "モデルの深い思考を有効化",
     },
     KimiThinking: {
       Title: "思考を有効化",
