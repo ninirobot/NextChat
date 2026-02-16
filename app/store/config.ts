@@ -74,7 +74,7 @@ export const DEFAULT_CONFIG = {
     sendMemory: false,
     historyMessageCount: 100,
     compressMessageLengthThreshold: 1048576,
-    compressModel: "LongCat-Flash-Chat",
+    compressModel: "LongCat-Flash-Lite",
     compressProviderName: "Meituan",
     template: config?.template ?? DEFAULT_INPUT_TEMPLATE,
     size: "1024x1024" as ModelSize,
@@ -212,7 +212,7 @@ export const useAppConfig = createPersistStore(
       }));
     },
 
-    allModels() { },
+    allModels() {},
   }),
   {
     name: StoreKey.Config,
@@ -262,7 +262,7 @@ export const useAppConfig = createPersistStore(
         state.modelConfig.template =
           state.modelConfig.template !== DEFAULT_INPUT_TEMPLATE
             ? state.modelConfig.template
-            : config?.template ?? DEFAULT_INPUT_TEMPLATE;
+            : (config?.template ?? DEFAULT_INPUT_TEMPLATE);
       }
 
       if (version < 4.1) {

@@ -44,6 +44,7 @@ export function ThinkingBlock(props: {
     const customThinkingModels = getClientConfig()?.thinkingModels || "";
     return (
       m.includes("deepseek-r1") ||
+      m.includes("deepseek-v3") ||
       m.includes("o1-") ||
       m.includes("o3-") ||
       m === "o1" ||
@@ -53,6 +54,7 @@ export function ThinkingBlock(props: {
       m.includes("thinking") ||
       m.includes("kimi") ||
       m.includes("gpt-oss") ||
+      m.includes("glm") ||
       customThinkingModels
         .split(",")
         .some(

@@ -1,15 +1,14 @@
+/* eslint-disable unused-imports/no-unused-imports */
 export const OWNER = "ChatGPTNextWeb";
 export const REPO = "ChatGPT-Next-Web";
 export const REPO_URL = `https://github.com/${OWNER}/${REPO}`;
-export const PLUGINS_REPO_URL = `https://github.com/${OWNER}/NextChat-Awesome-Plugins`;
+
 export const ISSUE_URL = `https://github.com/${OWNER}/${REPO}/issues`;
 export const UPDATE_URL = `${REPO_URL}#keep-updated`;
 export const RELEASE_URL = `${REPO_URL}/releases`;
 export const FETCH_COMMIT_URL = `https://api.github.com/repos/${OWNER}/${REPO}/commits?per_page=1`;
 export const FETCH_TAG_URL = `https://api.github.com/repos/${OWNER}/${REPO}/tags?per_page=1`;
 export const RUNTIME_CONFIG_DOM = "danger-runtime-config";
-
-export const STABILITY_BASE_URL = "https://api.stability.ai";
 
 export const OPENAI_BASE_URL = "https://api.openai.com";
 export const ANTHROPIC_BASE_URL = "https://api.anthropic.com";
@@ -41,7 +40,6 @@ export const MEITUAN_BASE_URL = "https://api.longcat.chat/openai";
 export const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 export const NVIDIA_BASE_URL = "https://integrate.api.nvidia.com";
 
-
 export const CACHE_URL_PREFIX = "/api/cache";
 export const UPLOAD_URL = `${CACHE_URL_PREFIX}/upload`;
 
@@ -51,10 +49,8 @@ export enum Path {
   Settings = "/settings",
   NewChat = "/new-chat",
   Masks = "/masks",
-  Plugins = "/plugins",
+
   Auth = "/auth",
-  Sd = "/sd",
-  SdNew = "/sd-new",
   Artifacts = "/artifacts",
   SearchChat = "/search-chat",
   McpMarket = "/mcp-market",
@@ -72,7 +68,6 @@ export enum ApiPath {
   Tencent = "/api/tencent",
   Moonshot = "/api/moonshot",
   Iflytek = "/api/iflytek",
-  Stability = "/api/stability",
   Artifacts = "/api/artifacts",
   XAI = "/api/xai",
   ChatGLM = "/api/chatglm",
@@ -83,7 +78,6 @@ export enum ApiPath {
   OpenRouter = "/api/openrouter",
   Nvidia = "/api/nvidia",
 }
-
 
 export enum SlotID {
   AppBody = "app-body",
@@ -97,14 +91,13 @@ export enum FileName {
 
 export enum StoreKey {
   Chat = "chat-next-web-store",
-  Plugin = "chat-next-web-plugin",
+
   Access = "access-control",
   Config = "app-config",
   Mask = "mask-store",
   Prompt = "prompt-store",
   Update = "chat-update",
   Sync = "sync",
-  SdList = "sd-list",
   Mcp = "mcp-store",
 }
 
@@ -147,7 +140,6 @@ export enum ServiceProvider {
   Nvidia = "Nvidia",
 }
 
-
 // Google API safety settings, see https://ai.google.dev/gemini-api/docs/safety-settings
 // BLOCK_NONE will not block any content, and BLOCK_ONLY_HIGH will block only high-risk content.
 export enum GoogleSafetySettingsThreshold {
@@ -177,12 +169,6 @@ export enum ModelProvider {
   OpenRouter = "OpenRouter",
   Nvidia = "Nvidia",
 }
-
-
-export const Stability = {
-  GeneratePath: "v2beta/stable-image/generate",
-  ExampleEndpoint: "https://api.stability.ai",
-};
 
 export const Anthropic = {
   ChatPath: "v1/messages",
@@ -308,7 +294,6 @@ export const Nvidia = {
   ExampleEndpoint: NVIDIA_BASE_URL,
   ChatPath: "v1/chat/completions",
 };
-
 
 export const DEFAULT_INPUT_TEMPLATE = ``; // input / time / model / lang
 // export const DEFAULT_SYSTEM_TEMPLATE = `
@@ -598,7 +583,7 @@ const googleModels = [
   "gemini-2.0-pro-exp",
   "gemini-2.0-pro-exp-02-05",
   "gemini-2.5-pro-preview-06-05",
-  "gemini-2.5-pro"
+  "gemini-2.5-pro",
 ];
 
 const anthropicModels = [
@@ -687,7 +672,12 @@ const iflytekModels = [
   "4.0Ultra",
 ];
 
-const deepseekModels = ["deepseek-chat", "deepseek-coder", "deepseek-reasoner", "deepseek-r1-0528:free"];
+const deepseekModels = [
+  "deepseek-chat",
+  "deepseek-coder",
+  "deepseek-reasoner",
+  "deepseek-r1-0528:free",
+];
 
 const xAIModes = [
   "grok-beta",
@@ -783,10 +773,11 @@ const longcatModels = [
   "LongCat-Flash-Chat",
   "LongCat-Flash-Thinking",
   "LongCat-Flash-Thinking-2601",
+  "LongCat-Flash-Lite",
 ];
 
 const openrouterModels = [
-  "deepseek/deepseek-r1:free",
+  "deepseek/deepseek-r1-0528:free",
   "deepseek/deepseek-chat",
   "google/gemini-2.0-flash-exp:free",
   "openai/gpt-4o",
@@ -982,9 +973,8 @@ const nvidiaModels = [
   "utter-project/eurollm-9b-instruct",
   "yentinglin/llama-3-taiwan-70b-instruct",
   "z-ai/glm4.7",
+  "z-ai/glm5",
 ];
-
-
 
 let seq = 1000; // 内置的模型序号生成器从1000开始
 export const DEFAULT_MODELS = [

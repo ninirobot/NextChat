@@ -17,7 +17,7 @@ export type Mask = {
   modelConfig: ModelConfig;
   lang: Lang;
   builtin: boolean;
-  plugin?: string[];
+
   enableArtifacts?: boolean;
   enableCodeFold?: boolean;
 };
@@ -43,7 +43,6 @@ export const createEmptyMask = () =>
     lang: getLang(),
     builtin: false,
     createdAt: Date.now(),
-    plugin: [],
   }) as Mask;
 
 export const useMaskStore = createPersistStore(

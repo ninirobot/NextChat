@@ -25,10 +25,6 @@ declare global {
       DEFAULT_MODEL?: string; // to control default model in every new chat window
       VISION_MODELS?: string; // to control vision models
 
-      // stability only
-      STABILITY_URL?: string;
-      STABILITY_API_KEY?: string;
-
       // azure only
       AZURE_URL?: string; // https://{azure-url}/openai/deployments/{deploy-name}
       AZURE_API_KEY?: string;
@@ -107,7 +103,6 @@ declare global {
       NVIDIA_URL?: string;
       NVIDIA_API_KEY?: string;
 
-
       // custom template for preprocessing user input
       DEFAULT_INPUT_TEMPLATE?: string;
 
@@ -136,7 +131,8 @@ function getApiKey(keys?: string) {
   const apiKey = apiKeys[randomIndex];
   if (apiKey) {
     console.log(
-      `[Server Config] using ${randomIndex + 1} of ${apiKeys.length
+      `[Server Config] using ${randomIndex + 1} of ${
+        apiKeys.length
       } api key - ${apiKey}`,
     );
   }
@@ -166,8 +162,6 @@ export const getServerSideConfig = () => {
     }
   }
 
-  const isStability = !!process.env.STABILITY_API_KEY;
-
   const isAzure = !!process.env.AZURE_URL;
   const isGoogle = !!process.env.GOOGLE_API_KEY;
   const isAnthropic = !!process.env.ANTHROPIC_API_KEY;
@@ -183,7 +177,9 @@ export const getServerSideConfig = () => {
   const isChatGLM = !!process.env.CHATGLM_API_KEY;
   const isSiliconFlow = !!process.env.SILICONFLOW_API_KEY;
   const isAI302 = !!process.env.AI302_API_KEY;
-  const isMeituan = !!(process.env.MEITUAN_API_KEY || process.env.LONGCAT_API_KEY);
+  const isMeituan = !!(
+    process.env.MEITUAN_API_KEY || process.env.LONGCAT_API_KEY
+  );
   const isOpenRouter = !!process.env.OPENROUTER_API_KEY;
   const isNvidia = !!process.env.NVIDIA_API_KEY;
 
@@ -203,10 +199,6 @@ export const getServerSideConfig = () => {
     baseUrl: process.env.BASE_URL,
     apiKey: getApiKey(process.env.OPENAI_API_KEY),
     openaiOrgId: process.env.OPENAI_ORG_ID,
-
-    isStability,
-    stabilityUrl: process.env.STABILITY_URL,
-    stabilityApiKey: getApiKey(process.env.STABILITY_API_KEY),
 
     isAzure,
     azureUrl: process.env.AZURE_URL,
@@ -276,7 +268,9 @@ export const getServerSideConfig = () => {
 
     isMeituan,
     meituanUrl: process.env.MEITUAN_URL || process.env.LONGCAT_URL,
-    meituanApiKey: getApiKey(process.env.MEITUAN_API_KEY || process.env.LONGCAT_API_KEY),
+    meituanApiKey: getApiKey(
+      process.env.MEITUAN_API_KEY || process.env.LONGCAT_API_KEY,
+    ),
 
     isOpenRouter,
     openRouterUrl: process.env.OPENROUTER_URL,
@@ -285,7 +279,6 @@ export const getServerSideConfig = () => {
     isNvidia,
     nvidiaUrl: process.env.NVIDIA_URL,
     nvidiaApiKey: getApiKey(process.env.NVIDIA_API_KEY),
-
 
     gtmId: process.env.GTM_ID,
     gaId: process.env.GA_ID || DEFAULT_GA_ID,

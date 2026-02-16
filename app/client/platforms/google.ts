@@ -11,7 +11,6 @@ import {
   useAccessStore,
   useAppConfig,
   useChatStore,
-  usePluginStore,
   ChatMessageTool,
 } from "@/app/store";
 import { streamWithThink } from "@/app/utils/chat";
@@ -91,7 +90,6 @@ export class GeminiProApi implements LLMApi {
   async chat(options: ChatOptions): Promise<void> {
     const apiClient = this;
 
-
     // try get base64image from local cache image_url
     const _messages: ChatOptions["messages"] = [];
     for (const v of options.messages) {
@@ -103,7 +101,6 @@ export class GeminiProApi implements LLMApi {
       if (isVisionModel(options.config.model)) {
         const images = getMessageImages(v);
         if (images.length > 0) {
-
           parts = parts.concat(
             images.map((image) => {
               const imageType = image.split(";")[0].split(":")[1];
@@ -125,7 +122,7 @@ export class GeminiProApi implements LLMApi {
     });
 
     // google requires that role in neighboring messages must not be the same
-    for (let i = 0; i < messages.length - 1;) {
+    for (let i = 0; i < messages.length - 1; ) {
       // Check if current and next item both have the role "model"
       if (messages[i].role === messages[i + 1].role) {
         // Concatenate the 'parts' of the current and next item
@@ -137,7 +134,6 @@ export class GeminiProApi implements LLMApi {
         i++;
       }
     }
-
 
     const accessStore = useAccessStore.getState();
 
@@ -153,8 +149,10 @@ export class GeminiProApi implements LLMApi {
 
     // 1. Feature Detection
     const modelName = modelConfig.model.toLowerCase();
-    const isGen3 = modelName.includes("gemini-3") || modelName.includes("gemini_3");
-    const isThinkingVersion = modelName.includes("thinking") || modelName.includes("2.5");
+    const isGen3 =
+      modelName.includes("gemini-3") || modelName.includes("gemini_3");
+    const isThinkingVersion =
+      modelName.includes("thinking") || modelName.includes("2.5");
 
     // 2. Build Thinking Config (Structured and mutually exclusive)
     let thinkingConfig: any = undefined;
@@ -219,18 +217,14 @@ export class GeminiProApi implements LLMApi {
         headers: getHeaders(),
       };
 
-
       const requestTimeoutId = setTimeout(
         () => controller.abort(),
         getTimeoutMSByModel(options.config.model),
       );
 
       if (shouldStream) {
-        const [tools, funcs] = usePluginStore
-          .getState()
-          .getAsTools(
-            useChatStore.getState().currentSession().mask?.plugin || [],
-          );
+        const tools: any[] = [];
+        const funcs = {};
         return streamWithThink(
           chatPath,
           requestPayload,
@@ -238,7 +232,7 @@ export class GeminiProApi implements LLMApi {
           // @ts-ignore
           tools.length > 0
             ? // @ts-ignore
-            [{ functionDeclarations: tools.map((tool) => tool.function) }]
+              [{ functionDeclarations: tools.map((tool) => tool.function) }]
             : [],
           funcs,
           controller,
@@ -324,7 +318,7 @@ export class GeminiProApi implements LLMApi {
           options.onError?.(
             new Error(
               "Message is being blocked for reason: " +
-              resJson.promptFeedback.blockReason,
+                resJson.promptFeedback.blockReason,
             ),
           );
         }

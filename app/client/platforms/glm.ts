@@ -5,7 +5,6 @@ import {
   useAppConfig,
   useChatStore,
   ChatMessageTool,
-  usePluginStore,
 } from "@/app/store";
 import { stream } from "@/app/utils/chat";
 import {
@@ -206,11 +205,8 @@ export class ChatGLMApi implements LLMApi {
 
       const shouldStream = !!options.config.stream;
       if (shouldStream) {
-        const [tools, funcs] = usePluginStore
-          .getState()
-          .getAsTools(
-            useChatStore.getState().currentSession().mask?.plugin || [],
-          );
+        const tools: any[] = [];
+        const funcs = {};
         return stream(
           path,
           requestPayload,

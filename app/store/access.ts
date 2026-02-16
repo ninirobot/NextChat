@@ -11,7 +11,6 @@ import {
   ALIBABA_BASE_URL,
   TENCENT_BASE_URL,
   MOONSHOT_BASE_URL,
-  STABILITY_BASE_URL,
   IFLYTEK_BASE_URL,
   DEEPSEEK_BASE_URL,
   XAI_BASE_URL,
@@ -22,7 +21,6 @@ import {
   OPENROUTER_BASE_URL,
   NVIDIA_BASE_URL,
 } from "../constant";
-
 
 import { getHeaders } from "../client/api";
 import { getClientConfig } from "../config/client";
@@ -51,8 +49,6 @@ const DEFAULT_TENCENT_URL = isApp ? TENCENT_BASE_URL : ApiPath.Tencent;
 
 const DEFAULT_MOONSHOT_URL = isApp ? MOONSHOT_BASE_URL : ApiPath.Moonshot;
 
-const DEFAULT_STABILITY_URL = isApp ? STABILITY_BASE_URL : ApiPath.Stability;
-
 const DEFAULT_IFLYTEK_URL = isApp ? IFLYTEK_BASE_URL : ApiPath.Iflytek;
 
 const DEFAULT_DEEPSEEK_URL = isApp ? DEEPSEEK_BASE_URL : ApiPath.DeepSeek;
@@ -72,8 +68,6 @@ const DEFAULT_MEITUAN_URL = isApp ? MEITUAN_BASE_URL : ApiPath.Meituan;
 const DEFAULT_OPENROUTER_URL = isApp ? OPENROUTER_BASE_URL : ApiPath.OpenRouter;
 
 const DEFAULT_NVIDIA_URL = isApp ? NVIDIA_BASE_URL : ApiPath.Nvidia;
-
-
 
 const DEFAULT_ACCESS_STATE = {
   accessCode: "",
@@ -117,10 +111,6 @@ const DEFAULT_ACCESS_STATE = {
   // moonshot
   moonshotUrl: DEFAULT_MOONSHOT_URL,
   moonshotApiKey: "",
-
-  //stability
-  stabilityUrl: DEFAULT_STABILITY_URL,
-  stabilityApiKey: "",
 
   // tencent
   tencentUrl: DEFAULT_TENCENT_URL,

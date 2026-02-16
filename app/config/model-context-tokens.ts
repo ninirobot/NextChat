@@ -6,6 +6,10 @@ export interface ModelContextConfig {
 export const MODEL_CONTEXT_TOKENS: Record<string, ModelContextConfig> = {
   // DeepSeek
   "deepseek/deepseek-r1-0528:free": { contextTokens: 163840 },
+  "deepseek-ai/deepseek-v3.2": { contextTokens: 163840 },
+
+  // GLM
+  "z-ai/glm5": { contextTokens: 209920 },
 
   // Moonshot
   "moonshotai/kimi-k2.5": { contextTokens: 262144 },
@@ -14,6 +18,7 @@ export const MODEL_CONTEXT_TOKENS: Record<string, ModelContextConfig> = {
   "LongCat-Flash-Chat": { contextTokens: 262144 },
   "LongCat-Flash-Thinking": { contextTokens: 262144 },
   "LongCat-Flash-Thinking-2601": { contextTokens: 262144 },
+  "LongCat-Flash-Lite": { contextTokens: 327680 },
 
   // GPT OSS
   "gpt-oss-120b": { contextTokens: 131072 },

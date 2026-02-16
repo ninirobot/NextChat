@@ -63,7 +63,7 @@ const cn = {
     },
     Commands: {
       new: "新建聊天",
-      newm: "从面具新建聊天",
+      newm: "从助手新建聊天",
       next: "下一个聊天",
       prev: "上一个聊天",
       clear: "清除上下文",
@@ -79,7 +79,7 @@ const cn = {
         dark: "深色模式",
       },
       Prompt: "快捷指令",
-      Masks: "所有面具",
+      Masks: "所有助手",
       Clear: "清除聊天",
       Settings: "对话设置",
       UploadImage: "上传图片",
@@ -99,7 +99,7 @@ const cn = {
     StopSpeak: "停止",
     Config: {
       Reset: "清除记忆",
-      SaveAs: "存为面具",
+      SaveAs: "存为助手",
     },
     IsContext: "预设提示词",
     ShortcutKey: {
@@ -137,8 +137,8 @@ const cn = {
       SubTitle: "可以导出 Markdown 文本或者 PNG 图片",
     },
     IncludeContext: {
-      Title: "包含面具上下文",
-      SubTitle: "是否在消息中展示面具上下文",
+      Title: "包含助手上下文",
+      SubTitle: "是否在消息中展示助手上下文",
     },
     Steps: {
       Select: "选取",
@@ -177,6 +177,14 @@ const cn = {
     Title: "设置",
     SubTitle: "所有设置选项",
     ShowPassword: "显示密码",
+    Tab: {
+      General: "通用",
+      Sync: "云同步",
+      Mask: "助手",
+      ModelService: "模型服务",
+      Model: "模型设置",
+      TTS: "语音合成",
+    },
 
     Danger: {
       Reset: {
@@ -271,18 +279,18 @@ const cn = {
 
       LocalState: "本地数据",
       Overview: (overview: any) => {
-        return `${overview.chat} 次对话，${overview.message} 条消息，${overview.prompt} 条提示词，${overview.mask} 个面具`;
+        return `${overview.chat} 次对话，${overview.message} 条消息，${overview.prompt} 条提示词，${overview.mask} 个助手`;
       },
       ImportFailed: "导入失败",
     },
     Mask: {
       Splash: {
-        Title: "面具启动页",
-        SubTitle: "新建聊天时，展示面具启动页",
+        Title: "助手启动页",
+        SubTitle: "新建聊天时，展示助手启动页",
       },
       Builtin: {
-        Title: "隐藏内置面具",
-        SubTitle: "在所有面具列表中隐藏内置面具",
+        Title: "隐藏内置助手",
+        SubTitle: "在所有助手列表中隐藏内置助手",
       },
     },
     Prompt: {
@@ -519,17 +527,6 @@ const cn = {
           SubTitle: "样例：",
         },
       },
-      Stability: {
-        ApiKey: {
-          Title: "接口密钥",
-          SubTitle: "使用自定义 Stability API Key",
-          Placeholder: "Stability API Key",
-        },
-        Endpoint: {
-          Title: "接口地址",
-          SubTitle: "样例：",
-        },
-      },
       Iflytek: {
         ApiKey: {
           Title: "ApiKey",
@@ -624,6 +621,10 @@ const cn = {
     ThinkingBudget: {
       Title: "思考预算 (thinking_budget)",
       SubTitle: "用于 LongCat 模型的深度思考 Token 数",
+    },
+    Thinking: {
+      Title: "启用思考 (Thinking)",
+      SubTitle: "启用模型的深度思考功能",
     },
     KimiThinking: {
       Title: "启用思考 (Thinking)",
@@ -734,9 +735,7 @@ const cn = {
     Clear: "上下文已清除",
     Revert: "恢复上下文",
   },
-  Discovery: {
-    Name: "发现",
-  },
+
   Mcp: {
     Name: "MCP",
   },
@@ -758,52 +757,13 @@ const cn = {
       View: "查看",
     },
   },
-  Plugin: {
-    Name: "插件",
-    Page: {
-      Title: "插件",
-      SubTitle: (count: number) => `${count} 个插件`,
-      Search: "搜索插件",
-      Create: "新建",
-      Find: "您可以在Github上找到优秀的插件：",
-    },
-    Item: {
-      Info: (count: number) => `${count} 方法`,
-      View: "查看",
-      Edit: "编辑",
-      Delete: "删除",
-      DeleteConfirm: "确认删除？",
-    },
-    Auth: {
-      None: "不需要授权",
-      Basic: "Basic",
-      Bearer: "Bearer",
-      Custom: "自定义",
-      CustomHeader: "自定义参数名称",
-      Token: "Token",
-      Proxy: "使用代理",
-      ProxyDescription: "使用代理解决 CORS 错误",
-      Location: "位置",
-      LocationHeader: "Header",
-      LocationQuery: "Query",
-      LocationBody: "Body",
-    },
-    EditModal: {
-      Title: (readonly: boolean) => `编辑插件 ${readonly ? "（只读）" : ""}`,
-      Download: "下载",
-      Auth: "授权方式",
-      Content: "OpenAPI Schema",
-      Load: "从网页加载",
-      Method: "方法",
-      Error: "格式错误",
-    },
-  },
+
   Mask: {
-    Name: "面具",
+    Name: "助手",
     Page: {
-      Title: "预设角色面具",
+      Title: "预设角色助手",
       SubTitle: (count: number) => `${count} 个预设角色定义`,
-      Search: "搜索角色面具",
+      Search: "搜索角色助手",
       Create: "新建",
     },
     Item: {
@@ -816,7 +776,7 @@ const cn = {
     },
     EditModal: {
       Title: (readonly: boolean) =>
-        `编辑预设面具 ${readonly ? "（只读）" : ""}`,
+        `编辑预设助手 ${readonly ? "（只读）" : ""}`,
       Download: "下载预设",
       Clone: "克隆预设",
     },
@@ -841,19 +801,20 @@ const cn = {
         SubTitle: "启用之后可以自动折叠/展开过长的代码块",
       },
       Share: {
-        Title: "分享此面具",
-        SubTitle: "生成此面具的直达链接",
+        Title: "分享此助手",
+        SubTitle: "生成此助手的直达链接",
         Action: "复制链接",
       },
     },
   },
+
   NewChat: {
     Return: "返回",
     Skip: "直接开始",
     NotShow: "不再展示",
     ConfirmNoShow: "确认禁用？禁用后可以随时在设置中重新启用。",
-    Title: "挑选一个面具",
-    SubTitle: "现在开始，与面具背后的灵魂思维碰撞",
+    Title: "挑选一个助手",
+    SubTitle: "现在开始，与助手背后的灵魂思维碰撞",
     More: "查看全部",
   },
 
@@ -882,70 +843,9 @@ const cn = {
     Topic: "主题",
     Time: "时间",
   },
-  SdPanel: {
-    Prompt: "画面提示",
-    NegativePrompt: "否定提示",
-    PleaseInput: (name: string) => `请输入${name}`,
-    AspectRatio: "横纵比",
-    ImageStyle: "图像风格",
-    OutFormat: "输出格式",
-    AIModel: "AI模型",
-    ModelVersion: "模型版本",
-    Submit: "提交生成",
-    ParamIsRequired: (name: string) => `${name}不能为空`,
-    Styles: {
-      D3Model: "3D模型",
-      AnalogFilm: "模拟电影",
-      Anime: "动漫",
-      Cinematic: "电影风格",
-      ComicBook: "漫画书",
-      DigitalArt: "数字艺术",
-      Enhance: "增强",
-      FantasyArt: "幻想艺术",
-      Isometric: "等角",
-      LineArt: "线描",
-      LowPoly: "低多边形",
-      ModelingCompound: "建模材料",
-      NeonPunk: "霓虹朋克",
-      Origami: "折纸",
-      Photographic: "摄影",
-      PixelArt: "像素艺术",
-      TileTexture: "贴图",
-    },
-  },
-  Sd: {
-    SubTitle: (count: number) => `共 ${count} 条绘画`,
-    Actions: {
-      Params: "查看参数",
-      Copy: "复制提示词",
-      Delete: "删除",
-      Retry: "重试",
-      ReturnHome: "返回首页",
-      History: "查看历史",
-    },
-    EmptyRecord: "暂无绘画记录",
-    Status: {
-      Name: "状态",
-      Success: "成功",
-      Error: "失败",
-      Wait: "等待中",
-      Running: "运行中",
-    },
-    Danger: {
-      Delete: "确认删除？",
-    },
-    GenerateParams: "生成参数",
-    Detail: "详情",
-  },
 };
 
-type DeepPartial<T> = T extends object
-  ? {
-      [P in keyof T]?: DeepPartial<T[P]>;
-    }
-  : T;
-
 export type LocaleType = typeof cn;
-export type PartialLocaleType = DeepPartial<typeof cn>;
+export type PartialLocaleType = Partial<typeof cn>;
 
 export default cn;

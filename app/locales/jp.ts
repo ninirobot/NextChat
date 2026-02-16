@@ -58,6 +58,8 @@ const jp: PartialLocaleType = {
       FullScreen: "フルスクリーン",
       Speech: "再生",
       StopSpeech: "停止",
+      PreviousVersion: "前のバージョン",
+      NextVersion: "次のバージョン",
     },
     Commands: {
       new: "新しいチャット",
@@ -81,6 +83,7 @@ const jp: PartialLocaleType = {
       Clear: "チャットをクリア",
       Settings: "チャット設定",
       UploadImage: "画像をアップロード",
+      UploadFile: "ファイルをアップロード",
     },
     Rename: "チャットの名前を変更",
     Typing: "入力中…",
@@ -111,6 +114,16 @@ const jp: PartialLocaleType = {
     Thinking: "思考中",
     Thought: "思考",
     ThinkingDuration: (d: number) => `${d}秒かかりました`,
+    TokenUsage: "トークン使用量",
+    TokenTooltip: {
+      Context: "コンテキストメッセージ数",
+      CurrentToken: "現在のトークン数",
+      EstimatedToken: "推定総トークン数",
+      Input: "入力トークン",
+      Output: "出力トークン",
+      Total: "現在のチャットの総トークン",
+      Unknown: "未知",
+    },
   },
   Export: {
     Title: "チャット履歴を共有",
@@ -164,6 +177,14 @@ const jp: PartialLocaleType = {
     Title: "設定",
     SubTitle: "すべての設定オプション",
     ShowPassword: "パスワードを表示",
+    Tab: {
+      General: "一般",
+      Sync: "同期",
+      Mask: "アシスタント",
+      ModelService: "モデルサービス",
+      Model: "モデル設定",
+      TTS: "音声合成",
+    },
 
     Danger: {
       Reset: {
@@ -512,17 +533,6 @@ const jp: PartialLocaleType = {
           SubTitle: "Example: ",
         },
       },
-      Stability: {
-        ApiKey: {
-          Title: "Stability API Key",
-          SubTitle: "Use a custom Stability API Key",
-          Placeholder: "Stability API Key",
-        },
-        Endpoint: {
-          Title: "Endpoint Address",
-          SubTitle: "Example: ",
-        },
-      },
       Iflytek: {
         ApiKey: {
           Title: "Iflytek API Key",
@@ -537,6 +547,17 @@ const jp: PartialLocaleType = {
         Endpoint: {
           Title: "Endpoint Address",
           SubTitle: "Example: ",
+        },
+      },
+      AI302: {
+        ApiKey: {
+          Title: "API キー",
+          SubTitle: "カスタム 302.AI API キーを使用",
+          Placeholder: "302.AI API キー",
+        },
+        Endpoint: {
+          Title: "エンドポイント",
+          SubTitle: "例：",
         },
       },
       Meituan: {
@@ -559,6 +580,17 @@ const jp: PartialLocaleType = {
           Title: "API Key",
           SubTitle: "Use a custom OpenRouter API Key",
           Placeholder: "OpenRouter API Key",
+        },
+      },
+      Nvidia: {
+        ApiKey: {
+          Title: "Nvidia API Key",
+          SubTitle: "Use a custom Nvidia API Key",
+          Placeholder: "Nvidia API Key",
+        },
+        Endpoint: {
+          Title: "Endpoint Address",
+          SubTitle: "Example: ",
         },
       },
       CustomModel: {
@@ -597,6 +629,10 @@ const jp: PartialLocaleType = {
       Title: "思考予算 (thinking_budget)",
       SubTitle: "LongCat-Thinkingの最大トークン数",
     },
+    Thinking: {
+      Title: "思考を有効化",
+      SubTitle: "モデルの深い思考を有効化",
+    },
     KimiThinking: {
       Title: "思考を有効化",
       SubTitle: "Kimi 2.5モデルの深い思考を有効化",
@@ -620,6 +656,10 @@ const jp: PartialLocaleType = {
     ThinkingLevel: {
       Title: "Thinking Level",
       SubTitle: "Control the depth of thought (Gemini 3 only)",
+    },
+    ReasoningEffort: {
+      Title: "推理強度 (reasoning_effort)",
+      SubTitle: "推理モデルの思考深度を制御 (GPT-OSS シリーズのみ)",
     },
     TTS: {
       Enable: {
@@ -704,12 +744,7 @@ const jp: PartialLocaleType = {
     Clear: "コンテキストがクリアされました",
     Revert: "コンテキストを元に戻す",
   },
-  Plugin: {
-    Name: "プラグイン",
-  },
-  Discovery: {
-    Name: "発見",
-  },
+
   FineTuned: {
     Sysmessage: "あなたはアシスタントです",
   },
@@ -763,6 +798,14 @@ const jp: PartialLocaleType = {
         Title: "プリセット対話を非表示",
         SubTitle:
           "非表示にすると、プリセット対話はチャット画面に表示されません",
+      },
+      Artifacts: {
+        Title: "アーティファクトを有効化",
+        SubTitle: "HTMLコンテンツを直接レンダリング可能にします",
+      },
+      CodeFold: {
+        Title: "コードの折りたたみを有効化",
+        SubTitle: "長すぎるコードブロックを自動的に折りたたみ/展開します",
       },
       Share: {
         Title: "このマスクを共有",
