@@ -55,6 +55,7 @@ export function ThinkingBlock(props: {
       m.includes("kimi") ||
       m.includes("gpt-oss") ||
       m.includes("glm") ||
+      m.includes("qwen") ||
       customThinkingModels
         .split(",")
         .some(

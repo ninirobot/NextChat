@@ -504,6 +504,7 @@ export const VISION_MODEL_REGEXES = [
   /learnlm/i,
   /qwen-vl/i,
   /qwen2-vl/i,
+  /qwen3\.5/i,
   /gpt-4-turbo(?!.*preview)/i,
   /^dall-e-3$/i,
   /glm-4v/i,
@@ -787,6 +788,7 @@ const openrouterModels = [
 ];
 
 const nvidiaModels = [
+  "qwen/qwen3.5-397b-a17b",
   "01-ai/yi-large",
   "abacusai/dracarys-llama-3.1-70b-instruct",
   "ai21labs/jamba-1.5-mini-instruct",
