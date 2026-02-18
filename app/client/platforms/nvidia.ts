@@ -77,6 +77,11 @@ export class NvidiaApi implements LLMApi {
       // Omit max_tokens to avoid compatibility issues
     };
 
+    // Special handling for qwen/qwen3.5-397b-a17b
+    if (modelConfig.model === "qwen/qwen3.5-397b-a17b") {
+      requestPayload.temperature = 0.6;
+    }
+
     // Add reasoning_effort for gpt-oss models
     if (modelConfig.model.includes("gpt-oss") && modelConfig.reasoning_effort) {
       requestPayload.reasoning_effort = modelConfig.reasoning_effort;

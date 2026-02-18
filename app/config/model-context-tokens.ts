@@ -22,6 +22,9 @@ export const MODEL_CONTEXT_TOKENS: Record<string, ModelContextConfig> = {
 
   // GPT OSS
   "gpt-oss-120b": { contextTokens: 131072 },
+
+  // Qwen
+  "qwen/qwen3.5-397b-a17b": { contextTokens: 262144 },
 };
 
 export function getModelContextTokens(
