@@ -613,6 +613,13 @@ const fr: PartialLocaleType = {
         SubTitle:
           "Ajouter des options de modèles personnalisés, séparées par des virgules",
       },
+      GoogleLive: {
+        ApiKey: {
+          Title: "Google Live API Key",
+          SubTitle: "Use a custom Google Live API Key",
+          Placeholder: "Google Live API Key",
+        },
+      },
     },
 
     Model: "Modèle",

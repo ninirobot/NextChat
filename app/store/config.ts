@@ -15,7 +15,6 @@ import {
   ServiceProvider,
 } from "../constant";
 import { createPersistStore } from "../utils/store";
-import type { Voice } from "rt-client";
 
 export type ModelType = (typeof DEFAULT_MODELS)[number]["name"];
 export type TTSModelType = (typeof DEFAULT_TTS_MODELS)[number];
@@ -98,17 +97,14 @@ export const DEFAULT_CONFIG = {
     speed: 1.0,
   },
 
-  realtimeConfig: {
-    enable: false,
-    provider: "OpenAI" as ServiceProvider,
-    model: "gpt-4o-realtime-preview-2024-10-01",
+  geminiLiveConfig: {
     apiKey: "",
-    azure: {
-      endpoint: "",
-      deployment: "",
-    },
+    model: "gemini-2.5-flash-native-audio-preview-12-2025",
+    voice: "Kore",
     temperature: 0.9,
-    voice: "alloy" as Voice,
+    speed: 1.0,
+    thinkingBudget: -1,
+    includeThoughts: true,
   },
 };
 
@@ -116,7 +112,7 @@ export type ChatConfig = typeof DEFAULT_CONFIG;
 
 export type ModelConfig = ChatConfig["modelConfig"];
 export type TTSConfig = ChatConfig["ttsConfig"];
-export type RealtimeConfig = ChatConfig["realtimeConfig"];
+export type GeminiLiveConfig = ChatConfig["geminiLiveConfig"];
 
 export function limitNumber(
   x: number,

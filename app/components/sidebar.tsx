@@ -12,6 +12,7 @@ import MaskIcon from "../icons/mask.svg";
 import McpIcon from "../icons/mcp.svg";
 import DragIcon from "../icons/drag.svg";
 import DiscoveryIcon from "../icons/discovery.svg";
+import GeminiLiveIcon from "../icons/gemini-live.svg";
 
 import Locale from "../locales";
 
@@ -280,6 +281,17 @@ export function SideBar(props: { className?: string }) {
             className={styles["sidebar-bar-button"]}
             onClick={() =>
               navigate(Path.SearchChat, { state: { fromHome: true } })
+            }
+            shadow
+          />
+        </div>
+        <div className={styles["sidebar-header-bar"]}>
+          <IconButton
+            icon={<GeminiLiveIcon />}
+            text={shouldNarrow ? undefined : "实时聊天"}
+            className={styles["sidebar-bar-button"]}
+            onClick={() =>
+              navigate(Path.GeminiLive, { state: { fromHome: true } })
             }
             shadow
           />

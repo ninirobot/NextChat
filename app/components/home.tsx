@@ -74,6 +74,10 @@ const McpMarketPage = dynamic(
   },
 );
 
+const LiveChat = dynamic(async () => (await import("./live-chat")).LiveChat, {
+  loading: () => <Loading noLogo />,
+});
+
 export function useSwitchTheme() {
   const config = useAppConfig();
 
@@ -190,6 +194,7 @@ function Screen() {
             <Route path={Path.Chat} element={<Chat />} />
             <Route path={Path.Settings} element={<Settings />} />
             <Route path={Path.McpMarket} element={<McpMarketPage />} />
+            <Route path={Path.GeminiLive} element={<LiveChat />} />
           </Routes>
         </WindowContent>
       </>

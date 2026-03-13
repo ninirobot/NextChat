@@ -74,6 +74,14 @@ export type ChatMessage = RequestMessage & {
     reasoning_duration?: number;
   }[];
   currentVersionIndex?: number;
+  // Live 音频相关字段
+  liveAudio?: {
+    data?: Uint8Array | null; // 音频数据（PCM）
+    duration?: number; // 音频时长（秒）
+    mimeType?: string; // 音频格式
+    isPlaying?: boolean; // 是否正在播放
+    _storedInDB?: boolean; // 标记数据是否已存储到 IndexedDB
+  };
 };
 
 export function createMessage(override: Partial<ChatMessage>): ChatMessage {

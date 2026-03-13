@@ -597,6 +597,13 @@ const jp: PartialLocaleType = {
         Title: "カスタムモデル名",
         SubTitle: "カスタムモデルの選択肢を追加、英語のカンマで区切る",
       },
+      GoogleLive: {
+        ApiKey: {
+          Title: "Google Live API Key",
+          SubTitle: "Use a custom Google Live API Key",
+          Placeholder: "Google Live API Key",
+        },
+      },
     },
 
     Model: "モデル (model)",

@@ -14,6 +14,8 @@ import CopyIcon from "../icons/copy.svg";
 import DragIcon from "../icons/drag.svg";
 
 import { DEFAULT_MASK_AVATAR, Mask, useMaskStore } from "../store/mask";
+import { VOICES } from "../lib/gemini/types";
+import { isLiveModel } from "../utils/model";
 import {
   ChatMessage,
   createMessage,
@@ -251,6 +253,91 @@ export function MaskConfig(props: {
           modelConfig={{ ...props.mask.modelConfig }}
           updateConfig={updateConfig}
         />
+
+        {/* Live 模式设置 - 只在 Live 模型时显示 */}
+        {isLiveModel(props.mask.modelConfig.model) && (
+          <>
+            <ListItem title="Gemini Live 语音">
+              <select
+                value={props.mask.liveConfig?.voice || "Kore"}
+                onChange={(e) => {
+                  props.updateMask((mask) => {
+                    mask.liveConfig = {
+                      ...mask.liveConfig,
+                      voice: e.target.value,
+                    };
+                  });
+                }}
+              >
+                {VOICES.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.id} - {v.desc}
+                  </option>
+                ))}
+              </select>
+            </ListItem>
+            <ListItem title="显示思考过程" subTitle="是否显示AI的思考过程">
+              <input
+                type="checkbox"
+                checked={props.mask.liveConfig?.includeThoughts !== false}
+                onChange={(e) => {
+                  props.updateMask((mask) => {
+                    mask.liveConfig = {
+                      ...mask.liveConfig,
+                      includeThoughts: e.target.checked,
+                    };
+                  });
+                }}
+              />
+            </ListItem>
+            {props.mask.liveConfig?.includeThoughts !== false && (
+              <ListItem title="思考预算 (tokens)" subTitle="-1 = 自动">
+                <input
+                  type="range"
+                  min="-1"
+                  max="24576"
+                  step="1024"
+                  value={props.mask.liveConfig?.thinkingBudget ?? -1}
+                  onChange={(e) => {
+                    const value = parseInt(e.currentTarget.value);
+                    props.updateMask((mask) => {
+                      mask.liveConfig = {
+                        ...mask.liveConfig,
+                        thinkingBudget: value,
+                      };
+                    });
+                  }}
+                  style={{ width: 120 }}
+                />
+                <span style={{ marginLeft: 8, fontSize: 12 }}>
+                  {(props.mask.liveConfig?.thinkingBudget ?? -1) === -1
+                    ? "自动"
+                    : props.mask.liveConfig?.thinkingBudget}
+                </span>
+              </ListItem>
+            )}
+            <ListItem title="语音语速" subTitle="0.25x - 4.0x">
+              <input
+                type="range"
+                min="0.25"
+                max="4.0"
+                step="0.25"
+                value={props.mask.liveConfig?.speed ?? 1.0}
+                onChange={(e) => {
+                  const value = parseFloat(e.currentTarget.value);
+                  props.updateMask((mask) => {
+                    mask.liveConfig = { ...mask.liveConfig, speed: value };
+                  });
+                }}
+                style={{ width: 120 }}
+              />
+              <span style={{ marginLeft: 8, fontSize: 12 }}>
+                {props.mask.liveConfig?.speed ?? 1.0}x
+              </span>
+            </ListItem>
+          </>
+        )}
+
         {props.extraListItems}
       </List>
     </>

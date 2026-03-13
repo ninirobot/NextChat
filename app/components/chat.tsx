@@ -54,7 +54,7 @@ import { uploadImage as uploadImageRemote } from "@/app/utils/chat";
 import { parseFile } from "../utils/file";
 import { prettyObject } from "../utils/format";
 import { useAllModels } from "../utils/hooks";
-import { getModelProvider } from "../utils/model";
+import { getModelProvider, isLiveModel } from "../utils/model";
 import { MsEdgeTTS, OUTPUT_FORMAT } from "../utils/ms_edge_tts";
 
 import { ClientApi, MultimodalContent } from "../client/api";
@@ -78,8 +78,9 @@ import { IconButton } from "./button";
 import { Avatar } from "./emoji";
 import { ExportMessageModal } from "./exporter";
 import { ContextPrompts, MaskAvatar, MaskConfig } from "./mask";
-import { RealtimeChat } from "@/app/components/realtime-chat";
 import { ThinkingBlock } from "./thinking";
+import { AudioBar } from "./audio-bar";
+import { AudioPlayer } from "./audio-player"; // 新增：Live 音频播放器
 import {
   List,
   ListItem,
@@ -99,6 +100,9 @@ import BottomIcon from "../icons/bottom.svg";
 import BrainIcon from "../icons/brain.svg";
 import BreakIcon from "../icons/break.svg";
 import CancelIcon from "../icons/cancel.svg";
+import CameraIcon from "../icons/camera.svg";
+import ScreenShareIcon from "../icons/screen-share.svg";
+import GeminiLiveIcon from "../icons/gemini-live.svg";
 import CloseIcon from "../icons/close.svg";
 import ConfirmIcon from "../icons/confirm.svg";
 import CopyIcon from "../icons/copy.svg";
@@ -106,7 +110,6 @@ import DarkIcon from "../icons/dark.svg";
 import DeleteIcon from "../icons/clear.svg";
 import EditIcon from "../icons/rename.svg";
 import ExportIcon from "../icons/share.svg";
-import HeadphoneIcon from "../icons/headphone.svg";
 import { ProviderIcon } from "./provider-icon";
 import ImageIcon from "../icons/image.svg";
 import LightIcon from "../icons/light.svg";
@@ -601,6 +604,7 @@ export function ChatActions(props: {
   setUserInput: (input: string) => void;
   setShowChatSidePanel: React.Dispatch<React.SetStateAction<boolean>>;
   userInput?: string;
+  isLiveMode?: boolean;
 }) {
   const config = useAppConfig();
   const navigate = useNavigate();
@@ -642,7 +646,11 @@ export function ChatActions(props: {
   const allModels = useAllModels();
   // 获取所有可用模型，并处理默认模型的排序
   const models = useMemo(() => {
-    const filteredModels = allModels.filter((m) => m.available);
+    // Live 模式下只显示 Live 模型，常规模式过滤掉 Live 模型
+    const filteredModels = props.isLiveMode
+      ? allModels.filter((m) => m.available && isLiveModel(m.name))
+      : allModels.filter((m) => m.available && !isLiveModel(m.name));
+
     const defaultModel = filteredModels.find((m) => m.isDefault);
 
     if (defaultModel) {
@@ -654,7 +662,7 @@ export function ChatActions(props: {
     } else {
       return filteredModels;
     }
-  }, [allModels]);
+  }, [allModels, props.isLiveMode]);
   const currentModelName = useMemo(() => {
     const model = models.find(
       (m) =>
@@ -688,6 +696,9 @@ export function ChatActions(props: {
       props.setAttachImages([]);
       props.setUploading(false);
     }
+
+    // Live 模式下不执行自动模型切换（Live 模型在 models 数组中被过滤）
+    if (props.isLiveMode) return;
 
     // if current model is not available
     // switch to first available model
@@ -916,14 +927,35 @@ export function ChatActions(props: {
         {!isMobileScreen && <MCPAction />}
       </>
       <div className={styles["chat-input-actions-end"]}>
-        {/* 右侧功能区：实时聊天、模型选择、Token计数 */}
-        {config.realtimeConfig.enable && (
-          <ChatAction
-            onClick={() => props.setShowChatSidePanel(true)}
-            text={"Realtime Chat"}
-            icon={<HeadphoneIcon />}
-          />
+        {/* 右侧功能区：Live功能按钮（仅在Live模式显示）、模型选择、Token计数 */}
+
+        {/* Live功能按钮 - 仅在Live模式显示 */}
+        {props.isLiveMode && (
+          <>
+            <ChatAction
+              onClick={() => {
+                // 语音对话功能由Live模式自动处理
+              }}
+              text="对话"
+              icon={<GeminiLiveIcon />}
+            />
+            <ChatAction
+              onClick={() => {
+                // 摄像头功能在LiveChat组件中处理
+              }}
+              text="摄像头"
+              icon={<CameraIcon />}
+            />
+            <ChatAction
+              onClick={() => {
+                // 屏幕分享功能在LiveChat组件中处理
+              }}
+              text="屏幕分享"
+              icon={<ScreenShareIcon />}
+            />
+          </>
         )}
+
         <div
           className={clsx(
             styles["chat-input-action"],
@@ -1092,7 +1124,11 @@ function FileIcon(props: { name: string }) {
   );
 }
 
-function SessionChat() {
+function SessionChat(props: {
+  isLiveMode?: boolean;
+  onSendText?: (text: string) => void;
+  isLiveConnected?: boolean;
+}) {
   type RenderMessage = ChatMessage & { preview?: boolean };
 
   const chatStore = useChatStore();
@@ -1328,6 +1364,31 @@ function SessionChat() {
       setUserInput("");
       setPromptHints([]);
       matchCommand.invoke();
+      return;
+    }
+
+    // Live 模式下使用文字输入发送到 Live API
+    if (props.isLiveMode) {
+      // 检查是否已连接
+      if (!props.isLiveConnected) {
+        showToast("请先点击'开始对话'按钮建立连接");
+        return;
+      }
+      // 创建用户消息
+      chatStore.updateTargetSession(session, (s) => {
+        s.messages.push(
+          createMessage({
+            role: "user",
+            content: userInput,
+          }),
+        );
+      });
+      // 调用 Live API 发送文字（通过 extra 回调）
+      props.onSendText?.(userInput);
+      setUserInput("");
+      setPromptHints([]);
+      if (!isMobileScreen) inputRef.current?.focus();
+      setAutoScroll(true);
       return;
     }
 
@@ -2247,6 +2308,43 @@ function SessionChat() {
                                   </div>
                                 </div>
                               )}
+                            {/* 音频条 */}
+                            {message.audio_url && (
+                              <AudioBar
+                                audioUrl={message.audio_url}
+                                duration={30} // 默认时长，实际应从音频文件获取
+                                onDownload={() => {
+                                  // 下载音频
+                                  if (message.audio_url) {
+                                    const link = document.createElement("a");
+                                    link.href = message.audio_url;
+                                    link.download = `audio-${message.id}.mp3`;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                  }
+                                }}
+                                onSpeedChange={(speed: number) => {
+                                  console.log("语速调节为:", speed);
+                                }}
+                              />
+                            )}
+                            {/* Live 音频播放器 */}
+                            {message.liveAudio?.data && (
+                              <AudioPlayer
+                                audioData={message.liveAudio.data}
+                                duration={message.liveAudio.duration}
+                                className={styles["live-audio-player"]}
+                                sampleRate={
+                                  message.liveAudio.mimeType?.includes(
+                                    "rate=16000",
+                                  )
+                                    ? 16000
+                                    : 24000
+                                }
+                              />
+                            )}
+
                             <ThinkingBlock
                               model={message.model}
                               thinking={
@@ -2376,6 +2474,7 @@ function SessionChat() {
                 setUserInput={setUserInput}
                 setShowChatSidePanel={setShowChatSidePanel}
                 userInput={userInput}
+                isLiveMode={props.isLiveMode}
               />
               <label
                 className={clsx(styles["chat-input-panel-inner"], {
@@ -2461,18 +2560,7 @@ function SessionChat() {
               [styles["mobile"]]: isMobileScreen,
               [styles["chat-side-panel-show"]]: showChatSidePanel,
             })}
-          >
-            {showChatSidePanel && (
-              <RealtimeChat
-                onClose={() => {
-                  setShowChatSidePanel(false);
-                }}
-                onStartVoice={async () => {
-                  console.log("start voice");
-                }}
-              />
-            )}
-          </div>
+          ></div>
         </div>
       </div>
       {showExport && (
@@ -2494,8 +2582,19 @@ function SessionChat() {
   );
 }
 
-export function Chat() {
+export function Chat(props: {
+  isLiveMode?: boolean;
+  onSendText?: (text: string) => void;
+  isLiveConnected?: boolean;
+}) {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
-  return <SessionChat key={session.id}></SessionChat>;
+  return (
+    <SessionChat
+      key={session.id}
+      isLiveMode={props.isLiveMode}
+      onSendText={props.onSendText}
+      isLiveConnected={props.isLiveConnected}
+    ></SessionChat>
+  );
 }

@@ -72,7 +72,6 @@ import { nanoid } from "nanoid";
 import { useMaskStore } from "../store/mask";
 import { ProviderType } from "../utils/cloud";
 import { TTSConfigList } from "./tts-config";
-import { RealtimeConfigList } from "./realtime-chat/realtime-config";
 import { ProviderConfig } from "./settings/provider-config";
 
 enum SettingsTab {
@@ -1236,19 +1235,6 @@ export function Settings() {
                     updater(modelConfig);
                     config.update(
                       (config) => (config.modelConfig = modelConfig),
-                    );
-                  }}
-                />
-              </List>
-
-              <List>
-                <RealtimeConfigList
-                  realtimeConfig={config.realtimeConfig}
-                  updateConfig={(updater) => {
-                    const realtimeConfig = { ...config.realtimeConfig };
-                    updater(realtimeConfig);
-                    config.update(
-                      (config) => (config.realtimeConfig = realtimeConfig),
                     );
                   }}
                 />

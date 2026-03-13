@@ -90,6 +90,9 @@ const DEFAULT_ACCESS_STATE = {
   googleApiVersion: "v1",
   googleSafetySettings: GoogleSafetySettingsThreshold.BLOCK_ONLY_HIGH,
 
+  // google live
+  googleLiveApiKey: "",
+
   // anthropic
   anthropicUrl: DEFAULT_ANTHROPIC_URL,
   anthropicApiKey: "",

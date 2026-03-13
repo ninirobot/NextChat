@@ -7,15 +7,16 @@ import { ListItem, Select } from "./ui-lib";
 import { useAllModels } from "../utils/hooks";
 import { groupBy } from "lodash-es";
 import styles from "./model-config.module.scss";
-import { getModelProvider } from "../utils/model";
+import { getModelProvider, isLiveModel } from "../utils/model";
 
 export function ModelConfigList(props: {
   modelConfig: ModelConfig;
   updateConfig: (updater: (config: ModelConfig) => void) => void;
 }) {
   const allModels = useAllModels();
+  // 过滤掉 Live 模型（Live 模型只在 Live 聊天页面显示）
   const groupModels = groupBy(
-    allModels.filter((v) => v.available),
+    allModels.filter((v) => v.available && !isLiveModel(v.name)),
     "provider.providerName",
   );
   const value = `${props.modelConfig.model}@${props.modelConfig?.providerName}`;

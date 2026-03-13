@@ -6,6 +6,13 @@ import { StoreKey } from "../constant";
 import { nanoid } from "nanoid";
 import { createPersistStore } from "../utils/store";
 
+export type LiveModeConfig = {
+  voice?: string; // 语音选择
+  thinkingBudget?: number; // Thinking budget (0-24576)
+  includeThoughts?: boolean; // 显示思考过程
+  speed?: number; // 语速 (0.25-4.0)
+};
+
 export type Mask = {
   id: string;
   createdAt: number;
@@ -20,6 +27,9 @@ export type Mask = {
 
   enableArtifacts?: boolean;
   enableCodeFold?: boolean;
+
+  // Live 模式配置
+  liveConfig?: LiveModeConfig;
 };
 
 export const DEFAULT_MASK_STATE = {
@@ -43,6 +53,12 @@ export const createEmptyMask = () =>
     lang: getLang(),
     builtin: false,
     createdAt: Date.now(),
+    liveConfig: {
+      voice: "Kore",
+      thinkingBudget: -1,
+      includeThoughts: true,
+      speed: 1.0,
+    },
   }) as Mask;
 
 export const useMaskStore = createPersistStore(

@@ -34,6 +34,9 @@ declare global {
       GOOGLE_API_KEY?: string;
       GOOGLE_URL?: string;
 
+      // google live only
+      GOOGLE_LIVE_API_KEY?: string;
+
       // google tag manager
       GTM_ID?: string;
 
@@ -164,6 +167,7 @@ export const getServerSideConfig = () => {
 
   const isAzure = !!process.env.AZURE_URL;
   const isGoogle = !!process.env.GOOGLE_API_KEY;
+  const isGoogleLive = !!process.env.GOOGLE_LIVE_API_KEY;
   const isAnthropic = !!process.env.ANTHROPIC_API_KEY;
   const isTencent = !!process.env.TENCENT_API_KEY;
 
@@ -208,6 +212,9 @@ export const getServerSideConfig = () => {
     isGoogle,
     googleApiKey: getApiKey(process.env.GOOGLE_API_KEY),
     googleUrl: process.env.GOOGLE_URL,
+
+    isGoogleLive,
+    googleLiveApiKey: getApiKey(process.env.GOOGLE_LIVE_API_KEY),
 
     isAnthropic,
     anthropicApiKey: getApiKey(process.env.ANTHROPIC_API_KEY),
