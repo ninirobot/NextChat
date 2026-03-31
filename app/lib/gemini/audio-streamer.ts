@@ -18,6 +18,8 @@ export class AudioStreamer {
   private gainNode: GainNode;
   private endOfQueueAudioSource: AudioBufferSourceNode | null = null;
   private initialBufferTime: number = 0.1; // 100ms 初始缓冲
+  private playbackRate: number = 1.0;
+  private activeSources: Set<AudioBufferSourceNode> = new Set();
 
   public onComplete = () => {};
 
@@ -35,13 +37,17 @@ export class AudioStreamer {
    * 若 chunk 的 byteOffset 不为 0（例如是 slice 出来的子视图），需先拷贝。
    */
   private processPCM16Chunk(chunk: Uint8Array): Float32Array {
+    // 防御性处理：Int16Array 要求 byteLength 必须是 2 的倍数
+    const validByteLength = Math.floor(chunk.byteLength / 2) * 2;
+    if (validByteLength === 0) return new Float32Array(0);
+
     // 确保底层 ArrayBuffer 对齐（byteOffset 可能不为 0）
     const alignedBuffer =
-      chunk.byteOffset === 0 && chunk.byteLength === chunk.buffer.byteLength
+      chunk.byteOffset === 0 && validByteLength === chunk.buffer.byteLength
         ? chunk.buffer
         : chunk.buffer.slice(
             chunk.byteOffset,
-            chunk.byteOffset + chunk.byteLength,
+            chunk.byteOffset + validByteLength,
           );
 
     const int16 = new Int16Array(alignedBuffer);
@@ -120,30 +126,30 @@ export class AudioStreamer {
       const audioBuffer = this.createAudioBuffer(audioData);
       const source = this.context.createBufferSource();
 
-      // 处理队列结束标记
       if (this.audioQueue.length === 0) {
         if (this.endOfQueueAudioSource) {
           this.endOfQueueAudioSource.onended = null;
         }
         this.endOfQueueAudioSource = source;
-        source.onended = () => {
-          if (
-            !this.audioQueue.length &&
-            this.endOfQueueAudioSource === source
-          ) {
-            this.endOfQueueAudioSource = null;
-            this.onComplete();
-          }
-        };
       }
 
       source.buffer = audioBuffer;
+      source.playbackRate.value = this.playbackRate;
       source.connect(this.gainNode);
+
+      this.activeSources.add(source);
+      source.onended = () => {
+        this.activeSources.delete(source);
+        if (!this.audioQueue.length && this.endOfQueueAudioSource === source) {
+          this.endOfQueueAudioSource = null;
+          this.onComplete();
+        }
+      };
 
       // 确保不调度到过去
       const startTime = Math.max(this.scheduledTime, this.context.currentTime);
       source.start(startTime);
-      this.scheduledTime = startTime + audioBuffer.duration;
+      this.scheduledTime = startTime + audioBuffer.duration / this.playbackRate;
     }
 
     // 调度下一次检查
@@ -181,6 +187,13 @@ export class AudioStreamer {
     this.scheduledTime = this.context.currentTime;
     this.endOfQueueAudioSource = null;
 
+    this.activeSources.forEach((s: AudioBufferSourceNode) => {
+      try {
+        s.stop();
+      } catch (e) {}
+    });
+    this.activeSources.clear();
+
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
       this.checkInterval = null;
@@ -212,5 +225,12 @@ export class AudioStreamer {
   complete(): void {
     this.isStreamComplete = true;
     this.onComplete();
+  }
+
+  setSpeed(speed: number): void {
+    this.playbackRate = speed;
+    this.activeSources.forEach((source) => {
+      source.playbackRate.value = speed;
+    });
   }
 }

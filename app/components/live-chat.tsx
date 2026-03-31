@@ -1,22 +1,19 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { useChatStore, useAppConfig, createMessage } from "../store";
+import {
+  useChatStore,
+  useAppConfig,
+  createMessage,
+  useAccessStore,
+} from "../store";
 import { Chat } from "./chat";
 import { GeminiLiveConfig } from "../lib/gemini/types";
-import { isLiveModel } from "../utils/model";
 import { useGeminiLive } from "../hooks/useGeminiLive";
 import { useMediaStream } from "../hooks/useMediaStream";
-import { ServiceProvider } from "../constant";
 import { showToast } from "./ui-lib";
 
-// 辅助函数：合并 Uint8Array
-function concatenateUint8Arrays(a: Uint8Array, b: Uint8Array): Uint8Array {
-  const result = new Uint8Array(a.length + b.length);
-  result.set(a, 0);
-  result.set(b, a.length);
-  return result;
-}
+// Removed concatenateUint8Arrays auxiliary function to prevent O(N^2) memory cloning.
 
 // Icons
 const MicIcon = () => (
@@ -150,36 +147,17 @@ const PhoneOffIcon = () => (
 export function LiveChat() {
   const chatStore = useChatStore();
   const config = useAppConfig();
-  const session = chatStore.currentSession();
+  const accessStore = useAccessStore();
+  const session = chatStore.currentSession(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // 检查当前会话是否已设置为 Live 模式
-  const isLiveSession = isLiveModel(session.mask.modelConfig.model);
-
-  // 使用 ref 来跟踪模型是否已经被切换过
-  const hasSwitchedToLiveRef = useRef(false);
-
-  // 如果不是 Live 会话，自动切换到 Live 模型（只在首次进入时切换）
-  useEffect(() => {
-    if (!isLiveSession && !hasSwitchedToLiveRef.current) {
-      hasSwitchedToLiveRef.current = true;
-      const geminiConfig = config.geminiLiveConfig;
-      const liveModel =
-        geminiConfig?.model || "gemini-2.5-flash-native-audio-preview-12-2025";
-
-      chatStore.updateTargetSession(session, (s) => {
-        s.mask.modelConfig.model = liveModel;
-        s.mask.modelConfig.providerName = ServiceProvider.Google;
-      });
-
-      showToast(`已切换到 ${liveModel}`);
-    }
-  }, [isLiveSession, session, chatStore, config]);
+  // The model is now automatically set correctly by `chatStore.newSession` and `createEmptySession`.
 
   // 使用 Mask 中的 Live 配置
   const liveConfig: GeminiLiveConfig = {
-    apiKey: config.geminiLiveConfig?.apiKey || "",
+    apiKey:
+      accessStore.googleLiveApiKey || config.geminiLiveConfig?.apiKey || "",
     model: session.mask.modelConfig.model,
     voice:
       session.mask.liveConfig?.voice ||
@@ -200,8 +178,23 @@ export function LiveChat() {
 
   const accumulatedOutputTextRef = useRef("");
   const accumulatedInputTextRef = useRef("");
-  const accumulatedOutputAudioRef = useRef<Uint8Array | null>(null);
-  const accumulatedInputAudioRef = useRef<Uint8Array | null>(null);
+  // 使用 chunks 数组避免 O(N^2) 内存全量复制
+  const accumulatedOutputAudioChunksRef = useRef<Uint8Array[]>([]);
+  const accumulatedInputAudioChunksRef = useRef<Uint8Array[]>([]);
+
+  // 辅助合并函数
+  const mergeAudioChunks = useCallback((chunks: Uint8Array[]) => {
+    if (chunks.length === 0) return undefined;
+    if (chunks.length === 1) return chunks[0];
+    const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+    const result = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+      result.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return result;
+  }, []);
 
   // AI 回合结束标识
   const isAITurnCompleteRef = useRef(false);
@@ -256,49 +249,48 @@ export function LiveChat() {
 
           const hasNewAudio = data && data.length > 0;
           if (hasNewAudio) {
-            if (accumulatedOutputAudioRef.current) {
-              accumulatedOutputAudioRef.current = concatenateUint8Arrays(
-                accumulatedOutputAudioRef.current,
-                data,
-              );
-            } else {
-              accumulatedOutputAudioRef.current = data;
-            }
+            accumulatedOutputAudioChunksRef.current.push(data);
           }
 
           // 累积更新现有 AI 消息
           const updatedMessage = {
             ...lastMessage,
             content: accumulatedOutputTextRef.current,
-            liveAudio: accumulatedOutputAudioRef.current
-              ? {
-                  data: accumulatedOutputAudioRef.current,
-                  duration: (lastMessage.liveAudio?.duration || 0) + duration,
-                  mimeType: "audio/pcm;rate=24000",
-                }
-              : lastMessage.liveAudio,
+            liveAudio:
+              accumulatedOutputAudioChunksRef.current.length > 0
+                ? {
+                    data: mergeAudioChunks(
+                      accumulatedOutputAudioChunksRef.current,
+                    ),
+                    duration: (lastMessage.liveAudio?.duration || 0) + duration,
+                    mimeType: "audio/pcm;rate=24000",
+                  }
+                : lastMessage.liveAudio,
           };
-          s.messages = [...s.messages.slice(0, -1), updatedMessage];
+          s.messages[s.messages.length - 1] = updatedMessage; // Immer 直接赋值
         } else {
           // 新的 AI 回复开始，先清空累积器，重置标识
           isAITurnCompleteRef.current = false;
           accumulatedOutputTextRef.current = text;
-          accumulatedOutputAudioRef.current =
-            data && data.length > 0 ? data : null;
+          accumulatedOutputAudioChunksRef.current =
+            data && data.length > 0 ? [data] : [];
 
           // 创建新 AI 消息
           const newMessage = createMessage({
             role: "assistant",
             content: accumulatedOutputTextRef.current,
-            liveAudio: accumulatedOutputAudioRef.current
-              ? {
-                  data: accumulatedOutputAudioRef.current,
-                  duration: duration,
-                  mimeType: "audio/pcm;rate=24000",
-                }
-              : undefined,
+            liveAudio:
+              accumulatedOutputAudioChunksRef.current.length > 0
+                ? {
+                    data: mergeAudioChunks(
+                      accumulatedOutputAudioChunksRef.current,
+                    ),
+                    duration: duration,
+                    mimeType: "audio/pcm;rate=24000",
+                  }
+                : undefined,
           });
-          s.messages = [...s.messages, newMessage];
+          s.messages.push(newMessage); // Immer 直接 push
         }
       });
     },
@@ -326,54 +318,49 @@ export function LiveChat() {
 
           const hasNewAudio = data && data.length > 0;
           if (hasNewAudio) {
-            if (accumulatedInputAudioRef.current) {
-              accumulatedInputAudioRef.current = concatenateUint8Arrays(
-                accumulatedInputAudioRef.current,
-                data,
-              );
-            } else {
-              accumulatedInputAudioRef.current = data;
-            }
+            accumulatedInputAudioChunksRef.current.push(data);
           }
 
           const updatedMessage = {
             ...lastUserMessage,
             content: accumulatedInputTextRef.current,
-            liveAudio: accumulatedInputAudioRef.current
-              ? {
-                  data: accumulatedInputAudioRef.current,
-                  duration:
-                    (lastUserMessage.liveAudio?.duration || 0) + duration,
-                  mimeType: "audio/pcm;rate=16000",
-                }
-              : lastUserMessage.liveAudio,
+            liveAudio:
+              accumulatedInputAudioChunksRef.current.length > 0
+                ? {
+                    data: mergeAudioChunks(
+                      accumulatedInputAudioChunksRef.current,
+                    ),
+                    duration:
+                      (lastUserMessage.liveAudio?.duration || 0) + duration,
+                    mimeType: "audio/pcm;rate=16000",
+                  }
+                : lastUserMessage.liveAudio,
           };
 
-          // 创建新数组触发 React 重新渲染
-          s.messages = [
-            ...s.messages.slice(0, actualIndex),
-            updatedMessage,
-            ...s.messages.slice(actualIndex + 1),
-          ];
+          // Immer 直接赋值
+          s.messages[actualIndex] = updatedMessage;
         } else {
           // 新的用户输入开始，先清空累积器
           accumulatedInputTextRef.current = text;
-          accumulatedInputAudioRef.current =
-            data && data.length > 0 ? data : null;
+          accumulatedInputAudioChunksRef.current =
+            data && data.length > 0 ? [data] : [];
 
           // 创建新用户消息
           const newMessage = createMessage({
             role: "user",
             content: accumulatedInputTextRef.current,
-            liveAudio: accumulatedInputAudioRef.current
-              ? {
-                  data: accumulatedInputAudioRef.current,
-                  duration: duration,
-                  mimeType: "audio/pcm;rate=16000",
-                }
-              : undefined,
+            liveAudio:
+              accumulatedInputAudioChunksRef.current.length > 0
+                ? {
+                    data: mergeAudioChunks(
+                      accumulatedInputAudioChunksRef.current,
+                    ),
+                    duration: duration,
+                    mimeType: "audio/pcm;rate=16000",
+                  }
+                : undefined,
           });
-          s.messages = [...s.messages, newMessage];
+          s.messages.push(newMessage);
         }
       });
     },
@@ -548,6 +535,7 @@ export function LiveChat() {
       {/* 复用常规聊天 UI */}
       <div style={{ flex: 1, overflow: "hidden" }}>
         <Chat
+          key={session.id}
           isLiveMode={true}
           onSendText={sendText}
           isLiveConnected={isConnected}

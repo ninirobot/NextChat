@@ -34,6 +34,7 @@ import {
   Select,
   showConfirm,
 } from "./ui-lib";
+import { InputRange } from "./input-range";
 import { Avatar, AvatarPicker } from "./emoji";
 import Locale, { AllLangs, ALL_LANG_OPTIONS, Lang } from "../locales";
 import { useNavigate } from "react-router-dom";
@@ -291,13 +292,20 @@ export function MaskConfig(props: {
               />
             </ListItem>
             {props.mask.liveConfig?.includeThoughts !== false && (
-              <ListItem title="思考预算 (tokens)" subTitle="-1 = 自动">
-                <input
-                  type="range"
+              <ListItem
+                title="思考预算 (tokens)"
+                subTitle={
+                  (props.mask.liveConfig?.thinkingBudget ?? -1) === -1
+                    ? "自动 (Dynamic)"
+                    : `${props.mask.liveConfig?.thinkingBudget} tokens (0-24576 or -1 for auto)`
+                }
+              >
+                <InputRange
+                  aria="思考预算 (tokens)"
+                  value={props.mask.liveConfig?.thinkingBudget ?? -1}
                   min="-1"
                   max="24576"
-                  step="1024"
-                  value={props.mask.liveConfig?.thinkingBudget ?? -1}
+                  step="1"
                   onChange={(e) => {
                     const value = parseInt(e.currentTarget.value);
                     props.updateMask((mask) => {
@@ -307,33 +315,26 @@ export function MaskConfig(props: {
                       };
                     });
                   }}
-                  style={{ width: 120 }}
                 />
-                <span style={{ marginLeft: 8, fontSize: 12 }}>
-                  {(props.mask.liveConfig?.thinkingBudget ?? -1) === -1
-                    ? "自动"
-                    : props.mask.liveConfig?.thinkingBudget}
-                </span>
               </ListItem>
             )}
-            <ListItem title="语音语速" subTitle="0.25x - 4.0x">
-              <input
-                type="range"
+            <ListItem
+              title="语音语速"
+              subTitle={`${props.mask.liveConfig?.speed ?? 1.0}x`}
+            >
+              <InputRange
+                aria="语音语速"
+                value={props.mask.liveConfig?.speed ?? 1.0}
                 min="0.25"
                 max="4.0"
                 step="0.25"
-                value={props.mask.liveConfig?.speed ?? 1.0}
                 onChange={(e) => {
                   const value = parseFloat(e.currentTarget.value);
                   props.updateMask((mask) => {
                     mask.liveConfig = { ...mask.liveConfig, speed: value };
                   });
                 }}
-                style={{ width: 120 }}
               />
-              <span style={{ marginLeft: 8, fontSize: 12 }}>
-                {props.mask.liveConfig?.speed ?? 1.0}x
-              </span>
             </ListItem>
           </>
         )}

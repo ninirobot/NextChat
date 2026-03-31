@@ -100,7 +100,7 @@ export const DEFAULT_CONFIG = {
   geminiLiveConfig: {
     apiKey: "",
     model: "gemini-2.5-flash-native-audio-preview-12-2025",
-    voice: "Kore",
+    voice: "Zephyr",
     temperature: 0.9,
     speed: 1.0,
     thinkingBudget: -1,

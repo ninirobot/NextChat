@@ -97,52 +97,50 @@ export class AudioRecorder extends EventEmitter<AudioRecorderEvents> {
       throw new Error("Could not request user media");
     }
 
-    this.starting = new Promise(async (resolve, reject) => {
-      try {
-        this.stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        });
-        this.audioContext = await createAudioContext({
-          sampleRate: this.sampleRate,
-        });
-        this.source = this.audioContext.createMediaStreamSource(this.stream);
+    const doStart = async () => {
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+      this.audioContext = await createAudioContext({
+        sampleRate: this.sampleRate,
+      });
+      this.source = this.audioContext.createMediaStreamSource(this.stream);
 
-        const workletName = "audio-recorder-worklet";
-        const src = createWorkletFromSrc(workletName, AudioRecordingWorklet);
-        this.workletBlobUrls.push(src); // 4.3 记录 URL 以便释放
+      const workletName = "audio-recorder-worklet";
+      const src = createWorkletFromSrc(workletName, AudioRecordingWorklet);
+      this.workletBlobUrls.push(src); // 4.3 记录 URL 以便释放
 
-        await this.audioContext.audioWorklet.addModule(src);
-        this.recordingWorklet = new AudioWorkletNode(
-          this.audioContext,
-          workletName,
-        );
+      await this.audioContext.audioWorklet.addModule(src);
+      this.recordingWorklet = new AudioWorkletNode(
+        this.audioContext,
+        workletName,
+      );
 
-        this.recordingWorklet.port.onmessage = async (ev: MessageEvent) => {
-          const arrayBuffer = ev.data.data?.int16arrayBuffer;
+      this.recordingWorklet.port.onmessage = async (ev: MessageEvent) => {
+        const arrayBuffer = ev.data.data?.int16arrayBuffer;
 
-          if (arrayBuffer) {
-            const base64 = arrayBufferToBase64(arrayBuffer);
-            this.emit("data", base64);
-          }
-        };
-        this.source.connect(this.recordingWorklet);
+        if (arrayBuffer) {
+          const base64 = arrayBufferToBase64(arrayBuffer);
+          this.emit("data", base64);
+        }
+      };
+      this.source.connect(this.recordingWorklet);
 
-        // Volume meter worklet
-        const vuWorkletName = "vu-meter";
-        const vuSrc = createWorkletFromSrc(vuWorkletName, VolMeterWorklet);
-        this.workletBlobUrls.push(vuSrc); // 4.3 记录 URL 以便释放
-        await this.audioContext.audioWorklet.addModule(vuSrc);
-        this.vuWorklet = new AudioWorkletNode(this.audioContext, vuWorkletName);
-        this.vuWorklet.port.onmessage = (ev: MessageEvent) => {
-          this.emit("volume", ev.data.volume);
-        };
+      // Volume meter worklet
+      const vuWorkletName = "vu-meter";
+      const vuSrc = createWorkletFromSrc(vuWorkletName, VolMeterWorklet);
+      this.workletBlobUrls.push(vuSrc); // 4.3 记录 URL 以便释放
+      await this.audioContext.audioWorklet.addModule(vuSrc);
+      this.vuWorklet = new AudioWorkletNode(this.audioContext, vuWorkletName);
+      this.vuWorklet.port.onmessage = (ev: MessageEvent) => {
+        this.emit("volume", ev.data.volume);
+      };
 
-        this.source.connect(this.vuWorklet);
-        this.recording = true;
-        resolve();
-      } catch (error) {
-        reject(error);
-      }
+      this.source.connect(this.vuWorklet);
+      this.recording = true;
+    };
+
+    this.starting = doStart().finally(() => {
       this.starting = null;
     });
 
@@ -177,7 +175,8 @@ export class AudioRecorder extends EventEmitter<AudioRecorderEvents> {
     };
 
     if (this.starting) {
-      this.starting.then(handleStop);
+      // 无论启动成功或失败，都在最后执行资源清理
+      this.starting.finally(handleStop).catch(() => {});
       return;
     }
 

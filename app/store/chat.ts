@@ -120,7 +120,17 @@ export const BOT_HELLO: ChatMessage = createMessage({
   content: Locale.Store.BotHello,
 });
 
-function createEmptySession(): ChatSession {
+function createEmptySession(isLiveMode = false): ChatSession {
+  const mask = createEmptyMask();
+  if (isLiveMode) {
+    const config = useAppConfig.getState();
+    const liveModel =
+      config.geminiLiveConfig?.model ||
+      "gemini-2.5-flash-native-audio-preview-12-2025";
+    mask.modelConfig.model = liveModel as any;
+    mask.modelConfig.providerName = ServiceProvider.Google;
+    mask.syncGlobalConfig = false;
+  }
   return {
     id: nanoid(),
     topic: DEFAULT_TOPIC,
@@ -134,7 +144,7 @@ function createEmptySession(): ChatSession {
     lastUpdate: Date.now(),
     lastSummarizeIndex: 0,
 
-    mask: createEmptyMask(),
+    mask,
   };
 }
 
@@ -243,8 +253,10 @@ async function getMcpSystemPrompt(): Promise<string> {
 }
 
 const DEFAULT_CHAT_STATE = {
-  sessions: [createEmptySession()],
+  sessions: [createEmptySession(false)],
   currentSessionIndex: 0,
+  liveSessions: [createEmptySession(true)],
+  currentLiveSessionIndex: 0,
   lastInput: "",
 };
 
@@ -259,12 +271,12 @@ export const useChatStore = createPersistStore(
     }
 
     const methods = {
-      forkSession() {
+      forkSession(isLiveMode = false) {
         // 获取当前会话
-        const currentSession = get().currentSession();
+        const currentSession = get().currentSession(isLiveMode);
         if (!currentSession) return;
 
-        const newSession = createEmptySession();
+        const newSession = createEmptySession(isLiveMode);
 
         newSession.topic = currentSession.topic;
         // 深拷贝消息
@@ -279,28 +291,50 @@ export const useChatStore = createPersistStore(
           },
         };
 
-        set((state) => ({
-          currentSessionIndex: 0,
-          sessions: [newSession, ...state.sessions],
-        }));
-      },
-
-      clearSessions() {
-        set(() => ({
-          sessions: [createEmptySession()],
-          currentSessionIndex: 0,
-        }));
-      },
-
-      selectSession(index: number) {
-        set({
-          currentSessionIndex: index,
+        set((state) => {
+          if (isLiveMode) {
+            return {
+              currentLiveSessionIndex: 0,
+              liveSessions: [newSession, ...state.liveSessions],
+            };
+          }
+          return {
+            currentSessionIndex: 0,
+            sessions: [newSession, ...state.sessions],
+          };
         });
       },
 
-      moveSession(from: number, to: number) {
+      clearSessions(isLiveMode = false) {
+        set(() => {
+          if (isLiveMode) {
+            return {
+              liveSessions: [createEmptySession(true)],
+              currentLiveSessionIndex: 0,
+            };
+          }
+          return {
+            sessions: [createEmptySession()],
+            currentSessionIndex: 0,
+          };
+        });
+      },
+
+      selectSession(index: number, isLiveMode = false) {
         set((state) => {
-          const { sessions, currentSessionIndex: oldIndex } = state;
+          if (isLiveMode) {
+            return { currentLiveSessionIndex: index };
+          }
+          return { currentSessionIndex: index };
+        });
+      },
+
+      moveSession(from: number, to: number, isLiveMode = false) {
+        set((state) => {
+          const sessions = isLiveMode ? state.liveSessions : state.sessions;
+          const oldIndex = isLiveMode
+            ? state.currentLiveSessionIndex
+            : state.currentSessionIndex;
 
           // move the session
           const newSessions = [...sessions];
@@ -316,6 +350,12 @@ export const useChatStore = createPersistStore(
             newIndex += 1;
           }
 
+          if (isLiveMode) {
+            return {
+              currentLiveSessionIndex: newIndex,
+              liveSessions: newSessions,
+            };
+          }
           return {
             currentSessionIndex: newIndex,
             sessions: newSessions,
@@ -323,8 +363,8 @@ export const useChatStore = createPersistStore(
         });
       },
 
-      newSession(mask?: Mask) {
-        const session = createEmptySession();
+      newSession(mask?: Mask, isLiveMode = false) {
+        const session = createEmptySession(isLiveMode);
 
         if (mask) {
           const config = useAppConfig.getState();
@@ -340,29 +380,43 @@ export const useChatStore = createPersistStore(
           session.topic = mask.name;
         }
 
-        set((state) => ({
-          currentSessionIndex: 0,
-          sessions: [session].concat(state.sessions),
-        }));
+        set((state) => {
+          if (isLiveMode) {
+            return {
+              currentLiveSessionIndex: 0,
+              liveSessions: [session].concat(state.liveSessions),
+            };
+          }
+          return {
+            currentSessionIndex: 0,
+            sessions: [session].concat(state.sessions),
+          };
+        });
       },
 
-      nextSession(delta: number) {
-        const n = get().sessions.length;
+      nextSession(delta: number, isLiveMode = false) {
+        const sessions = isLiveMode ? get().liveSessions : get().sessions;
+        const n = sessions.length;
         const limit = (x: number) => (x + n) % n;
-        const i = get().currentSessionIndex;
-        get().selectSession(limit(i + delta));
+        const i = isLiveMode
+          ? get().currentLiveSessionIndex
+          : get().currentSessionIndex;
+        get().selectSession(limit(i + delta), isLiveMode);
       },
 
-      deleteSession(index: number) {
-        const deletingLastSession = get().sessions.length === 1;
-        const deletedSession = get().sessions.at(index);
+      deleteSession(index: number, isLiveMode = false) {
+        const targetSessions = isLiveMode ? get().liveSessions : get().sessions;
+        const deletingLastSession = targetSessions.length === 1;
+        const deletedSession = targetSessions.at(index);
 
         if (!deletedSession) return;
 
-        const sessions = get().sessions.slice();
+        const sessions = targetSessions.slice();
         sessions.splice(index, 1);
 
-        const currentIndex = get().currentSessionIndex;
+        const currentIndex = isLiveMode
+          ? get().currentLiveSessionIndex
+          : get().currentSessionIndex;
         let nextIndex = Math.min(
           currentIndex - Number(index < currentIndex),
           sessions.length - 1,
@@ -370,19 +424,32 @@ export const useChatStore = createPersistStore(
 
         if (deletingLastSession) {
           nextIndex = 0;
-          sessions.push(createEmptySession());
+          sessions.push(createEmptySession(isLiveMode));
         }
 
         // for undo delete action
-        const restoreState = {
-          currentSessionIndex: get().currentSessionIndex,
-          sessions: get().sessions.slice(),
-        };
+        const restoreState = isLiveMode
+          ? {
+              currentLiveSessionIndex: get().currentLiveSessionIndex,
+              liveSessions: get().liveSessions.slice(),
+            }
+          : {
+              currentSessionIndex: get().currentSessionIndex,
+              sessions: get().sessions.slice(),
+            };
 
-        set(() => ({
-          currentSessionIndex: nextIndex,
-          sessions,
-        }));
+        set(() => {
+          if (isLiveMode) {
+            return {
+              currentLiveSessionIndex: nextIndex,
+              liveSessions: sessions,
+            };
+          }
+          return {
+            currentSessionIndex: nextIndex,
+            sessions,
+          };
+        });
 
         showToast(
           Locale.Home.DeleteToast,
@@ -396,13 +463,20 @@ export const useChatStore = createPersistStore(
         );
       },
 
-      currentSession() {
-        let index = get().currentSessionIndex;
-        const sessions = get().sessions;
+      currentSession(isLiveMode = false) {
+        let index = isLiveMode
+          ? get().currentLiveSessionIndex
+          : get().currentSessionIndex;
+        const sessions = isLiveMode ? get().liveSessions : get().sessions;
 
         if (index < 0 || index >= sessions.length) {
           index = Math.min(sessions.length - 1, Math.max(0, index));
-          set(() => ({ currentSessionIndex: index }));
+          set(() => {
+            if (isLiveMode) {
+              return { currentLiveSessionIndex: index };
+            }
+            return { currentSessionIndex: index };
+          });
         }
 
         const session = sessions[index];
@@ -428,8 +502,9 @@ export const useChatStore = createPersistStore(
         attachImages?: string[],
         isMcpResponse?: boolean,
         attachFiles?: { name: string; content: string }[],
+        isLiveMode = false,
       ) {
-        const session = get().currentSession();
+        const session = get().currentSession(isLiveMode);
         const modelConfig = session.mask.modelConfig;
 
         // MCP Response no need to fill template
@@ -504,7 +579,7 @@ export const useChatStore = createPersistStore(
         });
 
         // get recent messages
-        const recentMessages = get().getMessagesWithMemory();
+        const recentMessages = get().getMessagesWithMemory(isLiveMode);
         const sendMessages = recentMessages.concat({
           ...userMessage,
           content: finalContentForLLM,
@@ -525,8 +600,12 @@ export const useChatStore = createPersistStore(
         get().doRequest(sendMessages, session, botMessage, messageIndex);
       },
 
-      async retryBotMessage(botMessageId: string, userMessage: ChatMessage) {
-        const session = get().currentSession();
+      async retryBotMessage(
+        botMessageId: string,
+        userMessage: ChatMessage,
+        isLiveMode = false,
+      ) {
+        const session = get().currentSession(isLiveMode);
         const modelConfig = session.mask.modelConfig;
 
         const botMessageIndex = session.messages.findIndex(
@@ -569,7 +648,7 @@ export const useChatStore = createPersistStore(
         });
 
         // get context messages up to the user message
-        const recentMessages = get().getMessagesWithMemory();
+        const recentMessages = get().getMessagesWithMemory(isLiveMode);
         // remove messages after the user message (including the bot message being retried)
         const userMessageIndex = recentMessages.findIndex(
           (m) => m.id === userMessage.id,
@@ -738,8 +817,8 @@ export const useChatStore = createPersistStore(
         });
       },
 
-      getMemoryPrompt() {
-        const session = get().currentSession();
+      getMemoryPrompt(isLiveMode = false) {
+        const session = get().currentSession(isLiveMode);
 
         if (session.memoryPrompt.length) {
           return {
@@ -750,8 +829,8 @@ export const useChatStore = createPersistStore(
         }
       },
 
-      getMessagesWithMemory() {
-        const session = get().currentSession();
+      getMessagesWithMemory(isLiveMode = false) {
+        const session = get().currentSession(isLiveMode);
         const modelConfig = session.mask.modelConfig;
         const clearContextIndex = session.clearContextIndex ?? 0;
         const messages = session.messages.slice();
@@ -759,7 +838,7 @@ export const useChatStore = createPersistStore(
 
         // in-context prompts
         const contextPrompts = session.mask.context.slice();
-        const memoryPrompt = get().getMemoryPrompt();
+        const memoryPrompt = get().getMemoryPrompt(isLiveMode);
         // long term memory
         const shouldSendLongTermMemory =
           modelConfig.sendMemory &&
@@ -819,12 +898,24 @@ export const useChatStore = createPersistStore(
         sessionIndex: number,
         messageIndex: number,
         updater: (message?: ChatMessage) => void,
+        isLiveMode = false,
       ) {
-        const sessions = get().sessions;
+        const sessions = isLiveMode ? get().liveSessions : get().sessions;
         const session = sessions.at(sessionIndex);
         const messages = session?.messages;
         updater(messages?.at(messageIndex));
-        set(() => ({ sessions }));
+        set(() => {
+          if (isLiveMode) return { liveSessions: sessions };
+          return { sessions };
+        });
+      },
+
+      clearContext(isLiveMode = false) {
+        const session = get().currentSession(isLiveMode);
+        get().updateTargetSession(session, (session) => {
+          session.messages = [];
+          session.memoryPrompt = "";
+        });
       },
 
       resetSession(session: ChatSession) {
@@ -981,11 +1072,21 @@ export const useChatStore = createPersistStore(
         targetSession: ChatSession,
         updater: (session: ChatSession) => void,
       ) {
-        const sessions = get().sessions;
+        const state = get();
+        const sessions = state.sessions;
+        const liveSessions = state.liveSessions;
         const index = sessions.findIndex((s) => s.id === targetSession.id);
-        if (index < 0) return;
-        updater(sessions[index]);
-        set(() => ({ sessions }));
+        const liveIndex = liveSessions.findIndex(
+          (s) => s.id === targetSession.id,
+        );
+
+        if (index >= 0) {
+          updater(sessions[index]);
+          set(() => ({ sessions }));
+        } else if (liveIndex >= 0) {
+          updater(liveSessions[liveIndex]);
+          set(() => ({ liveSessions }));
+        }
       },
       async clearAllData() {
         await indexedDBStorage.clear();

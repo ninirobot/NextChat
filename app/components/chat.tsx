@@ -100,9 +100,6 @@ import BottomIcon from "../icons/bottom.svg";
 import BrainIcon from "../icons/brain.svg";
 import BreakIcon from "../icons/break.svg";
 import CancelIcon from "../icons/cancel.svg";
-import CameraIcon from "../icons/camera.svg";
-import ScreenShareIcon from "../icons/screen-share.svg";
-import GeminiLiveIcon from "../icons/gemini-live.svg";
 import CloseIcon from "../icons/close.svg";
 import ConfirmIcon from "../icons/confirm.svg";
 import CopyIcon from "../icons/copy.svg";
@@ -173,9 +170,12 @@ const MCPAction = () => {
   );
 };
 
-export function SessionConfigModel(props: { onClose: () => void }) {
+export function SessionConfigModel(props: {
+  onClose: () => void;
+  isLiveMode?: boolean;
+}) {
   const chatStore = useChatStore();
-  const session = chatStore.currentSession();
+  const session = chatStore.currentSession(props.isLiveMode);
   const maskStore = useMaskStore();
   const navigate = useNavigate();
 
@@ -245,9 +245,10 @@ function PromptToast(props: {
   showToast?: boolean;
   showModal?: boolean;
   setShowModal: (_: boolean) => void;
+  isLiveMode?: boolean;
 }) {
   const chatStore = useChatStore();
-  const session = chatStore.currentSession();
+  const session = chatStore.currentSession(props.isLiveMode);
   const context = session.mask.context;
 
   return (
@@ -265,7 +266,10 @@ function PromptToast(props: {
         </div>
       )}
       {props.showModal && (
-        <SessionConfigModel onClose={() => props.setShowModal(false)} />
+        <SessionConfigModel
+          onClose={() => props.setShowModal(false)}
+          isLiveMode={props.isLiveMode}
+        />
       )}
     </div>
   );
@@ -390,9 +394,9 @@ export function PromptHints(props: {
   );
 }
 
-function ClearContextDivider() {
+function ClearContextDivider(props: { isLiveMode?: boolean }) {
   const chatStore = useChatStore();
-  const session = chatStore.currentSession();
+  const session = chatStore.currentSession(props.isLiveMode);
 
   return (
     <div
@@ -475,14 +479,19 @@ export function TokenCounter(props: {
 
   // Calculate the token count for the current conversation (excluding thinking content)
   // Calculate the token count for the current conversation (excluding thinking content)
-  const { historyInputTokens, historyOutputTokens } = useMemo(() => {
+  const [tokenStats, setTokenStats] = useState({
+    historyInputTokens: 0,
+    historyOutputTokens: 0,
+  });
+
+  const calculateTokens = useDebouncedCallback(() => {
     const messages = props.session.messages;
     const clearContextIndex = props.session.clearContextIndex ?? -1;
     const contextMessages = messages.slice(
       clearContextIndex >= 0 ? clearContextIndex : 0,
     );
 
-    return contextMessages.reduce(
+    const stats = contextMessages.reduce(
       (acc, message: ChatMessage) => {
         // 忽略错误消息
         if (message.isError) return acc;
@@ -504,7 +513,18 @@ export function TokenCounter(props: {
       },
       { historyInputTokens: 0, historyOutputTokens: 0 },
     );
-  }, [props.session.messages, props.session.clearContextIndex]);
+    setTokenStats(stats);
+  }, 500);
+
+  useEffect(() => {
+    calculateTokens();
+  }, [
+    props.session.messages,
+    props.session.clearContextIndex,
+    calculateTokens,
+  ]);
+
+  const { historyInputTokens, historyOutputTokens } = tokenStats;
 
   // Get the configuration for the current session
   const modelConfig = props.session.mask.modelConfig;
@@ -610,7 +630,7 @@ export function ChatActions(props: {
   const navigate = useNavigate();
   const chatStore = useChatStore();
 
-  const session = chatStore.currentSession();
+  const session = chatStore.currentSession(props.isLiveMode);
 
   // switch themes
   const theme = config.theme;
@@ -929,32 +949,7 @@ export function ChatActions(props: {
       <div className={styles["chat-input-actions-end"]}>
         {/* 右侧功能区：Live功能按钮（仅在Live模式显示）、模型选择、Token计数 */}
 
-        {/* Live功能按钮 - 仅在Live模式显示 */}
-        {props.isLiveMode && (
-          <>
-            <ChatAction
-              onClick={() => {
-                // 语音对话功能由Live模式自动处理
-              }}
-              text="对话"
-              icon={<GeminiLiveIcon />}
-            />
-            <ChatAction
-              onClick={() => {
-                // 摄像头功能在LiveChat组件中处理
-              }}
-              text="摄像头"
-              icon={<CameraIcon />}
-            />
-            <ChatAction
-              onClick={() => {
-                // 屏幕分享功能在LiveChat组件中处理
-              }}
-              text="屏幕分享"
-              icon={<ScreenShareIcon />}
-            />
-          </>
-        )}
+        {/* 右侧功能区：模型选择、Token计数 */}
 
         <div
           className={clsx(
@@ -976,9 +971,12 @@ export function ChatActions(props: {
   );
 }
 
-export function EditMessageModal(props: { onClose: () => void }) {
+export function EditMessageModal(props: {
+  onClose: () => void;
+  isLiveMode?: boolean;
+}) {
   const chatStore = useChatStore();
-  const session = chatStore.currentSession();
+  const session = chatStore.currentSession(props.isLiveMode);
   const [messages, setMessages] = useState(session.messages.slice());
 
   return (
@@ -1132,7 +1130,7 @@ function SessionChat(props: {
   type RenderMessage = ChatMessage & { preview?: boolean };
 
   const chatStore = useChatStore();
-  const session = chatStore.currentSession();
+  const session = chatStore.currentSession(props.isLiveMode);
   const config = useAppConfig();
   const fontSize = config.fontSize;
   const fontFamily = config.fontFamily;
@@ -1228,7 +1226,8 @@ function SessionChat(props: {
       e.stopPropagation();
       setIsDragging(false);
 
-      const currentModel = chatStore.currentSession().mask.modelConfig.model;
+      const currentModel = chatStore.currentSession(props.isLiveMode).mask
+        .modelConfig.model;
       const files = Array.from(e.dataTransfer.files);
 
       if (files.length === 0) return;
@@ -1319,17 +1318,24 @@ function SessionChat(props: {
 
   // chat commands shortcuts
   const chatCommands = useChatCommand({
-    new: () => chatStore.newSession(),
-    newm: () => navigate(Path.NewChat),
-    prev: () => chatStore.nextSession(-1),
-    next: () => chatStore.nextSession(1),
+    new: () => chatStore.newSession(undefined, props.isLiveMode),
+    newm: () =>
+      navigate(Path.NewChat, { state: { isLiveMode: props.isLiveMode } }),
+    prev: () => chatStore.nextSession(-1, props.isLiveMode),
+    next: () => chatStore.nextSession(1, props.isLiveMode),
     clear: () =>
       chatStore.updateTargetSession(
         session,
         (session) => (session.clearContextIndex = session.messages.length),
       ),
-    fork: () => chatStore.forkSession(),
-    del: () => chatStore.deleteSession(chatStore.currentSessionIndex),
+    fork: () => chatStore.forkSession(props.isLiveMode),
+    del: () =>
+      chatStore.deleteSession(
+        props.isLiveMode
+          ? chatStore.currentLiveSessionIndex
+          : chatStore.currentSessionIndex,
+        props.isLiveMode,
+      ),
   });
 
   // only search prompts when user input is short
@@ -1394,7 +1400,13 @@ function SessionChat(props: {
 
     setIsLoading(true);
     chatStore
-      .onUserInput(userInput, attachImages, false, attachFiles)
+      .onUserInput(
+        userInput,
+        attachImages,
+        false,
+        attachFiles,
+        props.isLiveMode,
+      )
       .then(() => setIsLoading(false));
     setAttachImages([]);
     setAttachFiles([]);
@@ -1554,7 +1566,7 @@ function SessionChat(props: {
     if (botMessage) {
       setIsLoading(true);
       chatStore
-        .retryBotMessage(botMessage.id, userMessage)
+        .retryBotMessage(botMessage.id, userMessage, props.isLiveMode)
         .then(() => {
           setIsLoading(false);
         })
@@ -1571,7 +1583,9 @@ function SessionChat(props: {
     setIsLoading(true);
     const textContent = getMessageTextContent(userMessage);
     const images = getMessageImages(userMessage);
-    chatStore.onUserInput(textContent, images).then(() => setIsLoading(false));
+    chatStore
+      .onUserInput(textContent, images, false, undefined, props.isLiveMode)
+      .then(() => setIsLoading(false));
     inputRef.current?.focus();
   };
 
@@ -1833,7 +1847,8 @@ function SessionChat(props: {
 
   const handlePaste = useCallback(
     async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
-      const currentModel = chatStore.currentSession().mask.modelConfig.model;
+      const currentModel = chatStore.currentSession(props.isLiveMode).mask
+        .modelConfig.model;
       if (!isVisionModel(currentModel)) {
         return;
       }
@@ -2101,6 +2116,7 @@ function SessionChat(props: {
             showToast={!hitBottom}
             showModal={showPromptModal}
             setShowModal={setShowPromptModal}
+            isLiveMode={props.isLiveMode}
           />
         </div>
         <div className={styles["chat-main"]}>
@@ -2439,7 +2455,9 @@ function SessionChat(props: {
                           </div>
                         </div>
                       </div>
-                      {shouldShowClearContextDivider && <ClearContextDivider />}
+                      {shouldShowClearContextDivider && (
+                        <ClearContextDivider isLiveMode={props.isLiveMode} />
+                      )}
                     </Fragment>
                   );
                 })}
@@ -2572,6 +2590,7 @@ function SessionChat(props: {
           onClose={() => {
             setIsEditingMessage(false);
           }}
+          isLiveMode={props.isLiveMode}
         />
       )}
 
@@ -2588,7 +2607,7 @@ export function Chat(props: {
   isLiveConnected?: boolean;
 }) {
   const chatStore = useChatStore();
-  const session = chatStore.currentSession();
+  const session = chatStore.currentSession(props.isLiveMode);
   return (
     <SessionChat
       key={session.id}

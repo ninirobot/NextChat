@@ -64,6 +64,9 @@ export class GeminiLiveClient {
   private client: GoogleGenAI;
   private session: Session | null = null;
   private status: ConnectionStatus = "disconnected";
+  public lastModel: string = "";
+  public lastVoice: string = "";
+  public lastApiKey: string = "";
 
   // 重连相关状态
   private reconnectAttempts: number = 0;
@@ -198,6 +201,10 @@ export class GeminiLiveClient {
     this.reconnectAttempts = 0;
     this.cancelReconnect();
     this.lastConnectArgs = { model, config };
+    this.lastModel = model;
+    this.lastVoice =
+      config.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName || "";
+    this.lastApiKey = this.options.apiKey;
 
     await this.connectInternal(model, config);
   }

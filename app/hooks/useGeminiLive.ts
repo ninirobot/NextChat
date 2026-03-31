@@ -8,7 +8,7 @@ import { LiveConnectConfig } from "@google/genai";
 import { GeminiLiveClient, ConnectionStatus } from "../lib/gemini/client";
 import { AudioRecorder } from "../lib/gemini/audio-recorder";
 import { AudioStreamer } from "../lib/gemini/audio-streamer";
-import { createAudioContext } from "../lib/gemini/utils";
+import { createAudioContext, base64ToArrayBuffer } from "../lib/gemini/utils";
 import {
   GeminiLiveConfig,
   UseGeminiLiveReturn,
@@ -111,6 +111,7 @@ export function useGeminiLive(
       // Create audio context for playback
       const audioCtx = await getAudioContext();
       streamerRef.current = new AudioStreamer(audioCtx);
+      streamerRef.current.setSpeed(config.speed);
 
       // 初始化音频收集器
       audioCollectorRef.current = new AudioDataCollector(24000);
@@ -243,11 +244,8 @@ export function useGeminiLive(
 
           // 收集用户音频数据（转换为 Uint8Array）
           try {
-            const binary = atob(base64);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-              bytes[i] = binary.charCodeAt(i);
-            }
+            const buffer = base64ToArrayBuffer(base64);
+            const bytes = new Uint8Array(buffer);
             userAudioCollectorRef.current?.addChunk(bytes, 16000);
           } catch (e) {
             console.error("Failed to collect user audio:", e);
@@ -357,6 +355,44 @@ export function useGeminiLive(
       }
     };
   }, [disconnect]);
+
+  // 监听配置变更并自动应用
+  useEffect(() => {
+    // 1. 实时更新语速（无需重连）
+    if (streamerRef.current) {
+      streamerRef.current.setSpeed(config.speed);
+    }
+
+    // 2. 关键配置变更重连（Voice, Model, API Key）
+    if (isConnected && clientRef.current) {
+      const lastModel = clientRef.current.lastModel;
+      const lastVoice = clientRef.current.lastVoice;
+      const lastApiKey = clientRef.current.lastApiKey;
+
+      if (
+        config.model !== lastModel ||
+        config.voice !== lastVoice ||
+        config.apiKey !== lastApiKey
+      ) {
+        console.log(
+          "[useGeminiLive] 关键配置变更，正在自动重连以应用新设置...",
+        );
+        disconnect();
+        // 稍微延迟重连，确保之前的连接已彻底释放
+        setTimeout(() => {
+          connect();
+        }, 500);
+      }
+    }
+  }, [
+    config.speed,
+    config.voice,
+    config.model,
+    config.apiKey,
+    isConnected,
+    connect,
+    disconnect,
+  ]);
 
   return {
     ...state,

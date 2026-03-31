@@ -104,7 +104,7 @@ export type VoiceName = (typeof VOICES)[number]["id"];
 export const DEFAULT_GEMINI_LIVE_CONFIG: GeminiLiveConfig = {
   apiKey: "",
   model: DEFAULT_MODEL,
-  voice: "Kore",
+  voice: "Zephyr",
   temperature: 0.9,
   speed: 1.0,
 };
