@@ -276,7 +276,11 @@ export function getLiveModels(): string[] {
     .split(",")
     .map((v) => v.trim())
     .filter((v) => !!v && !v.startsWith("-"))
-    .map((v) => (v.startsWith("+") ? v.slice(1) : v).split("=")[0]);
+    .map((v) => {
+      const nameConfig = v.startsWith("+") ? v.slice(1) : v;
+      const nameWithProvider = nameConfig.split("=")[0];
+      return getModelProvider(nameWithProvider)[0];
+    });
 }
 
 /**
