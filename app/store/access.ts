@@ -163,6 +163,7 @@ const DEFAULT_ACCESS_STATE = {
   disableGPT4: false,
   disableFastLink: false,
   customModels: "",
+  liveModels: "",
   defaultModel: "",
   visionModels: "",
 

@@ -60,6 +60,7 @@ export const DEFAULT_CONFIG = {
   hideBuiltinMasks: false, // dont add builtin masks
 
   customModels: "",
+  liveModels: "",
   models: DEFAULT_MODELS as any as LLMModel[],
 
   modelConfig: {

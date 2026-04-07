@@ -74,6 +74,7 @@ import { useMaskStore } from "../store/mask";
 import { ProviderType } from "../utils/cloud";
 import { TTSConfigList } from "./tts-config";
 import { ProviderConfig } from "./settings/provider-config";
+import { getLiveModels } from "../utils/model";
 
 enum SettingsTab {
   General = "general",
@@ -1257,12 +1258,11 @@ export function Settings() {
                       )
                     }
                   >
-                    <option value="gemini-2.5-flash-native-audio-preview-12-2025">
-                      gemini-2.5-flash-native-audio-preview-12-2025
-                    </option>
-                    <option value="gemini-3.1-flash-live-preview">
-                      gemini-3.1-flash-live-preview
-                    </option>
+                    {getLiveModels().map((m) => (
+                      <option value={m} key={m}>
+                        {m}
+                      </option>
+                    ))}
                   </Select>
                 </ListItem>
                 <ListItem title="语音人物">
