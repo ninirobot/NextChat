@@ -13,6 +13,7 @@ import McpIcon from "../icons/mcp.svg";
 import DragIcon from "../icons/drag.svg";
 import DiscoveryIcon from "../icons/discovery.svg";
 import GeminiLiveIcon from "../icons/gemini-live.svg";
+import ChatLineIcon from "../icons/chat-line.svg";
 
 import Locale from "../locales";
 
@@ -289,7 +290,7 @@ export function SideBar(props: { className?: string }) {
         </div>
         <div className={styles["sidebar-header-bar"]}>
           <IconButton
-            icon={<ChatGptIcon />}
+            icon={<ChatLineIcon />}
             text={shouldNarrow ? undefined : "常规聊天"}
             className={styles["sidebar-bar-button"]}
             onClick={() => navigate(Path.Home)}

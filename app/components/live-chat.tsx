@@ -231,7 +231,7 @@ export function LiveChat() {
   // 音频数据处理回调（AI 回复）- 现在接收文本参数
   const handleAudioData = useCallback(
     (data: Uint8Array, duration: number, text: string) => {
-      if (!text) return;
+      if (!text && (!data || data.length === 0)) return;
 
       scheduleStoreUpdate((s: any) => {
         // 查找最后一条消息
@@ -300,7 +300,7 @@ export function LiveChat() {
   // 用户音频处理回调
   const handleUserAudioData = useCallback(
     (data: Uint8Array, duration: number, text: string) => {
-      if (!text) return;
+      if (!text && (!data || data.length === 0)) return;
 
       scheduleStoreUpdate((s: any) => {
         // 查找最近的用户消息索引

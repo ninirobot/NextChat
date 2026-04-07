@@ -163,8 +163,20 @@ export class GeminiLiveClient {
           this.reconnectAttempts = 0; // 连接成功后重置重连计数
           this.setStatus("connected");
         },
-        onclose: () => {
+        onclose: (event: any) => {
           this.setStatus("disconnected");
+          if (event && event.code && event.code !== 1000) {
+            console.error(
+              "[GeminiLiveClient] WS Closed Abnormally:",
+              event.code,
+              event.reason,
+            );
+            this.options.callbacks.onError?.(
+              new Error(
+                `WebSocket Closed: ${event.code} ${event.reason || "未知原因"}`,
+              ),
+            );
+          }
           // 仅在非主动断开时尝试重连
           this.scheduleReconnect();
         },
@@ -221,7 +233,17 @@ export class GeminiLiveClient {
 
   sendRealtimeInput(chunks: Array<{ mimeType: string; data: string }>): void {
     for (const chunk of chunks) {
-      this.session?.sendRealtimeInput({ media: chunk });
+      if (chunk.mimeType.startsWith("audio/")) {
+        this.session?.sendRealtimeInput({ audio: chunk });
+      } else if (
+        chunk.mimeType.startsWith("image/") ||
+        chunk.mimeType.startsWith("video/")
+      ) {
+        this.session?.sendRealtimeInput({ video: chunk });
+      } else {
+        // Fallback for text or unknown
+        this.session?.sendRealtimeInput({ media: chunk });
+      }
     }
   }
 

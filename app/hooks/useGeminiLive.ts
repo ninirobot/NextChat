@@ -126,6 +126,19 @@ export function useGeminiLive(
             streamerRef.current?.addPCM16(new Uint8Array(data));
             // Collect audio data for saving
             audioCollectorRef.current?.addChunk(new Uint8Array(data));
+
+            if (options?.onAudioData) {
+              const audioData = audioCollectorRef.current?.getData();
+              const duration = audioCollectorRef.current?.getDuration() || 0;
+              options.onAudioData(
+                audioData && audioData.length > 0
+                  ? audioData
+                  : new Uint8Array(),
+                duration,
+                "",
+              );
+              audioCollectorRef.current?.clear();
+            }
           },
           onTranscription: (text, type) => {
             const key =
@@ -141,33 +154,11 @@ export function useGeminiLive(
             // 总是触发业务回调（由调用方决定是否渲染）
             if (isNewContent) {
               if (type === "input" && options?.onUserAudioData) {
-                // 用户转录：只要有音频数据就保存，不再限制条件
-                const userAudioData = userAudioCollectorRef.current?.getData();
-                const userDuration =
-                  userAudioCollectorRef.current?.getDuration() || 0;
-
-                if (userAudioData && userAudioData.length > 0) {
-                  options.onUserAudioData(userAudioData, userDuration, text);
-                  userAudioCollectorRef.current?.clear();
-                } else {
-                  options.onUserAudioData(new Uint8Array(), 0, text);
-                }
+                options.onUserAudioData(new Uint8Array(), 0, text);
               }
 
               if (type === "output" && options?.onAudioData) {
-                // AI 转录：获取增量音频并清空收集器，对外始终推送 chunk
-                const audioData = audioCollectorRef.current?.getData();
-                const duration = audioCollectorRef.current?.getDuration() || 0;
-
-                options.onAudioData(
-                  audioData && audioData.length > 0
-                    ? audioData
-                    : new Uint8Array(),
-                  duration,
-                  text,
-                );
-
-                audioCollectorRef.current?.clear();
+                options.onAudioData(new Uint8Array(), 0, text);
               }
             }
 
@@ -247,6 +238,16 @@ export function useGeminiLive(
             const buffer = base64ToArrayBuffer(base64);
             const bytes = new Uint8Array(buffer);
             userAudioCollectorRef.current?.addChunk(bytes, 16000);
+
+            if (options?.onUserAudioData) {
+              const userAudioData = userAudioCollectorRef.current?.getData();
+              const userDuration =
+                userAudioCollectorRef.current?.getDuration() || 0;
+              if (userAudioData && userAudioData.length > 0) {
+                options.onUserAudioData(userAudioData, userDuration, "");
+                userAudioCollectorRef.current?.clear();
+              }
+            }
           } catch (e) {
             console.error("Failed to collect user audio:", e);
           }

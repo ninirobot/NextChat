@@ -16,7 +16,6 @@ const DANGER_CONFIG = {
   defaultModel: serverConfig.defaultModel,
   visionModels: serverConfig.visionModels,
   isGoogleLive: serverConfig.isGoogleLive,
-  googleLiveApiKey: serverConfig.googleLiveApiKey,
 };
 
 declare global {

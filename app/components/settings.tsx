@@ -1244,9 +1244,8 @@ export function Settings() {
               <div className="settings-title">Gemini Live 配置</div>
               <List>
                 <ListItem title="模型">
-                  <input
+                  <Select
                     aria-label="Gemini Live 模型"
-                    type="text"
                     value={
                       config.geminiLiveConfig?.model ||
                       "gemini-2.5-flash-native-audio-preview-12-2025"
@@ -1257,7 +1256,14 @@ export function Settings() {
                           (c.geminiLiveConfig.model = e.currentTarget.value),
                       )
                     }
-                  ></input>
+                  >
+                    <option value="gemini-2.5-flash-native-audio-preview-12-2025">
+                      gemini-2.5-flash-native-audio-preview-12-2025
+                    </option>
+                    <option value="gemini-3.1-flash-live-preview">
+                      gemini-3.1-flash-live-preview
+                    </option>
+                  </Select>
                 </ListItem>
                 <ListItem title="语音人物">
                   <Select

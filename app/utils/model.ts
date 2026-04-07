@@ -262,6 +262,9 @@ export function isModelNotavailableInServer(
  * Live models use native audio and have different capabilities
  */
 export function isLiveModel(modelName: string): boolean {
-  const liveModels = ["gemini-2.5-flash-native-audio-preview-12-2025"];
+  const liveModels = [
+    "gemini-2.5-flash-native-audio-preview-12-2025",
+    "gemini-3.1-flash-live-preview",
+  ];
   return liveModels.some((liveModel) => modelName.includes(liveModel));
 }
