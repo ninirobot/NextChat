@@ -54,7 +54,7 @@ import { uploadImage as uploadImageRemote } from "@/app/utils/chat";
 import { parseFile } from "../utils/file";
 import { prettyObject } from "../utils/format";
 import { useAllModels } from "../utils/hooks";
-import { getModelProvider, isLiveModel } from "../utils/model";
+import { getModelProvider, isLiveModel, getLiveModels } from "../utils/model";
 import { MsEdgeTTS, OUTPUT_FORMAT } from "../utils/ms_edge_tts";
 
 import { ClientApi, MultimodalContent } from "../client/api";
@@ -664,12 +664,18 @@ export function ChatActions(props: {
   const currentProviderName =
     session.mask.modelConfig?.providerName || ServiceProvider.OpenAI;
   const allModels = useAllModels();
+  const accessStore = useAccessStore();
   // 获取所有可用模型，并处理默认模型的排序
   const models = useMemo(() => {
+    const liveModels = getLiveModels(
+      [config.liveModels, accessStore.liveModels].join(","),
+    );
     // Live 模式下只显示 Live 模型，常规模式过滤掉 Live 模型
     const filteredModels = props.isLiveMode
-      ? allModels.filter((m) => m.available && isLiveModel(m.name))
-      : allModels.filter((m) => m.available && !isLiveModel(m.name));
+      ? allModels.filter((m) => m.available && isLiveModel(m.name, liveModels))
+      : allModels.filter(
+          (m) => m.available && !isLiveModel(m.name, liveModels),
+        );
 
     const defaultModel = filteredModels.find((m) => m.isDefault);
 

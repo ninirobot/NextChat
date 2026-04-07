@@ -14,8 +14,6 @@ import CopyIcon from "../icons/copy.svg";
 import DragIcon from "../icons/drag.svg";
 
 import { DEFAULT_MASK_AVATAR, Mask, useMaskStore } from "../store/mask";
-import { VOICES } from "../lib/gemini/types";
-import { isLiveModel } from "../utils/model";
 import {
   ChatMessage,
   createMessage,
@@ -23,7 +21,10 @@ import {
   ModelType,
   useAppConfig,
   useChatStore,
+  useAccessStore,
 } from "../store";
+import { isLiveModel, getLiveModels } from "../utils/model";
+import { VOICES } from "../lib/gemini/types";
 import { MultimodalContent, ROLES } from "../client/api";
 import {
   Input,
@@ -103,6 +104,10 @@ export function MaskConfig(props: {
   };
 
   const globalConfig = useAppConfig();
+  const accessStore = useAccessStore();
+  const liveModels = getLiveModels(
+    [globalConfig.liveModels, accessStore.liveModels].join(","),
+  );
 
   return (
     <>
@@ -256,7 +261,7 @@ export function MaskConfig(props: {
         />
 
         {/* Live 模式设置 - 只在 Live 模型时显示 */}
-        {isLiveModel(props.mask.modelConfig.model) && (
+        {isLiveModel(props.mask.modelConfig.model, liveModels) && (
           <>
             <ListItem title="Gemini Live 语音">
               <select

@@ -1,6 +1,5 @@
 import { DEFAULT_MODELS, ServiceProvider } from "../constant";
 import { LLMModel } from "../client/api";
-import { useAppConfig, useAccessStore } from "../store";
 
 const CustomSeq = {
   val: -1000, //To ensure the custom model located at front, start from -1000, refer to constant.ts
@@ -258,20 +257,7 @@ export function isModelNotavailableInServer(
   return true;
 }
 
-export function getLiveModelsString(): string {
-  let liveModelsStr = "";
-  try {
-    const configStore = useAppConfig.getState();
-    const accessStore = useAccessStore.getState();
-    liveModelsStr = [configStore.liveModels, accessStore.liveModels].join(",");
-  } catch (e) {
-    //
-  }
-  return liveModelsStr;
-}
-
-export function getLiveModels(): string[] {
-  const liveModelsStr = getLiveModelsString();
+export function getLiveModels(liveModelsStr: string): string[] {
   return liveModelsStr
     .split(",")
     .map((v) => v.trim())
@@ -287,7 +273,6 @@ export function getLiveModels(): string[] {
  * Check if a model is a Gemini Live model
  * Live models use native audio and have different capabilities
  */
-export function isLiveModel(modelName: string): boolean {
-  const liveModels = getLiveModels();
+export function isLiveModel(modelName: string, liveModels: string[]): boolean {
   return liveModels.some((liveModel) => modelName.includes(liveModel));
 }

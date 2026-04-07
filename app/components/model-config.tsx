@@ -5,18 +5,24 @@ import Locale from "../locales";
 import { InputRange } from "./input-range";
 import { ListItem, Select } from "./ui-lib";
 import { useAllModels } from "../utils/hooks";
+import { useAppConfig, useAccessStore } from "../store";
 import { groupBy } from "lodash-es";
 import styles from "./model-config.module.scss";
-import { getModelProvider, isLiveModel } from "../utils/model";
+import { getModelProvider, isLiveModel, getLiveModels } from "../utils/model";
 
 export function ModelConfigList(props: {
   modelConfig: ModelConfig;
   updateConfig: (updater: (config: ModelConfig) => void) => void;
 }) {
   const allModels = useAllModels();
+  const config = useAppConfig();
+  const accessStore = useAccessStore();
+  const liveModels = getLiveModels(
+    [config.liveModels, accessStore.liveModels].join(","),
+  );
   // 过滤掉 Live 模型（Live 模型只在 Live 聊天页面显示）
   const groupModels = groupBy(
-    allModels.filter((v) => v.available && !isLiveModel(v.name)),
+    allModels.filter((v) => v.available && !isLiveModel(v.name, liveModels)),
     "provider.providerName",
   );
   const value = `${props.modelConfig.model}@${props.modelConfig?.providerName}`;

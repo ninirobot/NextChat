@@ -1258,7 +1258,12 @@ export function Settings() {
                       )
                     }
                   >
-                    {getLiveModels().map((m) => (
+                    {getLiveModels(
+                      [
+                        config.liveModels,
+                        useAccessStore.getState().liveModels,
+                      ].join(","),
+                    ).map((m) => (
                       <option value={m} key={m}>
                         {m}
                       </option>
