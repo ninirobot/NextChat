@@ -45,11 +45,13 @@ export function ThinkingBlock(props: {
     return (
       m.includes("deepseek-r1") ||
       m.includes("deepseek-v3") ||
+      m.includes("deepseek-v4") ||
       m.includes("o1-") ||
       m.includes("o3-") ||
       m === "o1" ||
       m === "o3" ||
-      (m.includes("longcat") && m.includes("thinking")) ||
+      (m.includes("longcat") &&
+        (m.includes("thinking") || m.includes("2.0"))) ||
       m.includes("gemini") || // 包含所有 Gemini 模型
       m.includes("thinking") ||
       m.includes("kimi") ||
