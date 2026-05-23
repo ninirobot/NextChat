@@ -1,0 +1,202 @@
+.audio-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    max-width: 100%;
+
+    .play-button {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #4a90e2;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+
+        &:hover {
+            background-color: #357abd;
+        }
+
+        svg {
+            width: 16px;
+            height: 16px;
+        }
+    }
+
+    .time-display {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        color: #666;
+        min-width: 70px;
+
+        .separator {
+            color: #999;
+        }
+    }
+
+    .progress-bar {
+        flex: 1;
+        height: 4px;
+        background-color: #ddd;
+        border-radius: 2px;
+        outline: none;
+        cursor: pointer;
+        -webkit-appearance: none;
+
+        &::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background-color: #4a90e2;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+
+            &:hover {
+                transform: scale(1.2);
+            }
+        }
+
+        &::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            background-color: #4a90e2;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            transition: transform 0.2s ease;
+
+            &:hover {
+                transform: scale(1.2);
+            }
+        }
+    }
+
+    .menu-container {
+        position: relative;
+
+        .menu-button {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: transparent;
+            color: #666;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+
+            &:hover {
+                background-color: #e0e0e0;
+            }
+
+            svg {
+                width: 16px;
+                height: 16px;
+            }
+        }
+
+        .menu-content {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 4px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            padding: 8px;
+            min-width: 160px;
+            z-index: 100;
+
+            .menu-section {
+                margin-bottom: 8px;
+
+                .menu-label {
+                    font-size: 12px;
+                    font-weight: 500;
+                    color: #333;
+                    margin-bottom: 4px;
+                }
+
+                .speed-options {
+                    display: flex;
+                    gap: 4px;
+
+                    .speed-option {
+                        padding: 4px 8px;
+                        font-size: 12px;
+                        background-color: #f5f5f5;
+                        color: #666;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+
+                        &:hover {
+                            background-color: #e0e0e0;
+                        }
+
+                        &.selected {
+                            background-color: #4a90e2;
+                            color: white;
+                        }
+                    }
+                }
+            }
+
+            .menu-item {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                width: 100%;
+                padding: 8px;
+                font-size: 14px;
+                background-color: transparent;
+                color: #333;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+
+                &:hover {
+                    background-color: #f5f5f5;
+                }
+
+                svg {
+                    width: 16px;
+                    height: 16px;
+                }
+            }
+        }
+    }
+}
+
+// 响应式设计
+@media (max-width: 600px) {
+    .audio-bar {
+        flex-wrap: wrap;
+
+        .time-display {
+            min-width: auto;
+            order: -1;
+            flex: 1 1 100%;
+            text-align: center;
+        }
+
+        .progress-bar {
+            order: 1;
+            flex: 1 1 100%;
+        }
+    }
+}

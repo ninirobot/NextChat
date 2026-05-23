@@ -1,9 +1,9 @@
 import { getServerSideConfig } from "@/app/config/server";
 import {
-    OPENROUTER_BASE_URL,
-    ApiPath,
-    ModelProvider,
-    ServiceProvider,
+  OPENROUTER_BASE_URL,
+  ApiPath,
+  ModelProvider,
+  ServiceProvider,
 } from "@/app/constant";
 import { prettyObject } from "@/app/utils/format";
 import { NextRequest, NextResponse } from "next/server";
@@ -13,114 +13,123 @@ import { isModelNotavailableInServer } from "@/app/utils/model";
 const serverConfig = getServerSideConfig();
 
 export async function handle(
-    req: NextRequest,
-    { params }: { params: { path: string[] } },
+  req: NextRequest,
+  { params }: { params: { path: string[] } },
 ) {
-    console.log("[OpenRouter Route] params ", params);
+  console.log("[OpenRouter Route] params ", params);
 
-    if (req.method === "OPTIONS") {
-        return NextResponse.json({ body: "OK" }, { status: 200 });
-    }
+  if (req.method === "OPTIONS") {
+    return NextResponse.json({ body: "OK" }, { status: 200 });
+  }
 
-    const authResult = auth(req, ModelProvider.OpenRouter);
-    if (authResult.error) {
-        return NextResponse.json(authResult, {
-            status: 401,
-        });
-    }
+  const authResult = auth(req, ModelProvider.OpenRouter);
+  if (authResult.error) {
+    return NextResponse.json(authResult, {
+      status: 401,
+    });
+  }
 
-    try {
-        const response = await request(req);
-        return response;
-    } catch (e) {
-        console.error("[OpenRouter] ", e);
-        return NextResponse.json(prettyObject(e));
-    }
+  try {
+    const response = await request(req);
+    return response;
+  } catch (e) {
+    console.error("[OpenRouter] ", e);
+    return NextResponse.json(prettyObject(e));
+  }
 }
 
 async function request(req: NextRequest) {
-    const controller = new AbortController();
+  const controller = new AbortController();
 
-    let path = `${req.nextUrl.pathname}`.replaceAll(ApiPath.OpenRouter, "");
+  let path = `${req.nextUrl.pathname}`.replaceAll(ApiPath.OpenRouter, "");
 
-    let baseUrl = serverConfig.openRouterUrl || OPENROUTER_BASE_URL;
+  let baseUrl = serverConfig.openRouterUrl || OPENROUTER_BASE_URL;
 
-    if (!baseUrl.startsWith("http")) {
-        baseUrl = `https://${baseUrl}`;
-    }
+  if (!baseUrl.startsWith("http")) {
+    baseUrl = `https://${baseUrl}`;
+  }
 
-    if (baseUrl.endsWith("/")) {
-        baseUrl = baseUrl.slice(0, -1);
-    }
+  if (baseUrl.endsWith("/")) {
+    baseUrl = baseUrl.slice(0, -1);
+  }
 
-    console.log("[Proxy] ", path);
-    console.log("[Base Url]", baseUrl);
+  console.log("[Proxy] ", path);
+  console.log("[Base Url]", baseUrl);
 
-    const timeoutId = setTimeout(
-        () => {
-            controller.abort();
-        },
-        30 * 60 * 1000,
-    );
+  const timeoutId = setTimeout(
+    () => {
+      controller.abort();
+    },
+    30 * 60 * 1000,
+  );
 
-    const fetchUrl = `${baseUrl}${path}`;
-    const fetchOptions: RequestInit = {
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: req.headers.get("Authorization") ?? "",
-            Connection: "keep-alive",
-        },
-        method: req.method,
-        body: req.body,
-        redirect: "manual",
-        // @ts-ignore
-        duplex: "half",
-        signal: controller.signal,
-    };
+  const fetchUrl = `${baseUrl}${path}`;
+  let authHeader = req.headers.get("Authorization") ?? "";
+  if (!authHeader && serverConfig.openRouterApiKey) {
+    authHeader = `Bearer ${serverConfig.openRouterApiKey.trim()}`;
+  }
 
-    // Filter models if configured
-    if (serverConfig.customModels && req.body) {
-        try {
-            const clonedBody = await req.text();
-            fetchOptions.body = clonedBody;
+  const fetchOptions: RequestInit = {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: authHeader,
+      Connection: "keep-alive",
+      "HTTP-Referer":
+        req.headers.get("Referer") ??
+        "https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web",
+      "X-Title": "NextChat",
+    },
+    method: req.method,
+    body: req.body,
+    redirect: "manual",
+    // @ts-ignore
+    duplex: "half",
+    signal: controller.signal,
+  };
 
-            const jsonBody = JSON.parse(clonedBody) as { model?: string };
-
-            if (
-                isModelNotavailableInServer(
-                    serverConfig.customModels,
-                    jsonBody?.model as string,
-                    ServiceProvider.OpenRouter as string,
-                )
-            ) {
-                return NextResponse.json(
-                    {
-                        error: true,
-                        message: `you are not allowed to use ${jsonBody?.model} model`,
-                    },
-                    {
-                        status: 403,
-                    },
-                );
-            }
-        } catch (e) {
-            console.error(`[OpenRouter] filter`, e);
-        }
-    }
-
+  // Filter models if configured
+  if (serverConfig.customModels && req.body) {
     try {
-        const res = await fetch(fetchUrl, fetchOptions);
+      const clonedBody = await req.text();
+      fetchOptions.body = clonedBody;
 
-        const newHeaders = new Headers(res.headers);
-        newHeaders.delete("www-authenticate");
-        newHeaders.set("X-Accel-Buffering", "no");
+      const jsonBody = JSON.parse(clonedBody) as { model?: string };
 
-        return new Response(res.body, {
-            status: res.status,
-            statusText: res.statusText,
-            headers: newHeaders,
-        });
-    } finally {
-        clearTimeout(timeoutId);
+      if (
+        isModelNotavailableInServer(
+          serverConfig.customModels,
+          jsonBody?.model as string,
+          ServiceProvider.OpenRouter as string,
+        )
+      ) {
+        return NextResponse.json(
+          {
+            error: true,
+            message: `you are not allowed to use ${jsonBody?.model} model`,
+          },
+          {
+            status: 403,
+          },
+        );
+      }
+    } catch (e) {
+      console.error(`[OpenRouter] filter`, e);
     }
+  }
+
+  try {
+    const res = await fetch(fetchUrl, fetchOptions);
+
+    const newHeaders = new Headers(res.headers);
+    newHeaders.delete("www-authenticate");
+    newHeaders.set("X-Accel-Buffering", "no");
+
+    return new Response(res.body, {
+      status: res.status,
+      statusText: res.statusText,
+      headers: newHeaders,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }

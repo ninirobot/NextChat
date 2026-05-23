@@ -256,3 +256,31 @@ export function isModelNotavailableInServer(
   }
   return true;
 }
+
+export function getLiveModels(liveModelsStr: string): string[] {
+  const cleanStr = (liveModelsStr || "").replace(/,/g, "").trim();
+  if (cleanStr === "") {
+    return [
+      "gemini-2.5-flash-native-audio-preview-12-2025",
+      "gemini-3.1-flash-live-preview",
+    ];
+  }
+
+  return liveModelsStr
+    .split(",")
+    .map((v) => v.trim())
+    .filter((v) => !!v && !v.startsWith("-"))
+    .map((v) => {
+      const nameConfig = v.startsWith("+") ? v.slice(1) : v;
+      const nameWithProvider = nameConfig.split("=")[0];
+      return getModelProvider(nameWithProvider)[0];
+    });
+}
+
+/**
+ * Check if a model is a Gemini Live model
+ * Live models use native audio and have different capabilities
+ */
+export function isLiveModel(modelName: string, liveModels: string[]): boolean {
+  return liveModels.some((liveModel) => modelName.includes(liveModel));
+}

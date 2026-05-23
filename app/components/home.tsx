@@ -74,6 +74,10 @@ const McpMarketPage = dynamic(
   },
 );
 
+const LiveChat = dynamic(async () => (await import("./live-chat")).LiveChat, {
+  loading: () => <Loading noLogo />,
+});
+
 export function useSwitchTheme() {
   const config = useAppConfig();
 
@@ -164,6 +168,15 @@ function Screen() {
     loadAsyncGoogleFont();
   }, []);
 
+  useEffect(() => {
+    const isLive = location.pathname.includes(Path.GeminiLive);
+    if (isLive) {
+      document.body.classList.add("live-mode");
+    } else {
+      document.body.classList.remove("live-mode");
+    }
+  }, [location.pathname]);
+
   if (isArtifact) {
     return (
       <Routes>
@@ -190,6 +203,7 @@ function Screen() {
             <Route path={Path.Chat} element={<Chat />} />
             <Route path={Path.Settings} element={<Settings />} />
             <Route path={Path.McpMarket} element={<McpMarketPage />} />
+            <Route path={Path.GeminiLive} element={<LiveChat />} />
           </Routes>
         </WindowContent>
       </>

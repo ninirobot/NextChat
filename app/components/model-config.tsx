@@ -5,21 +5,36 @@ import Locale from "../locales";
 import { InputRange } from "./input-range";
 import { ListItem, Select } from "./ui-lib";
 import { useAllModels } from "../utils/hooks";
+import { useAppConfig, useAccessStore } from "../store";
 import { groupBy } from "lodash-es";
 import styles from "./model-config.module.scss";
-import { getModelProvider } from "../utils/model";
+import { getModelProvider, isLiveModel, getLiveModels } from "../utils/model";
 
 export function ModelConfigList(props: {
   modelConfig: ModelConfig;
   updateConfig: (updater: (config: ModelConfig) => void) => void;
+  isLiveMode?: boolean;
 }) {
   const allModels = useAllModels();
+  const config = useAppConfig();
+  const accessStore = useAccessStore();
+  const liveModels = getLiveModels(
+    [config.liveModels, accessStore.liveModels].join(","),
+  );
+  // Live 模式下只显示 Live 模型；普通模式过滤掉 Live 模型
   const groupModels = groupBy(
-    allModels.filter((v) => v.available),
+    allModels.filter(
+      (v) =>
+        v.available &&
+        (props.isLiveMode
+          ? isLiveModel(v.name, liveModels)
+          : !isLiveModel(v.name, liveModels)),
+    ),
     "provider.providerName",
   );
   const value = `${props.modelConfig.model}@${props.modelConfig?.providerName}`;
   const compressModelValue = `${props.modelConfig.compressModel}@${props.modelConfig?.compressProviderName}`;
+  const isCurrentLiveModel = isLiveModel(props.modelConfig.model, liveModels);
 
   return (
     <>
@@ -110,7 +125,8 @@ export function ModelConfigList(props: {
         ></InputRange>
       </ListItem>
       {/* Gemini 2.5 Flash Thinking Budget */}
-      {props.modelConfig.model.includes("gemini") &&
+      {!isCurrentLiveModel &&
+        props.modelConfig.model.includes("gemini") &&
         props.modelConfig.model.includes("2.5") &&
         props.modelConfig.model.includes("flash") && (
           <ListItem
@@ -141,7 +157,8 @@ export function ModelConfigList(props: {
         )}
 
       {/* Gemini 2.5 Pro Thinking Budget */}
-      {props.modelConfig.model.includes("gemini") &&
+      {!isCurrentLiveModel &&
+        props.modelConfig.model.includes("gemini") &&
         props.modelConfig.model.includes("2.5") &&
         props.modelConfig.model.includes("pro") && (
           <ListItem
@@ -182,7 +199,7 @@ export function ModelConfigList(props: {
         )}
 
       {/* Gemini 3 Thinking Level */}
-      {props.modelConfig.model.includes("3") && (
+      {!isCurrentLiveModel && props.modelConfig.model.includes("3") && (
         <ListItem
           title={Locale.Settings.ThinkingLevel?.Title || "Thinking Level"}
           subTitle={
@@ -263,25 +280,27 @@ export function ModelConfigList(props: {
       )}
 
       {/* Thought Summary Toggle - Only for Gemini 2.5 and 3 */}
-      {(props.modelConfig.model.toLowerCase().includes("gemini-2.5") ||
-        props.modelConfig.model.toLowerCase().includes("gemini-3") ||
-        props.modelConfig.model.toLowerCase().includes("gemini_2.5") ||
-        props.modelConfig.model.toLowerCase().includes("gemini_3")) && (
-        <ListItem
-          title={Locale.Settings.ThoughtSummary.Title}
-          subTitle={Locale.Settings.ThoughtSummary.SubTitle}
-        >
-          <input
-            type="checkbox"
-            checked={props.modelConfig.include_thoughts}
-            onChange={(e) =>
-              props.updateConfig(
-                (config) => (config.include_thoughts = e.currentTarget.checked),
-              )
-            }
-          ></input>
-        </ListItem>
-      )}
+      {!isCurrentLiveModel &&
+        (props.modelConfig.model.toLowerCase().includes("gemini-2.5") ||
+          props.modelConfig.model.toLowerCase().includes("gemini-3") ||
+          props.modelConfig.model.toLowerCase().includes("gemini_2.5") ||
+          props.modelConfig.model.toLowerCase().includes("gemini_3")) && (
+          <ListItem
+            title={Locale.Settings.ThoughtSummary.Title}
+            subTitle={Locale.Settings.ThoughtSummary.SubTitle}
+          >
+            <input
+              type="checkbox"
+              checked={props.modelConfig.include_thoughts}
+              onChange={(e) =>
+                props.updateConfig(
+                  (config) =>
+                    (config.include_thoughts = e.currentTarget.checked),
+                )
+              }
+            ></input>
+          </ListItem>
+        )}
 
       {/* Thinking Toggle for Nvidia or Kimi 2.5 */}
       {(props.modelConfig.providerName === "Nvidia" ||

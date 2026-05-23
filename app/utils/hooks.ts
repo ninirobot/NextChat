@@ -8,13 +8,20 @@ export function useAllModels() {
   const models = useMemo(() => {
     return collectModelsWithDefaultModel(
       configStore.models,
-      [configStore.customModels, accessStore.customModels].join(","),
+      [
+        configStore.customModels,
+        accessStore.customModels,
+        configStore.liveModels,
+        accessStore.liveModels,
+      ].join(","),
       accessStore.defaultModel,
     );
   }, [
     accessStore.customModels,
-    accessStore.defaultModel,
     configStore.customModels,
+    accessStore.liveModels,
+    configStore.liveModels,
+    accessStore.defaultModel,
     configStore.models,
   ]);
 

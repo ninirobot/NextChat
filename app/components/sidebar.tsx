@@ -12,6 +12,8 @@ import MaskIcon from "../icons/mask.svg";
 import McpIcon from "../icons/mcp.svg";
 import DragIcon from "../icons/drag.svg";
 import DiscoveryIcon from "../icons/discovery.svg";
+import GeminiLiveIcon from "../icons/gemini-live.svg";
+import ChatLineIcon from "../icons/chat-line.svg";
 
 import Locale from "../locales";
 
@@ -26,7 +28,7 @@ import {
   REPO_URL,
 } from "../constant";
 
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { isIOS, useMobileScreen } from "../utils";
 import dynamic from "next/dynamic";
 import { showConfirm } from "./ui-lib";
@@ -223,6 +225,8 @@ export function SideBar(props: { className?: string }) {
   const { onDragStart, shouldNarrow } = useDragSideBar();
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const isLiveMode = location.pathname === Path.GeminiLive;
   const config = useAppConfig();
   const chatStore = useChatStore();
   const [mcpEnabled, setMcpEnabled] = useState(false);
@@ -284,6 +288,24 @@ export function SideBar(props: { className?: string }) {
             shadow
           />
         </div>
+        <div className={styles["sidebar-header-bar"]}>
+          <IconButton
+            icon={<ChatLineIcon />}
+            text={shouldNarrow ? undefined : "常规聊天"}
+            className={styles["sidebar-bar-button"]}
+            onClick={() => navigate(Path.Home)}
+            shadow
+          />
+          <IconButton
+            icon={<GeminiLiveIcon />}
+            text={shouldNarrow ? undefined : "实时聊天"}
+            className={styles["sidebar-bar-button"]}
+            onClick={() =>
+              navigate(Path.GeminiLive, { state: { fromHome: true } })
+            }
+            shadow
+          />
+        </div>
       </SideBarHeader>
       <SideBarBody
         onClick={(e) => {
@@ -292,7 +314,7 @@ export function SideBar(props: { className?: string }) {
           }
         }}
       >
-        <ChatList narrow={shouldNarrow} />
+        <ChatList narrow={shouldNarrow} isLiveMode={isLiveMode} />
       </SideBarBody>
       <SideBarTail
         primaryAction={
@@ -302,7 +324,12 @@ export function SideBar(props: { className?: string }) {
                 icon={<DeleteIcon />}
                 onClick={async () => {
                   if (await showConfirm(Locale.Home.DeleteChat)) {
-                    chatStore.deleteSession(chatStore.currentSessionIndex);
+                    chatStore.deleteSession(
+                      isLiveMode
+                        ? chatStore.currentLiveSessionIndex
+                        : chatStore.currentSessionIndex,
+                      isLiveMode,
+                    );
                   }
                 }}
               />
@@ -333,10 +360,12 @@ export function SideBar(props: { className?: string }) {
             text={shouldNarrow ? undefined : Locale.Home.NewChat}
             onClick={() => {
               if (config.dontShowMaskSplashScreen) {
-                chatStore.newSession();
-                navigate(Path.Chat);
+                chatStore.newSession(undefined, isLiveMode);
+                if (!isLiveMode) {
+                  navigate(Path.Chat);
+                }
               } else {
-                navigate(Path.NewChat);
+                navigate(Path.NewChat, { state: { isLiveMode } });
               }
             }}
             shadow

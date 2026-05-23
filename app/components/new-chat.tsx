@@ -87,11 +87,16 @@ export function NewChat() {
   const maskRef = useRef<HTMLDivElement>(null);
 
   const { state } = useLocation();
+  const isLiveMode = state?.isLiveMode;
 
   const startChat = (mask?: Mask) => {
     setTimeout(() => {
-      chatStore.newSession(mask);
-      navigate(Path.Chat);
+      chatStore.newSession(mask, isLiveMode);
+      if (isLiveMode) {
+        navigate(Path.GeminiLive);
+      } else {
+        navigate(Path.Chat);
+      }
     }, 10);
   };
 

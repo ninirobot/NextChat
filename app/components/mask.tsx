@@ -21,7 +21,10 @@ import {
   ModelType,
   useAppConfig,
   useChatStore,
+  useAccessStore,
 } from "../store";
+import { isLiveModel, getLiveModels } from "../utils/model";
+import { VOICES } from "../lib/gemini/types";
 import { MultimodalContent, ROLES } from "../client/api";
 import {
   Input,
@@ -32,6 +35,7 @@ import {
   Select,
   showConfirm,
 } from "./ui-lib";
+import { InputRange } from "./input-range";
 import { Avatar, AvatarPicker } from "./emoji";
 import Locale, { AllLangs, ALL_LANG_OPTIONS, Lang } from "../locales";
 import { useNavigate } from "react-router-dom";
@@ -79,6 +83,7 @@ export function MaskConfig(props: {
   extraListItems?: JSX.Element;
   readonly?: boolean;
   shouldSyncFromGlobal?: boolean;
+  isLiveMode?: boolean;
 }) {
   const [showPicker, setShowPicker] = useState(false);
 
@@ -100,6 +105,10 @@ export function MaskConfig(props: {
   };
 
   const globalConfig = useAppConfig();
+  const accessStore = useAccessStore();
+  const liveModels = getLiveModels(
+    [globalConfig.liveModels, accessStore.liveModels].join(","),
+  );
 
   return (
     <>
@@ -250,7 +259,132 @@ export function MaskConfig(props: {
         <ModelConfigList
           modelConfig={{ ...props.mask.modelConfig }}
           updateConfig={updateConfig}
+          isLiveMode={props.isLiveMode}
         />
+
+        {/* Live 模式设置 - 只在 Live 模型时显示 */}
+        {isLiveModel(props.mask.modelConfig.model, liveModels) && (
+          <>
+            {/* 语音角色 */}
+            <ListItem title="Gemini Live 语音">
+              <Select
+                value={props.mask.liveConfig?.voice || "Zephyr"}
+                onChange={(e) => {
+                  props.updateMask((mask) => {
+                    mask.liveConfig = {
+                      ...mask.liveConfig,
+                      voice: e.target.value,
+                    };
+                  });
+                }}
+              >
+                {VOICES.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.id} - {v.desc}
+                  </option>
+                ))}
+              </Select>
+            </ListItem>
+
+            {/* 语速 */}
+            <ListItem
+              title="语音语速"
+              subTitle={`${props.mask.liveConfig?.speed ?? 1.0}x`}
+            >
+              <InputRange
+                aria="语音语速"
+                value={props.mask.liveConfig?.speed ?? 1.0}
+                min="0.25"
+                max="4.0"
+                step="0.25"
+                onChange={(e) => {
+                  const value = parseFloat(e.currentTarget.value);
+                  props.updateMask((mask) => {
+                    mask.liveConfig = { ...mask.liveConfig, speed: value };
+                  });
+                }}
+              />
+            </ListItem>
+
+            {/* Gemini 2.5 系列：Thinking Budget 滑块 */}
+            {props.mask.modelConfig.model.includes("2.5") && (
+              <>
+                <ListItem
+                  title="显示思考过程"
+                  subTitle="是否在气泡中显示 AI 的思考过程"
+                >
+                  <input
+                    type="checkbox"
+                    checked={props.mask.liveConfig?.includeThoughts !== false}
+                    onChange={(e) => {
+                      props.updateMask((mask) => {
+                        mask.liveConfig = {
+                          ...mask.liveConfig,
+                          includeThoughts: e.target.checked,
+                        };
+                      });
+                    }}
+                  />
+                </ListItem>
+                {props.mask.liveConfig?.includeThoughts !== false && (
+                  <ListItem
+                    title="思考预算 (tokens)"
+                    subTitle={
+                      (props.mask.liveConfig?.thinkingBudget ?? -1) === -1
+                        ? "自动 (Dynamic)"
+                        : `${props.mask.liveConfig?.thinkingBudget} tokens (0–24576，-1 为自动)`
+                    }
+                  >
+                    <InputRange
+                      aria="思考预算 (tokens)"
+                      value={props.mask.liveConfig?.thinkingBudget ?? -1}
+                      min="-1"
+                      max="24576"
+                      step="1"
+                      onChange={(e) => {
+                        const value = parseInt(e.currentTarget.value);
+                        props.updateMask((mask) => {
+                          mask.liveConfig = {
+                            ...mask.liveConfig,
+                            thinkingBudget: value,
+                          };
+                        });
+                      }}
+                    />
+                  </ListItem>
+                )}
+              </>
+            )}
+
+            {/* Gemini 3.x 系列：Thinking Level 下拉 */}
+            {(props.mask.modelConfig.model.toLowerCase().includes("-3.") ||
+              props.mask.modelConfig.model.toLowerCase().includes("-3-") ||
+              /gemini-3\d/i.test(props.mask.modelConfig.model)) && (
+              <ListItem
+                title="思考等级 (Thinking Level)"
+                subTitle="控制模型的思考深度，越高越慢但质量更好"
+              >
+                <Select
+                  value={props.mask.liveConfig?.thinkingLevel ?? "low"}
+                  onChange={(e) => {
+                    props.updateMask((mask) => {
+                      mask.liveConfig = {
+                        ...mask.liveConfig,
+                        thinkingLevel: e.target.value,
+                      };
+                    });
+                  }}
+                >
+                  <option value="none">无思考 (No Thinking)</option>
+                  <option value="low">低 (Low)</option>
+                  <option value="medium">中 (Medium)</option>
+                  <option value="high">高 (High)</option>
+                </Select>
+              </ListItem>
+            )}
+          </>
+        )}
+
         {props.extraListItems}
       </List>
     </>

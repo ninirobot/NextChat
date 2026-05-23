@@ -596,6 +596,13 @@ const en: LocaleType = {
           Placeholder: "Nvidia API Key",
         },
       },
+      GoogleLive: {
+        ApiKey: {
+          Title: "Google Live API Key",
+          SubTitle: "Use a custom Google Live API Key",
+          Placeholder: "Google Live API Key",
+        },
+      },
     },
 
     Model: "Model",

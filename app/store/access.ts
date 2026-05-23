@@ -90,6 +90,9 @@ const DEFAULT_ACCESS_STATE = {
   googleApiVersion: "v1",
   googleSafetySettings: GoogleSafetySettingsThreshold.BLOCK_ONLY_HIGH,
 
+  // google live
+  googleLiveApiKey: "",
+
   // anthropic
   anthropicUrl: DEFAULT_ANTHROPIC_URL,
   anthropicApiKey: "",
@@ -160,6 +163,7 @@ const DEFAULT_ACCESS_STATE = {
   disableGPT4: false,
   disableFastLink: false,
   customModels: "",
+  liveModels: "",
   defaultModel: "",
   visionModels: "",
 

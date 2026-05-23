@@ -102,15 +102,28 @@ export function ChatItem(props: {
   );
 }
 
-export function ChatList(props: { narrow?: boolean }) {
-  const [sessions, selectedIndex, selectSession, moveSession] = useChatStore(
-    (state) => [
-      state.sessions,
-      state.currentSessionIndex,
-      state.selectSession,
-      state.moveSession,
-    ],
-  );
+export function ChatList(props: { narrow?: boolean; isLiveMode?: boolean }) {
+  const [
+    sessions,
+    liveSessions,
+    selectedIndex,
+    currentLiveSessionIndex,
+    selectSession,
+    moveSession,
+  ] = useChatStore((state) => [
+    state.sessions,
+    state.liveSessions,
+    state.currentSessionIndex,
+    state.currentLiveSessionIndex,
+    state.selectSession,
+    state.moveSession,
+  ]);
+
+  const activeSessions = props.isLiveMode ? liveSessions : sessions;
+  const activeSelectedIndex = props.isLiveMode
+    ? currentLiveSessionIndex
+    : selectedIndex;
+
   const chatStore = useChatStore();
   const navigate = useNavigate();
   const isMobileScreen = useMobileScreen();
@@ -128,7 +141,7 @@ export function ChatList(props: { narrow?: boolean }) {
       return;
     }
 
-    moveSession(source.index, destination.index);
+    moveSession(source.index, destination.index, props.isLiveMode);
   };
 
   return (
@@ -140,7 +153,7 @@ export function ChatList(props: { narrow?: boolean }) {
             ref={provided.innerRef}
             {...provided.droppableProps}
           >
-            {sessions.map((item, i) => (
+            {activeSessions.map((item, i) => (
               <ChatItem
                 title={item.topic}
                 time={new Date(item.lastUpdate).toLocaleString()}
@@ -148,17 +161,22 @@ export function ChatList(props: { narrow?: boolean }) {
                 key={item.id}
                 id={item.id}
                 index={i}
-                selected={i === selectedIndex}
+                selected={i === activeSelectedIndex}
                 onClick={() => {
-                  navigate(Path.Chat);
-                  selectSession(i);
+                  if (!props.isLiveMode) {
+                    navigate(Path.Chat);
+                  } else {
+                    // Do nothing, already in live chat, or explicitly navigate
+                    navigate(Path.GeminiLive);
+                  }
+                  selectSession(i, props.isLiveMode);
                 }}
                 onDelete={async () => {
                   if (
                     (!props.narrow && !isMobileScreen) ||
                     (await showConfirm(Locale.Home.DeleteChat))
                   ) {
-                    chatStore.deleteSession(i);
+                    chatStore.deleteSession(i, props.isLiveMode);
                   }
                 }}
                 narrow={props.narrow}

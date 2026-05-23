@@ -198,6 +198,22 @@ export function ProviderConfig() {
           ))}
         </Select>
       </ListItem>
+      <ListItem
+        title={Locale.Settings.Access.GoogleLive.ApiKey.Title}
+        subTitle={Locale.Settings.Access.GoogleLive.ApiKey.SubTitle}
+      >
+        <PasswordInput
+          aria-label={Locale.Settings.Access.GoogleLive.ApiKey.Title}
+          value={accessStore.googleLiveApiKey}
+          type="text"
+          placeholder={Locale.Settings.Access.GoogleLive.ApiKey.Placeholder}
+          onChange={(e) => {
+            accessStore.update(
+              (access) => (access.googleLiveApiKey = e.currentTarget.value),
+            );
+          }}
+        />
+      </ListItem>
     </>
   );
 

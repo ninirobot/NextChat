@@ -591,6 +591,13 @@ const cn = {
           SubTitle: "样例：",
         },
       },
+      GoogleLive: {
+        ApiKey: {
+          Title: "Google Live API Key",
+          SubTitle: "使用自定义 Google Live API Key",
+          Placeholder: "Google Live API Key",
+        },
+      },
     },
 
     Model: "模型 (model)",

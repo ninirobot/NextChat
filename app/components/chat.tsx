@@ -54,7 +54,7 @@ import { uploadImage as uploadImageRemote } from "@/app/utils/chat";
 import { parseFile } from "../utils/file";
 import { prettyObject } from "../utils/format";
 import { useAllModels } from "../utils/hooks";
-import { getModelProvider } from "../utils/model";
+import { getModelProvider, isLiveModel, getLiveModels } from "../utils/model";
 import { MsEdgeTTS, OUTPUT_FORMAT } from "../utils/ms_edge_tts";
 
 import { ClientApi, MultimodalContent } from "../client/api";
@@ -78,8 +78,9 @@ import { IconButton } from "./button";
 import { Avatar } from "./emoji";
 import { ExportMessageModal } from "./exporter";
 import { ContextPrompts, MaskAvatar, MaskConfig } from "./mask";
-import { RealtimeChat } from "@/app/components/realtime-chat";
 import { ThinkingBlock } from "./thinking";
+import { AudioBar } from "./audio-bar";
+import { AudioPlayer } from "./audio-player"; // 新增：Live 音频播放器
 import {
   List,
   ListItem,
@@ -106,7 +107,6 @@ import DarkIcon from "../icons/dark.svg";
 import DeleteIcon from "../icons/clear.svg";
 import EditIcon from "../icons/rename.svg";
 import ExportIcon from "../icons/share.svg";
-import HeadphoneIcon from "../icons/headphone.svg";
 import { ProviderIcon } from "./provider-icon";
 import ImageIcon from "../icons/image.svg";
 import LightIcon from "../icons/light.svg";
@@ -170,9 +170,12 @@ const MCPAction = () => {
   );
 };
 
-export function SessionConfigModel(props: { onClose: () => void }) {
+export function SessionConfigModel(props: {
+  onClose: () => void;
+  isLiveMode?: boolean;
+}) {
   const chatStore = useChatStore();
-  const session = chatStore.currentSession();
+  const session = chatStore.currentSession(props.isLiveMode);
   const maskStore = useMaskStore();
   const navigate = useNavigate();
 
@@ -221,6 +224,7 @@ export function SessionConfigModel(props: { onClose: () => void }) {
             );
           }}
           shouldSyncFromGlobal
+          isLiveMode={props.isLiveMode}
           extraListItems={
             session.mask.modelConfig.sendMemory ? (
               <ListItem
@@ -242,9 +246,10 @@ function PromptToast(props: {
   showToast?: boolean;
   showModal?: boolean;
   setShowModal: (_: boolean) => void;
+  isLiveMode?: boolean;
 }) {
   const chatStore = useChatStore();
-  const session = chatStore.currentSession();
+  const session = chatStore.currentSession(props.isLiveMode);
   const context = session.mask.context;
 
   return (
@@ -262,7 +267,10 @@ function PromptToast(props: {
         </div>
       )}
       {props.showModal && (
-        <SessionConfigModel onClose={() => props.setShowModal(false)} />
+        <SessionConfigModel
+          onClose={() => props.setShowModal(false)}
+          isLiveMode={props.isLiveMode}
+        />
       )}
     </div>
   );
@@ -387,9 +395,9 @@ export function PromptHints(props: {
   );
 }
 
-function ClearContextDivider() {
+function ClearContextDivider(props: { isLiveMode?: boolean }) {
   const chatStore = useChatStore();
-  const session = chatStore.currentSession();
+  const session = chatStore.currentSession(props.isLiveMode);
 
   return (
     <div
@@ -472,14 +480,19 @@ export function TokenCounter(props: {
 
   // Calculate the token count for the current conversation (excluding thinking content)
   // Calculate the token count for the current conversation (excluding thinking content)
-  const { historyInputTokens, historyOutputTokens } = useMemo(() => {
+  const [tokenStats, setTokenStats] = useState({
+    historyInputTokens: 0,
+    historyOutputTokens: 0,
+  });
+
+  const calculateTokens = useDebouncedCallback(() => {
     const messages = props.session.messages;
     const clearContextIndex = props.session.clearContextIndex ?? -1;
     const contextMessages = messages.slice(
       clearContextIndex >= 0 ? clearContextIndex : 0,
     );
 
-    return contextMessages.reduce(
+    const stats = contextMessages.reduce(
       (acc, message: ChatMessage) => {
         // 忽略错误消息
         if (message.isError) return acc;
@@ -501,7 +514,18 @@ export function TokenCounter(props: {
       },
       { historyInputTokens: 0, historyOutputTokens: 0 },
     );
-  }, [props.session.messages, props.session.clearContextIndex]);
+    setTokenStats(stats);
+  }, 500);
+
+  useEffect(() => {
+    calculateTokens();
+  }, [
+    props.session.messages,
+    props.session.clearContextIndex,
+    calculateTokens,
+  ]);
+
+  const { historyInputTokens, historyOutputTokens } = tokenStats;
 
   // Get the configuration for the current session
   const modelConfig = props.session.mask.modelConfig;
@@ -601,12 +625,13 @@ export function ChatActions(props: {
   setUserInput: (input: string) => void;
   setShowChatSidePanel: React.Dispatch<React.SetStateAction<boolean>>;
   userInput?: string;
+  isLiveMode?: boolean;
 }) {
   const config = useAppConfig();
   const navigate = useNavigate();
   const chatStore = useChatStore();
 
-  const session = chatStore.currentSession();
+  const session = chatStore.currentSession(props.isLiveMode);
 
   // switch themes
   const theme = config.theme;
@@ -640,9 +665,19 @@ export function ChatActions(props: {
   const currentProviderName =
     session.mask.modelConfig?.providerName || ServiceProvider.OpenAI;
   const allModels = useAllModels();
+  const accessStore = useAccessStore();
   // 获取所有可用模型，并处理默认模型的排序
   const models = useMemo(() => {
-    const filteredModels = allModels.filter((m) => m.available);
+    const liveModels = getLiveModels(
+      [config.liveModels, accessStore.liveModels].join(","),
+    );
+    // Live 模式下只显示 Live 模型，常规模式过滤掉 Live 模型
+    const filteredModels = props.isLiveMode
+      ? allModels.filter((m) => m.available && isLiveModel(m.name, liveModels))
+      : allModels.filter(
+          (m) => m.available && !isLiveModel(m.name, liveModels),
+        );
+
     const defaultModel = filteredModels.find((m) => m.isDefault);
 
     if (defaultModel) {
@@ -654,7 +689,7 @@ export function ChatActions(props: {
     } else {
       return filteredModels;
     }
-  }, [allModels]);
+  }, [allModels, props.isLiveMode]);
   const currentModelName = useMemo(() => {
     const model = models.find(
       (m) =>
@@ -688,6 +723,9 @@ export function ChatActions(props: {
       props.setAttachImages([]);
       props.setUploading(false);
     }
+
+    // Live 模式下不执行自动模型切换（Live 模型在 models 数组中被过滤）
+    if (props.isLiveMode) return;
 
     // if current model is not available
     // switch to first available model
@@ -916,14 +954,10 @@ export function ChatActions(props: {
         {!isMobileScreen && <MCPAction />}
       </>
       <div className={styles["chat-input-actions-end"]}>
-        {/* 右侧功能区：实时聊天、模型选择、Token计数 */}
-        {config.realtimeConfig.enable && (
-          <ChatAction
-            onClick={() => props.setShowChatSidePanel(true)}
-            text={"Realtime Chat"}
-            icon={<HeadphoneIcon />}
-          />
-        )}
+        {/* 右侧功能区：Live功能按钮（仅在Live模式显示）、模型选择、Token计数 */}
+
+        {/* 右侧功能区：模型选择、Token计数 */}
+
         <div
           className={clsx(
             styles["chat-input-action"],
@@ -944,9 +978,12 @@ export function ChatActions(props: {
   );
 }
 
-export function EditMessageModal(props: { onClose: () => void }) {
+export function EditMessageModal(props: {
+  onClose: () => void;
+  isLiveMode?: boolean;
+}) {
   const chatStore = useChatStore();
-  const session = chatStore.currentSession();
+  const session = chatStore.currentSession(props.isLiveMode);
   const [messages, setMessages] = useState(session.messages.slice());
 
   return (
@@ -1092,11 +1129,15 @@ function FileIcon(props: { name: string }) {
   );
 }
 
-function SessionChat() {
+function SessionChat(props: {
+  isLiveMode?: boolean;
+  onSendText?: (text: string) => void;
+  isLiveConnected?: boolean;
+}) {
   type RenderMessage = ChatMessage & { preview?: boolean };
 
   const chatStore = useChatStore();
-  const session = chatStore.currentSession();
+  const session = chatStore.currentSession(props.isLiveMode);
   const config = useAppConfig();
   const fontSize = config.fontSize;
   const fontFamily = config.fontFamily;
@@ -1192,7 +1233,8 @@ function SessionChat() {
       e.stopPropagation();
       setIsDragging(false);
 
-      const currentModel = chatStore.currentSession().mask.modelConfig.model;
+      const currentModel = chatStore.currentSession(props.isLiveMode).mask
+        .modelConfig.model;
       const files = Array.from(e.dataTransfer.files);
 
       if (files.length === 0) return;
@@ -1283,17 +1325,24 @@ function SessionChat() {
 
   // chat commands shortcuts
   const chatCommands = useChatCommand({
-    new: () => chatStore.newSession(),
-    newm: () => navigate(Path.NewChat),
-    prev: () => chatStore.nextSession(-1),
-    next: () => chatStore.nextSession(1),
+    new: () => chatStore.newSession(undefined, props.isLiveMode),
+    newm: () =>
+      navigate(Path.NewChat, { state: { isLiveMode: props.isLiveMode } }),
+    prev: () => chatStore.nextSession(-1, props.isLiveMode),
+    next: () => chatStore.nextSession(1, props.isLiveMode),
     clear: () =>
       chatStore.updateTargetSession(
         session,
         (session) => (session.clearContextIndex = session.messages.length),
       ),
-    fork: () => chatStore.forkSession(),
-    del: () => chatStore.deleteSession(chatStore.currentSessionIndex),
+    fork: () => chatStore.forkSession(props.isLiveMode),
+    del: () =>
+      chatStore.deleteSession(
+        props.isLiveMode
+          ? chatStore.currentLiveSessionIndex
+          : chatStore.currentSessionIndex,
+        props.isLiveMode,
+      ),
   });
 
   // only search prompts when user input is short
@@ -1331,9 +1380,40 @@ function SessionChat() {
       return;
     }
 
+    // Live 模式下使用文字输入发送到 Live API
+    if (props.isLiveMode) {
+      // 检查是否已连接
+      if (!props.isLiveConnected) {
+        showToast("请先点击'开始对话'按钮建立连接");
+        return;
+      }
+      // 创建用户消息
+      chatStore.updateTargetSession(session, (s) => {
+        s.messages.push(
+          createMessage({
+            role: "user",
+            content: userInput,
+          }),
+        );
+      });
+      // 调用 Live API 发送文字（通过 extra 回调）
+      props.onSendText?.(userInput);
+      setUserInput("");
+      setPromptHints([]);
+      if (!isMobileScreen) inputRef.current?.focus();
+      setAutoScroll(true);
+      return;
+    }
+
     setIsLoading(true);
     chatStore
-      .onUserInput(userInput, attachImages, false, attachFiles)
+      .onUserInput(
+        userInput,
+        attachImages,
+        false,
+        attachFiles,
+        props.isLiveMode,
+      )
       .then(() => setIsLoading(false));
     setAttachImages([]);
     setAttachFiles([]);
@@ -1493,7 +1573,7 @@ function SessionChat() {
     if (botMessage) {
       setIsLoading(true);
       chatStore
-        .retryBotMessage(botMessage.id, userMessage)
+        .retryBotMessage(botMessage.id, userMessage, props.isLiveMode)
         .then(() => {
           setIsLoading(false);
         })
@@ -1510,7 +1590,9 @@ function SessionChat() {
     setIsLoading(true);
     const textContent = getMessageTextContent(userMessage);
     const images = getMessageImages(userMessage);
-    chatStore.onUserInput(textContent, images).then(() => setIsLoading(false));
+    chatStore
+      .onUserInput(textContent, images, false, undefined, props.isLiveMode)
+      .then(() => setIsLoading(false));
     inputRef.current?.focus();
   };
 
@@ -1772,7 +1854,8 @@ function SessionChat() {
 
   const handlePaste = useCallback(
     async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
-      const currentModel = chatStore.currentSession().mask.modelConfig.model;
+      const currentModel = chatStore.currentSession(props.isLiveMode).mask
+        .modelConfig.model;
       if (!isVisionModel(currentModel)) {
         return;
       }
@@ -2040,6 +2123,7 @@ function SessionChat() {
             showToast={!hitBottom}
             showModal={showPromptModal}
             setShowModal={setShowPromptModal}
+            isLiveMode={props.isLiveMode}
           />
         </div>
         <div className={styles["chat-main"]}>
@@ -2247,6 +2331,43 @@ function SessionChat() {
                                   </div>
                                 </div>
                               )}
+                            {/* 音频条 */}
+                            {message.audio_url && (
+                              <AudioBar
+                                audioUrl={message.audio_url}
+                                duration={30} // 默认时长，实际应从音频文件获取
+                                onDownload={() => {
+                                  // 下载音频
+                                  if (message.audio_url) {
+                                    const link = document.createElement("a");
+                                    link.href = message.audio_url;
+                                    link.download = `audio-${message.id}.mp3`;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                  }
+                                }}
+                                onSpeedChange={(speed: number) => {
+                                  console.log("语速调节为:", speed);
+                                }}
+                              />
+                            )}
+                            {/* Live 音频播放器 */}
+                            {message.liveAudio?.data && (
+                              <AudioPlayer
+                                audioData={message.liveAudio.data}
+                                duration={message.liveAudio.duration}
+                                className={styles["live-audio-player"]}
+                                sampleRate={
+                                  message.liveAudio.mimeType?.includes(
+                                    "rate=16000",
+                                  )
+                                    ? 16000
+                                    : 24000
+                                }
+                              />
+                            )}
+
                             <ThinkingBlock
                               model={message.model}
                               thinking={
@@ -2341,7 +2462,9 @@ function SessionChat() {
                           </div>
                         </div>
                       </div>
-                      {shouldShowClearContextDivider && <ClearContextDivider />}
+                      {shouldShowClearContextDivider && (
+                        <ClearContextDivider isLiveMode={props.isLiveMode} />
+                      )}
                     </Fragment>
                   );
                 })}
@@ -2376,6 +2499,7 @@ function SessionChat() {
                 setUserInput={setUserInput}
                 setShowChatSidePanel={setShowChatSidePanel}
                 userInput={userInput}
+                isLiveMode={props.isLiveMode}
               />
               <label
                 className={clsx(styles["chat-input-panel-inner"], {
@@ -2461,18 +2585,7 @@ function SessionChat() {
               [styles["mobile"]]: isMobileScreen,
               [styles["chat-side-panel-show"]]: showChatSidePanel,
             })}
-          >
-            {showChatSidePanel && (
-              <RealtimeChat
-                onClose={() => {
-                  setShowChatSidePanel(false);
-                }}
-                onStartVoice={async () => {
-                  console.log("start voice");
-                }}
-              />
-            )}
-          </div>
+          ></div>
         </div>
       </div>
       {showExport && (
@@ -2484,6 +2597,7 @@ function SessionChat() {
           onClose={() => {
             setIsEditingMessage(false);
           }}
+          isLiveMode={props.isLiveMode}
         />
       )}
 
@@ -2494,8 +2608,19 @@ function SessionChat() {
   );
 }
 
-export function Chat() {
+export function Chat(props: {
+  isLiveMode?: boolean;
+  onSendText?: (text: string) => void;
+  isLiveConnected?: boolean;
+}) {
   const chatStore = useChatStore();
-  const session = chatStore.currentSession();
-  return <SessionChat key={session.id}></SessionChat>;
+  const session = chatStore.currentSession(props.isLiveMode);
+  return (
+    <SessionChat
+      key={session.id}
+      isLiveMode={props.isLiveMode}
+      onSendText={props.onSendText}
+      isLiveConnected={props.isLiveConnected}
+    ></SessionChat>
+  );
 }

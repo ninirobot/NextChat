@@ -107,6 +107,9 @@ export function auth(req: NextRequest, modelProvider: ModelProvider) {
       case ModelProvider.Nvidia:
         systemApiKey = serverConfig.nvidiaApiKey;
         break;
+      case ModelProvider.OpenRouter:
+        systemApiKey = serverConfig.openRouterApiKey;
+        break;
       case ModelProvider.GPT:
       default:
         if (req.nextUrl.pathname.includes("azure/deployments")) {

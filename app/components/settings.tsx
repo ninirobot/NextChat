@@ -64,6 +64,7 @@ import {
 import { Prompt, SearchService, usePromptStore } from "../store/prompt";
 import { ErrorBoundary } from "./error";
 import { InputRange } from "./input-range";
+import { VOICES } from "../lib/gemini/types";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarPicker } from "./emoji";
 import { getClientConfig } from "../config/client";
@@ -72,8 +73,8 @@ import { nanoid } from "nanoid";
 import { useMaskStore } from "../store/mask";
 import { ProviderType } from "../utils/cloud";
 import { TTSConfigList } from "./tts-config";
-import { RealtimeConfigList } from "./realtime-chat/realtime-config";
 import { ProviderConfig } from "./settings/provider-config";
+import { getLiveModels } from "../utils/model";
 
 enum SettingsTab {
   General = "general",
@@ -1241,17 +1242,131 @@ export function Settings() {
                 />
               </List>
 
+              <div className="settings-title">Gemini Live 配置</div>
               <List>
-                <RealtimeConfigList
-                  realtimeConfig={config.realtimeConfig}
-                  updateConfig={(updater) => {
-                    const realtimeConfig = { ...config.realtimeConfig };
-                    updater(realtimeConfig);
-                    config.update(
-                      (config) => (config.realtimeConfig = realtimeConfig),
-                    );
-                  }}
-                />
+                <ListItem title="模型">
+                  <Select
+                    aria-label="Gemini Live 模型"
+                    value={
+                      config.geminiLiveConfig?.model ||
+                      "gemini-2.5-flash-native-audio-preview-12-2025"
+                    }
+                    onChange={(e) =>
+                      config.update(
+                        (c) =>
+                          (c.geminiLiveConfig.model = e.currentTarget.value),
+                      )
+                    }
+                  >
+                    {getLiveModels(
+                      [
+                        config.liveModels,
+                        useAccessStore.getState().liveModels,
+                      ].join(","),
+                    ).map((m) => (
+                      <option value={m} key={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </Select>
+                </ListItem>
+                <ListItem title="语音人物">
+                  <Select
+                    value={config.geminiLiveConfig?.voice || "Zephyr"}
+                    onChange={(e) => {
+                      config.update((c) => {
+                        c.geminiLiveConfig.voice = e.target.value;
+                      });
+                    }}
+                  >
+                    {VOICES.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.id} - {v.desc}
+                      </option>
+                    ))}
+                  </Select>
+                </ListItem>
+                <ListItem title="显示思考过程" subTitle="是否显示AI的思考过程">
+                  <input
+                    type="checkbox"
+                    checked={config.geminiLiveConfig?.includeThoughts !== false}
+                    onChange={(e) => {
+                      config.update((c) => {
+                        c.geminiLiveConfig.includeThoughts = e.target.checked;
+                      });
+                    }}
+                  />
+                </ListItem>
+                {config.geminiLiveConfig?.includeThoughts !== false && (
+                  <ListItem
+                    title="思考预算 (tokens)"
+                    subTitle={
+                      (config.geminiLiveConfig?.thinkingBudget ?? -1) === -1
+                        ? "自动 (Dynamic)"
+                        : `${config.geminiLiveConfig?.thinkingBudget} tokens (0-24576 or -1 for auto)`
+                    }
+                  >
+                    <InputRange
+                      aria="思考预算 (tokens)"
+                      value={config.geminiLiveConfig?.thinkingBudget ?? -1}
+                      min="-1"
+                      max="24576"
+                      step="1"
+                      onChange={(e) => {
+                        const value = parseInt(e.currentTarget.value);
+                        config.update((c) => {
+                          c.geminiLiveConfig.thinkingBudget = value;
+                        });
+                      }}
+                    />
+                  </ListItem>
+                )}
+                {/* Gemini 3.x 系列：Thinking Level 下拉 */}
+                {(config.geminiLiveConfig?.model
+                  .toLowerCase()
+                  .includes("-3.") ||
+                  config.geminiLiveConfig?.model
+                    .toLowerCase()
+                    .includes("-3-") ||
+                  /gemini-3\d/i.test(config.geminiLiveConfig?.model || "")) && (
+                  <ListItem
+                    title="思考等级 (Thinking Level)"
+                    subTitle="控制模型的思考深度，越高越慢但质量更好"
+                  >
+                    <Select
+                      value={config.geminiLiveConfig?.thinkingLevel ?? "low"}
+                      onChange={(e) => {
+                        config.update((c) => {
+                          c.geminiLiveConfig.thinkingLevel =
+                            e.currentTarget.value;
+                        });
+                      }}
+                    >
+                      <option value="none">无思考 (No Thinking)</option>
+                      <option value="low">低 (Low)</option>
+                      <option value="medium">中 (Medium)</option>
+                      <option value="high">高 (High)</option>
+                    </Select>
+                  </ListItem>
+                )}
+                <ListItem
+                  title="语音语速"
+                  subTitle={`${config.geminiLiveConfig?.speed ?? 1.0}x`}
+                >
+                  <InputRange
+                    aria="语音语速"
+                    value={config.geminiLiveConfig?.speed ?? 1.0}
+                    min="0.25"
+                    max="4.0"
+                    step="0.25"
+                    onChange={(e) => {
+                      const value = parseFloat(e.currentTarget.value);
+                      config.update((c) => {
+                        c.geminiLiveConfig.speed = value;
+                      });
+                    }}
+                  />
+                </ListItem>
               </List>
             </>
           )}

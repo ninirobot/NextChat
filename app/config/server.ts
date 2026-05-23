@@ -22,6 +22,7 @@ declare global {
       ENABLE_BALANCE_QUERY?: string; // allow user to query balance or not
       DISABLE_FAST_LINK?: string; // disallow parse settings from url or not
       CUSTOM_MODELS?: string; // to control custom models
+      LIVE_MODELS?: string; // to control live models
       DEFAULT_MODEL?: string; // to control default model in every new chat window
       VISION_MODELS?: string; // to control vision models
 
@@ -33,6 +34,9 @@ declare global {
       // google only
       GOOGLE_API_KEY?: string;
       GOOGLE_URL?: string;
+
+      // google live only
+      GOOGLE_LIVE_API_KEY?: string;
 
       // google tag manager
       GTM_ID?: string;
@@ -149,6 +153,7 @@ export const getServerSideConfig = () => {
 
   const disableGPT4 = !!process.env.DISABLE_GPT4;
   let customModels = process.env.CUSTOM_MODELS ?? "";
+  let liveModels = process.env.LIVE_MODELS ?? "";
   let defaultModel = process.env.DEFAULT_MODEL ?? "";
   let visionModels = process.env.VISION_MODELS ?? "";
 
@@ -164,6 +169,7 @@ export const getServerSideConfig = () => {
 
   const isAzure = !!process.env.AZURE_URL;
   const isGoogle = !!process.env.GOOGLE_API_KEY;
+  const isGoogleLive = !!process.env.GOOGLE_LIVE_API_KEY;
   const isAnthropic = !!process.env.ANTHROPIC_API_KEY;
   const isTencent = !!process.env.TENCENT_API_KEY;
 
@@ -208,6 +214,9 @@ export const getServerSideConfig = () => {
     isGoogle,
     googleApiKey: getApiKey(process.env.GOOGLE_API_KEY),
     googleUrl: process.env.GOOGLE_URL,
+
+    isGoogleLive,
+    googleLiveApiKey: getApiKey(process.env.GOOGLE_LIVE_API_KEY),
 
     isAnthropic,
     anthropicApiKey: getApiKey(process.env.ANTHROPIC_API_KEY),
@@ -295,6 +304,7 @@ export const getServerSideConfig = () => {
     hideBalanceQuery: !process.env.ENABLE_BALANCE_QUERY,
     disableFastLink: !!process.env.DISABLE_FAST_LINK,
     customModels,
+    liveModels,
     defaultModel,
     visionModels,
     allowedWebDavEndpoints,
