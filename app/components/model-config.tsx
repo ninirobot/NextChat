@@ -302,10 +302,11 @@ export function ModelConfigList(props: {
           </ListItem>
         )}
 
-      {/* Thinking Toggle for Nvidia or Kimi 2.5 */}
+      {/* Thinking Toggle for Nvidia or Kimi 2.5 or LongCat 2.0 */}
       {(props.modelConfig.providerName === "Nvidia" ||
         (props.modelConfig.model.toLowerCase().includes("kimi") &&
-          props.modelConfig.model.includes("2.5"))) && (
+          props.modelConfig.model.includes("2.5")) ||
+        props.modelConfig.model.toLowerCase().includes("longcat-2.0")) && (
         <ListItem
           title={Locale.Settings.Thinking.Title} // Using a more generic title key if available, or falling back to reuse Kimi's if necessary, but "Enable Thinking" is better. Let's check locale keys. relying on existing keys.
           subTitle={Locale.Settings.Thinking.SubTitle}

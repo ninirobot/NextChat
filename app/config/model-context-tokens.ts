@@ -7,18 +7,25 @@ export const MODEL_CONTEXT_TOKENS: Record<string, ModelContextConfig> = {
   // DeepSeek
   "deepseek/deepseek-r1-0528:free": { contextTokens: 163840 },
   "deepseek-ai/deepseek-v3.2": { contextTokens: 163840 },
+  "deepseek-ai/deepseek-v4-flash": { contextTokens: 1048576 },
+  "deepseek-ai/deepseek-v4-pro": { contextTokens: 1048576 },
 
   // GLM
   "z-ai/glm5": { contextTokens: 209920 },
+  "z-ai/glm-5.1": { contextTokens: 204800 },
 
   // Moonshot
   "moonshotai/kimi-k2.5": { contextTokens: 262144 },
+  "moonshotai/kimi-k2.6": { contextTokens: 262144 },
 
   // LongCat
   "LongCat-Flash-Chat": { contextTokens: 262144 },
   "LongCat-Flash-Thinking": { contextTokens: 262144 },
   "LongCat-Flash-Thinking-2601": { contextTokens: 262144 },
   "LongCat-Flash-Lite": { contextTokens: 327680 },
+  "LongCat-Flash-Omni-2603": { contextTokens: 262144 },
+  "LongCat-Flash-Chat-2602-Exp": { contextTokens: 262144 },
+  "LongCat-2.0-Preview": { contextTokens: 1048576 },
 
   // GPT OSS
   "gpt-oss-120b": { contextTokens: 131072 },
@@ -88,14 +95,19 @@ export function getModelContextTokens(
     return { contextTokens: 262144 };
   }
 
-  // Moonshot Kimi variants
-  if (lowerName.includes("kimi-k2.5")) {
+  // Moonshot Kimi variants (k2.x series)
+  if (lowerName.includes("kimi-k2")) {
     return { contextTokens: 262144 };
   }
 
   // DeepSeek R1 0528 Free variant
   if (lowerName.includes("deepseek-r1")) {
     return { contextTokens: 163840 };
+  }
+
+  // DeepSeek V4 variants
+  if (lowerName.includes("deepseek-v4")) {
+    return { contextTokens: 1048576 };
   }
 
   // GPT OSS

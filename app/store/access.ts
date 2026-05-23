@@ -30,6 +30,7 @@ import { DEFAULT_CONFIG } from "./config";
 import { getModelProvider } from "../utils/model";
 
 let fetchState = 0; // 0 not fetch, 1 fetching, 2 done
+let fetchStateTimestamp = 0; // record last fetch timestamp
 
 const isApp = getClientConfig()?.buildMode === "export";
 
@@ -280,9 +281,15 @@ export const useAccessStore = createPersistStore(
         (this.enabledAccessControl() && ensure(get(), ["accessCode"]))
       );
     },
-    fetch() {
-      if (fetchState > 0 || getClientConfig()?.buildMode === "export") return;
+    fetch(force?: boolean) {
+      if (getClientConfig()?.buildMode === "export") return;
+      // If force=true, allow re-fetching (reset state if previously done)
+      if (force && fetchState === 2) {
+        fetchState = 0;
+      }
+      if (fetchState > 0) return;
       fetchState = 1;
+      fetchStateTimestamp = Date.now();
       fetch("/api/config", {
         method: "post",
         body: null,
@@ -301,9 +308,15 @@ export const useAccessStore = createPersistStore(
 
           return res;
         })
-        .then((res: DangerConfig) => {
+        .then((res: DangerConfig & { googleLiveApiKey?: string }) => {
           console.log("[Config] got config from server", res);
+          // 写入公开配置字段
           set(() => ({ ...res }));
+          // 如果服务端返回了 googleLiveApiKey，且当前前端尚未手动填写，则自动填充
+          if (res.googleLiveApiKey && !get().googleLiveApiKey) {
+            set(() => ({ googleLiveApiKey: res.googleLiveApiKey }));
+            console.log("[Config] googleLiveApiKey auto-filled from server");
+          }
         })
         .catch(() => {
           console.error("[Config] failed to fetch config");

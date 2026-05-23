@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { getServerSideConfig } from "../../config/server";
+import { auth } from "../auth";
+import { ModelProvider } from "../../constant";
 
 const serverConfig = getServerSideConfig();
 
@@ -23,8 +25,19 @@ declare global {
   type DangerConfig = typeof DANGER_CONFIG;
 }
 
-async function handle() {
-  return NextResponse.json(DANGER_CONFIG);
+async function handle(req: NextRequest) {
+  // 尝试鉴权：如果通过（或不需要访问密码），则额外返回 googleLiveApiKey
+  // 这样部署者在服务端配置的 GOOGLE_LIVE_API_KEY 就可以自动传递到前端
+  const authResult = auth(req, ModelProvider.GeminiPro);
+  const isAuthorized = !authResult.error;
+
+  const responseConfig: Record<string, unknown> = { ...DANGER_CONFIG };
+
+  if (isAuthorized && serverConfig.googleLiveApiKey) {
+    responseConfig.googleLiveApiKey = serverConfig.googleLiveApiKey;
+  }
+
+  return NextResponse.json(responseConfig);
 }
 
 export const GET = handle;

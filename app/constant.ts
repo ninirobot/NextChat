@@ -778,6 +778,9 @@ const longcatModels = [
   "LongCat-Flash-Thinking",
   "LongCat-Flash-Thinking-2601",
   "LongCat-Flash-Lite",
+  "LongCat-Flash-Omni-2603",
+  "LongCat-Flash-Chat-2602-Exp",
+  "LongCat-2.0-Preview",
 ];
 
 const openrouterModels = [
@@ -891,9 +894,12 @@ const nvidiaModels = [
   "mistralai/mixtral-8x22b-instruct",
   "mistralai/mixtral-8x7b-instruct",
   "moonshotai/kimi-k2.5",
+  "moonshotai/kimi-k2.6",
   "moonshotai/kimi-k2-instruct",
   "moonshotai/kimi-k2-instruct-0905",
   "moonshotai/kimi-k2-thinking",
+  "deepseek-ai/deepseek-v4-flash",
+  "deepseek-ai/deepseek-v4-pro",
   "nvidia/bevformer",
   "nvidia/cosmos-predict1-7b",
   "nvidia/embed-qa-4",
@@ -979,6 +985,7 @@ const nvidiaModels = [
   "yentinglin/llama-3-taiwan-70b-instruct",
   "z-ai/glm4.7",
   "z-ai/glm5",
+  "z-ai/glm-5.1",
 ];
 
 let seq = 1000; // 内置的模型序号生成器从1000开始
