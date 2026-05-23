@@ -154,6 +154,13 @@ export function LiveChat() {
 
   // The model is now automatically set correctly by `chatStore.newSession` and `createEmptySession`.
 
+  // 组件挂载时，强制从服务端拉取一次配置，
+  // 以便将服务端的 GOOGLE_LIVE_API_KEY 自动填充到 accessStore.googleLiveApiKey
+  useEffect(() => {
+    accessStore.fetch(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessStore.accessCode]);
+
   // 使用 Mask 中的 Live 配置
   const liveConfig: GeminiLiveConfig = {
     apiKey:
@@ -163,6 +170,7 @@ export function LiveChat() {
       session.mask.liveConfig?.voice ||
       config.geminiLiveConfig?.voice ||
       "Zephyr",
+
     temperature: session.mask.modelConfig.temperature,
     speed:
       session.mask.liveConfig?.speed ?? config.geminiLiveConfig?.speed ?? 1.0,
