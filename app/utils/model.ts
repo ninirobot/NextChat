@@ -258,6 +258,14 @@ export function isModelNotavailableInServer(
 }
 
 export function getLiveModels(liveModelsStr: string): string[] {
+  const cleanStr = (liveModelsStr || "").replace(/,/g, "").trim();
+  if (cleanStr === "") {
+    return [
+      "gemini-2.5-flash-native-audio-preview-12-2025",
+      "gemini-3.1-flash-live-preview",
+    ];
+  }
+
   return liveModelsStr
     .split(",")
     .map((v) => v.trim())

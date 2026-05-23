@@ -106,6 +106,7 @@ export const DEFAULT_CONFIG = {
     speed: 1.0,
     thinkingBudget: -1,
     includeThoughts: true,
+    thinkingLevel: "low",
   },
 };
 

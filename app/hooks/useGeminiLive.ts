@@ -48,7 +48,7 @@ class AudioDataCollector {
   }
 
   getDuration(): number {
-    return Math.round(this.duration * 10) / 10; // 保留1位小数
+    return this.duration;
   }
 
   clear() {
@@ -127,10 +127,10 @@ export function useGeminiLive(
             // Collect audio data for saving
             audioCollectorRef.current?.addChunk(new Uint8Array(data));
 
-            if (options?.onAudioData) {
+            if (callbacksRef.current?.onAudioData) {
               const audioData = audioCollectorRef.current?.getData();
               const duration = audioCollectorRef.current?.getDuration() || 0;
-              options.onAudioData(
+              callbacksRef.current.onAudioData(
                 audioData && audioData.length > 0
                   ? audioData
                   : new Uint8Array(),
@@ -141,24 +141,39 @@ export function useGeminiLive(
             }
           },
           onTranscription: (text, type) => {
-            const key =
-              type === "input" ? "inputTranscription" : "outputTranscription";
-            const prevText = pendingTranscriptionsRef.current[type];
-            const isNewContent = text && text !== prevText && text.length > 0;
+            const prevText = pendingTranscriptionsRef.current[type] || "";
 
-            // 更新挂起的转录文本
-            if (isNewContent) {
+            // 提取增量文本
+            let incrementalText = "";
+            let isNewContent = false;
+
+            if (text && text !== prevText) {
+              if (text.startsWith(prevText)) {
+                incrementalText = text.substring(prevText.length);
+              } else {
+                // 如果发生了截断或者跨段，将其视为全新文本
+                incrementalText = text;
+              }
               pendingTranscriptionsRef.current[type] = text;
+              isNewContent = true;
             }
 
-            // 总是触发业务回调（由调用方决定是否渲染）
-            if (isNewContent) {
-              if (type === "input" && options?.onUserAudioData) {
-                options.onUserAudioData(new Uint8Array(), 0, text);
+            // 触发业务回调，传递增量文本
+            if (isNewContent && incrementalText) {
+              if (type === "input" && callbacksRef.current?.onUserAudioData) {
+                callbacksRef.current.onUserAudioData(
+                  new Uint8Array(),
+                  0,
+                  incrementalText,
+                );
               }
 
-              if (type === "output" && options?.onAudioData) {
-                options.onAudioData(new Uint8Array(), 0, text);
+              if (type === "output" && callbacksRef.current?.onAudioData) {
+                callbacksRef.current.onAudioData(
+                  new Uint8Array(),
+                  0,
+                  incrementalText,
+                );
               }
             }
 
@@ -175,7 +190,9 @@ export function useGeminiLive(
             }
           },
           onTurnComplete: () => {
-            options?.onTurnComplete?.();
+            // 清理这一轮产生的增量副本记录，以便下一次开始时从零开始匹配增量
+            pendingTranscriptionsRef.current.output = "";
+            callbacksRef.current?.onTurnComplete?.();
           },
           onStatusChange: (status) => {
             setState((prev) => ({ ...prev, status }));
@@ -192,6 +209,10 @@ export function useGeminiLive(
             streamerRef.current?.stop();
             // 重置音频收集器
             audioCollectorRef.current?.clear();
+
+            // 重置转录以接受用户全新的插入语句
+            pendingTranscriptionsRef.current.output = "";
+            pendingTranscriptionsRef.current.input = "";
           },
         },
       });
@@ -209,11 +230,32 @@ export function useGeminiLive(
       };
 
       // Add thinking configuration if enabled
-      if (
+      const modelName = config.model || DEFAULT_MODEL;
+      const is3xModel =
+        /-3\./i.test(modelName) ||
+        /-3-/i.test(modelName) ||
+        /gemini-3\d/i.test(modelName);
+
+      if (is3xModel) {
+        // Gemini 3.x: 使用 thinkingLevel 控制思考深度
+        const level = config.thinkingLevel ?? "low";
+        if (level !== "none") {
+          (
+            liveConfig as LiveConnectConfig & { thinkingConfig: ThinkingConfig }
+          ).thinkingConfig = {
+            includeThoughts: true,
+            // Gemini 3.x API 通过 thinking_effort 或 thinkingBudget 控制等级
+            // 映射: low=1024, medium=8192, high=24576
+            thinkingBudget:
+              level === "low" ? 1024 : level === "medium" ? 8192 : 24576,
+          };
+        }
+      } else if (
         config.includeThoughts &&
         config.thinkingBudget !== undefined &&
         config.thinkingBudget !== -1
       ) {
+        // Gemini 2.5: 使用 thinkingBudget 精确控制
         (
           liveConfig as LiveConnectConfig & { thinkingConfig: ThinkingConfig }
         ).thinkingConfig = {
@@ -239,12 +281,16 @@ export function useGeminiLive(
             const bytes = new Uint8Array(buffer);
             userAudioCollectorRef.current?.addChunk(bytes, 16000);
 
-            if (options?.onUserAudioData) {
+            if (callbacksRef.current?.onUserAudioData) {
               const userAudioData = userAudioCollectorRef.current?.getData();
               const userDuration =
                 userAudioCollectorRef.current?.getDuration() || 0;
               if (userAudioData && userAudioData.length > 0) {
-                options.onUserAudioData(userAudioData, userDuration, "");
+                callbacksRef.current.onUserAudioData(
+                  userAudioData,
+                  userDuration,
+                  "",
+                );
                 userAudioCollectorRef.current?.clear();
               }
             }

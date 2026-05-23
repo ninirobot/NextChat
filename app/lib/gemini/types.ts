@@ -16,8 +16,9 @@ export interface GeminiLiveConfig {
   temperature: number;
   speed: number;
   // Thinking configuration
-  thinkingBudget?: number; // -1 = disabled, 0+ = budget in tokens
+  thinkingBudget?: number; // -1 = disabled, 0+ = budget in tokens (Gemini 2.5)
   includeThoughts?: boolean;
+  thinkingLevel?: string; // "none" | "low" | "medium" | "high" (Gemini 3.x)
 }
 
 // Media stream types

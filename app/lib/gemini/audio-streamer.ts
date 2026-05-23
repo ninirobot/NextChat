@@ -14,7 +14,7 @@ export class AudioStreamer {
   private isPlaying: boolean = false;
   private scheduledTime: number = 0;
   private isStreamComplete: boolean = false;
-  private checkInterval: number | null = null;
+  private nextBufferTimeoutId: number | null = null;
   private gainNode: GainNode;
   private endOfQueueAudioSource: AudioBufferSourceNode | null = null;
   private initialBufferTime: number = 0.1; // 100ms 初始缓冲
@@ -101,8 +101,10 @@ export class AudioStreamer {
     if (!this.isPlaying) {
       this.isPlaying = true;
       this.scheduledTime = this.context.currentTime + this.initialBufferTime;
-      this.scheduleNextBuffer();
     }
+
+    // 每次流入新数据，主动调度下一批流数据进轨道
+    this.scheduleNextBuffer();
   }
 
   private createAudioBuffer(audioData: Float32Array): AudioBuffer {
@@ -117,6 +119,17 @@ export class AudioStreamer {
 
   private scheduleNextBuffer(): void {
     const SCHEDULE_AHEAD_TIME = 0.2; // 200ms 预调度（官方参数）
+
+    if (this.nextBufferTimeoutId !== null) {
+      window.clearTimeout(this.nextBufferTimeoutId);
+      this.nextBufferTimeoutId = null;
+    }
+
+    // 填补缝隙：如果之前的 scheduledTime 已经落后于当前时间太多（也就是缓冲饥饿了），
+    // 强制将其同步到当前时间，避免过去的堆积以及瞬间播放导致堆栈重叠
+    if (this.scheduledTime < this.context.currentTime) {
+      this.scheduledTime = this.context.currentTime + 0.05; // 添加少量额外缓冲
+    }
 
     while (
       this.audioQueue.length > 0 &&
@@ -146,37 +159,23 @@ export class AudioStreamer {
         }
       };
 
-      // 确保不调度到过去
-      const startTime = Math.max(this.scheduledTime, this.context.currentTime);
-      source.start(startTime);
-      this.scheduledTime = startTime + audioBuffer.duration / this.playbackRate;
+      source.start(this.scheduledTime);
+      this.scheduledTime =
+        this.scheduledTime + audioBuffer.duration / this.playbackRate;
     }
 
     // 调度下一次检查
-    if (this.audioQueue.length === 0) {
-      if (this.isStreamComplete) {
-        this.isPlaying = false;
-        if (this.checkInterval) {
-          clearInterval(this.checkInterval);
-          this.checkInterval = null;
-        }
-      } else {
-        if (!this.checkInterval) {
-          this.checkInterval = window.setInterval(() => {
-            if (this.audioQueue.length > 0) {
-              this.scheduleNextBuffer();
-            }
-          }, 100) as unknown as number;
-        }
-      }
-    } else {
-      // 使用 setTimeout 更精确地调度下一次
+    if (this.audioQueue.length > 0) {
       const nextCheckTime =
         (this.scheduledTime - this.context.currentTime) * 1000;
-      setTimeout(
+      this.nextBufferTimeoutId = window.setTimeout(
         () => this.scheduleNextBuffer(),
         Math.max(0, nextCheckTime - 50),
       );
+    } else {
+      if (this.isStreamComplete) {
+        this.isPlaying = false;
+      }
     }
   }
 
@@ -194,9 +193,9 @@ export class AudioStreamer {
     });
     this.activeSources.clear();
 
-    if (this.checkInterval) {
-      clearInterval(this.checkInterval);
-      this.checkInterval = null;
+    if (this.nextBufferTimeoutId !== null) {
+      window.clearTimeout(this.nextBufferTimeoutId);
+      this.nextBufferTimeoutId = null;
     }
 
     // 平滑淡出（官方做法）

@@ -83,6 +83,7 @@ export function MaskConfig(props: {
   extraListItems?: JSX.Element;
   readonly?: boolean;
   shouldSyncFromGlobal?: boolean;
+  isLiveMode?: boolean;
 }) {
   const [showPicker, setShowPicker] = useState(false);
 
@@ -258,14 +259,16 @@ export function MaskConfig(props: {
         <ModelConfigList
           modelConfig={{ ...props.mask.modelConfig }}
           updateConfig={updateConfig}
+          isLiveMode={props.isLiveMode}
         />
 
         {/* Live 模式设置 - 只在 Live 模型时显示 */}
         {isLiveModel(props.mask.modelConfig.model, liveModels) && (
           <>
+            {/* 语音角色 */}
             <ListItem title="Gemini Live 语音">
-              <select
-                value={props.mask.liveConfig?.voice || "Kore"}
+              <Select
+                value={props.mask.liveConfig?.voice || "Zephyr"}
                 onChange={(e) => {
                   props.updateMask((mask) => {
                     mask.liveConfig = {
@@ -280,49 +283,10 @@ export function MaskConfig(props: {
                     {v.id} - {v.desc}
                   </option>
                 ))}
-              </select>
+              </Select>
             </ListItem>
-            <ListItem title="显示思考过程" subTitle="是否显示AI的思考过程">
-              <input
-                type="checkbox"
-                checked={props.mask.liveConfig?.includeThoughts !== false}
-                onChange={(e) => {
-                  props.updateMask((mask) => {
-                    mask.liveConfig = {
-                      ...mask.liveConfig,
-                      includeThoughts: e.target.checked,
-                    };
-                  });
-                }}
-              />
-            </ListItem>
-            {props.mask.liveConfig?.includeThoughts !== false && (
-              <ListItem
-                title="思考预算 (tokens)"
-                subTitle={
-                  (props.mask.liveConfig?.thinkingBudget ?? -1) === -1
-                    ? "自动 (Dynamic)"
-                    : `${props.mask.liveConfig?.thinkingBudget} tokens (0-24576 or -1 for auto)`
-                }
-              >
-                <InputRange
-                  aria="思考预算 (tokens)"
-                  value={props.mask.liveConfig?.thinkingBudget ?? -1}
-                  min="-1"
-                  max="24576"
-                  step="1"
-                  onChange={(e) => {
-                    const value = parseInt(e.currentTarget.value);
-                    props.updateMask((mask) => {
-                      mask.liveConfig = {
-                        ...mask.liveConfig,
-                        thinkingBudget: value,
-                      };
-                    });
-                  }}
-                />
-              </ListItem>
-            )}
+
+            {/* 语速 */}
             <ListItem
               title="语音语速"
               subTitle={`${props.mask.liveConfig?.speed ?? 1.0}x`}
@@ -341,6 +305,83 @@ export function MaskConfig(props: {
                 }}
               />
             </ListItem>
+
+            {/* Gemini 2.5 系列：Thinking Budget 滑块 */}
+            {props.mask.modelConfig.model.includes("2.5") && (
+              <>
+                <ListItem
+                  title="显示思考过程"
+                  subTitle="是否在气泡中显示 AI 的思考过程"
+                >
+                  <input
+                    type="checkbox"
+                    checked={props.mask.liveConfig?.includeThoughts !== false}
+                    onChange={(e) => {
+                      props.updateMask((mask) => {
+                        mask.liveConfig = {
+                          ...mask.liveConfig,
+                          includeThoughts: e.target.checked,
+                        };
+                      });
+                    }}
+                  />
+                </ListItem>
+                {props.mask.liveConfig?.includeThoughts !== false && (
+                  <ListItem
+                    title="思考预算 (tokens)"
+                    subTitle={
+                      (props.mask.liveConfig?.thinkingBudget ?? -1) === -1
+                        ? "自动 (Dynamic)"
+                        : `${props.mask.liveConfig?.thinkingBudget} tokens (0–24576，-1 为自动)`
+                    }
+                  >
+                    <InputRange
+                      aria="思考预算 (tokens)"
+                      value={props.mask.liveConfig?.thinkingBudget ?? -1}
+                      min="-1"
+                      max="24576"
+                      step="1"
+                      onChange={(e) => {
+                        const value = parseInt(e.currentTarget.value);
+                        props.updateMask((mask) => {
+                          mask.liveConfig = {
+                            ...mask.liveConfig,
+                            thinkingBudget: value,
+                          };
+                        });
+                      }}
+                    />
+                  </ListItem>
+                )}
+              </>
+            )}
+
+            {/* Gemini 3.x 系列：Thinking Level 下拉 */}
+            {(props.mask.modelConfig.model.toLowerCase().includes("-3.") ||
+              props.mask.modelConfig.model.toLowerCase().includes("-3-") ||
+              /gemini-3\d/i.test(props.mask.modelConfig.model)) && (
+              <ListItem
+                title="思考等级 (Thinking Level)"
+                subTitle="控制模型的思考深度，越高越慢但质量更好"
+              >
+                <Select
+                  value={props.mask.liveConfig?.thinkingLevel ?? "low"}
+                  onChange={(e) => {
+                    props.updateMask((mask) => {
+                      mask.liveConfig = {
+                        ...mask.liveConfig,
+                        thinkingLevel: e.target.value,
+                      };
+                    });
+                  }}
+                >
+                  <option value="none">无思考 (No Thinking)</option>
+                  <option value="low">低 (Low)</option>
+                  <option value="medium">中 (Medium)</option>
+                  <option value="high">高 (High)</option>
+                </Select>
+              </ListItem>
+            )}
           </>
         )}
 

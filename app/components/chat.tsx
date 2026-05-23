@@ -224,6 +224,7 @@ export function SessionConfigModel(props: {
             );
           }}
           shouldSyncFromGlobal
+          isLiveMode={props.isLiveMode}
           extraListItems={
             session.mask.modelConfig.sendMemory ? (
               <ListItem

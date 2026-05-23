@@ -168,6 +168,15 @@ function Screen() {
     loadAsyncGoogleFont();
   }, []);
 
+  useEffect(() => {
+    const isLive = location.pathname.includes(Path.GeminiLive);
+    if (isLive) {
+      document.body.classList.add("live-mode");
+    } else {
+      document.body.classList.remove("live-mode");
+    }
+  }, [location.pathname]);
+
   if (isArtifact) {
     return (
       <Routes>

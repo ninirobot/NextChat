@@ -8,9 +8,10 @@ import { createPersistStore } from "../utils/store";
 
 export type LiveModeConfig = {
   voice?: string; // 语音选择
-  thinkingBudget?: number; // Thinking budget (0-24576)
+  thinkingBudget?: number; // Thinking budget for 2.5 models (0-24576, -1=auto)
   includeThoughts?: boolean; // 显示思考过程
   speed?: number; // 语速 (0.25-4.0)
+  thinkingLevel?: string; // Thinking level for 3.x models: "none" | "low" | "medium" | "high"
 };
 
 export type Mask = {
@@ -54,7 +55,7 @@ export const createEmptyMask = () =>
     builtin: false,
     createdAt: Date.now(),
     liveConfig: {
-      voice: "Kore",
+      voice: "Zephyr",
       thinkingBudget: -1,
       includeThoughts: true,
       speed: 1.0,

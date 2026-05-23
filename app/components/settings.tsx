@@ -1321,6 +1321,34 @@ export function Settings() {
                     />
                   </ListItem>
                 )}
+                {/* Gemini 3.x 系列：Thinking Level 下拉 */}
+                {(config.geminiLiveConfig?.model
+                  .toLowerCase()
+                  .includes("-3.") ||
+                  config.geminiLiveConfig?.model
+                    .toLowerCase()
+                    .includes("-3-") ||
+                  /gemini-3\d/i.test(config.geminiLiveConfig?.model || "")) && (
+                  <ListItem
+                    title="思考等级 (Thinking Level)"
+                    subTitle="控制模型的思考深度，越高越慢但质量更好"
+                  >
+                    <Select
+                      value={config.geminiLiveConfig?.thinkingLevel ?? "low"}
+                      onChange={(e) => {
+                        config.update((c) => {
+                          c.geminiLiveConfig.thinkingLevel =
+                            e.currentTarget.value;
+                        });
+                      }}
+                    >
+                      <option value="none">无思考 (No Thinking)</option>
+                      <option value="low">低 (Low)</option>
+                      <option value="medium">中 (Medium)</option>
+                      <option value="high">高 (High)</option>
+                    </Select>
+                  </ListItem>
+                )}
                 <ListItem
                   title="语音语速"
                   subTitle={`${config.geminiLiveConfig?.speed ?? 1.0}x`}

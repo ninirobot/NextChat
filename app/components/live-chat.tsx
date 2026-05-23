@@ -162,7 +162,7 @@ export function LiveChat() {
     voice:
       session.mask.liveConfig?.voice ||
       config.geminiLiveConfig?.voice ||
-      "Kore",
+      "Zephyr",
     temperature: session.mask.modelConfig.temperature,
     speed:
       session.mask.liveConfig?.speed ?? config.geminiLiveConfig?.speed ?? 1.0,
@@ -174,6 +174,7 @@ export function LiveChat() {
       session.mask.liveConfig?.includeThoughts ??
       config.geminiLiveConfig?.includeThoughts ??
       true,
+    thinkingLevel: session.mask.liveConfig?.thinkingLevel,
   };
 
   const accumulatedOutputTextRef = useRef("");
@@ -211,6 +212,8 @@ export function LiveChat() {
   const flushStoreUpdates = useCallback(() => {
     if (pendingStoreUpdatesRef.current.length > 0) {
       chatStore.updateTargetSession(session, (s) => {
+        // 创建新的引用，触发 React 组件重渲染
+        s.messages = [...s.messages];
         pendingStoreUpdatesRef.current.forEach((updateFn) => updateFn(s));
       });
       pendingStoreUpdatesRef.current = [];
@@ -234,14 +237,14 @@ export function LiveChat() {
       if (!text && (!data || data.length === 0)) return;
 
       scheduleStoreUpdate((s: any) => {
-        // 查找最后一条消息
-        const lastMessage = s.messages[s.messages.length - 1];
+        // 查找最后一条 AI 消息（无视中间可能插入的 User 消息）
+        const activeAiIndex = s.messages.findLastIndex(
+          (m: any) => m.role === "assistant",
+        );
 
-        // 简化判断：只要最后一条是 AI 消息且上回合未结束，就更新它
+        // 只要存在 AI 消息且当前回答未结束，就持续累积更新它，避免产生对话碎片
         const isUpdatingLastMessage =
-          lastMessage &&
-          lastMessage.role === "assistant" &&
-          !isAITurnCompleteRef.current;
+          activeAiIndex !== -1 && !isAITurnCompleteRef.current;
 
         if (isUpdatingLastMessage) {
           // 累积文本和音频
@@ -254,7 +257,7 @@ export function LiveChat() {
 
           // 累积更新现有 AI 消息
           const updatedMessage = {
-            ...lastMessage,
+            ...s.messages[activeAiIndex],
             content: accumulatedOutputTextRef.current,
             liveAudio:
               accumulatedOutputAudioChunksRef.current.length > 0
@@ -262,12 +265,14 @@ export function LiveChat() {
                     data: mergeAudioChunks(
                       accumulatedOutputAudioChunksRef.current,
                     ),
-                    duration: (lastMessage.liveAudio?.duration || 0) + duration,
+                    duration:
+                      (s.messages[activeAiIndex].liveAudio?.duration || 0) +
+                      duration,
                     mimeType: "audio/pcm;rate=24000",
                   }
-                : lastMessage.liveAudio,
+                : s.messages[activeAiIndex].liveAudio,
           };
-          s.messages[s.messages.length - 1] = updatedMessage; // Immer 直接赋值
+          s.messages[activeAiIndex] = updatedMessage;
         } else {
           // 新的 AI 回复开始，先清空累积器，重置标识
           isAITurnCompleteRef.current = false;
@@ -290,7 +295,7 @@ export function LiveChat() {
                   }
                 : undefined,
           });
-          s.messages.push(newMessage); // Immer 直接 push
+          s.messages.push(newMessage);
         }
       });
     },
@@ -303,14 +308,14 @@ export function LiveChat() {
       if (!text && (!data || data.length === 0)) return;
 
       scheduleStoreUpdate((s: any) => {
-        // 查找最近的用户消息索引
-        const lastUserMessageIndex = [...s.messages]
-          .reverse()
-          .findIndex((m: any) => m.role === "user");
+        // 查找最后一条消息，只有它才是真正的本轮语音气泡
+        const lastMessage = s.messages[s.messages.length - 1];
+        const isUpdatingLastMessage =
+          lastMessage && lastMessage.role === "user";
 
-        if (lastUserMessageIndex >= 0) {
-          // 找到用户消息，更新它
-          const actualIndex = s.messages.length - 1 - lastUserMessageIndex;
+        if (isUpdatingLastMessage) {
+          // 找到真正的最新的用户消息，更新它
+          const actualIndex = s.messages.length - 1;
           const lastUserMessage = s.messages[actualIndex];
 
           // 累积文本和音频
@@ -337,7 +342,6 @@ export function LiveChat() {
                 : lastUserMessage.liveAudio,
           };
 
-          // Immer 直接赋值
           s.messages[actualIndex] = updatedMessage;
         } else {
           // 新的用户输入开始，先清空累积器

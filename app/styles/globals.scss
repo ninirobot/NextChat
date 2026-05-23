@@ -52,6 +52,23 @@
   @include dark;
 }
 
+.live-mode {
+  --primary: rgb(139, 92, 246);
+  --second: rgb(245, 243, 255);
+
+  &.dark {
+    --primary: rgb(167, 139, 250);
+    --second: rgb(30, 27, 56);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    &:not(.light) {
+      --primary: rgb(167, 139, 250);
+      --second: rgb(30, 27, 56);
+    }
+  }
+}
+
 .mask {
   filter: invert(0.8);
 }

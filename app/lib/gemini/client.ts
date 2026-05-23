@@ -249,7 +249,7 @@ export class GeminiLiveClient {
 
   sendText(text: string, turnComplete = true): void {
     this.session?.sendClientContent({
-      turns: [{ text }],
+      turns: [{ role: "user", parts: [{ text }] }],
       turnComplete,
     });
   }
