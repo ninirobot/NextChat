@@ -986,6 +986,8 @@ const nvidiaModels = [
   "z-ai/glm4.7",
   "z-ai/glm5",
   "z-ai/glm-5.1",
+  "nvidia/nemotron-3-ultra-550b-a55b",
+  "minimaxai/minimax-m3",
 ];
 
 let seq = 1000; // 内置的模型序号生成器从1000开始

@@ -255,14 +255,15 @@ export function ModelConfigList(props: {
           </ListItem>
         )}
 
-      {/* GPT-OSS Reasoning Effort */}
-      {props.modelConfig.model.includes("gpt-oss") && (
+      {/* GPT-OSS and Nvidia Nemotron Reasoning Effort */}
+      {(props.modelConfig.model.includes("gpt-oss") ||
+        props.modelConfig.model === "nvidia/nemotron-3-ultra-550b-a55b") && (
         <ListItem
           title={Locale.Settings.ReasoningEffort.Title}
           subTitle={Locale.Settings.ReasoningEffort.SubTitle}
         >
           <Select
-            value={props.modelConfig.reasoning_effort || "medium"}
+            value={props.modelConfig.reasoning_effort || "high"}
             onChange={(e) => {
               props.updateConfig((config) => {
                 config.reasoning_effort = e.currentTarget.value as
@@ -272,9 +273,42 @@ export function ModelConfigList(props: {
               });
             }}
           >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
+            {props.modelConfig.model === "nvidia/nemotron-3-ultra-550b-a55b" ? (
+              <>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </>
+            ) : (
+              <>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </>
+            )}
+          </Select>
+        </ListItem>
+      )}
+
+      {/* Minimax M3 Thinking Mode */}
+      {props.modelConfig.model === "minimaxai/minimax-m3" && (
+        <ListItem
+          title="思维模式 (thinking_mode)"
+          subTitle="控制 Minimax M3 的思考模式"
+        >
+          <Select
+            value={props.modelConfig.thinking_mode || "enabled"}
+            onChange={(e) => {
+              props.updateConfig((config) => {
+                config.thinking_mode = e.currentTarget.value as
+                  | "enabled"
+                  | "disabled"
+                  | "adaptive";
+              });
+            }}
+          >
+            <option value="enabled">Enabled (Think)</option>
+            <option value="disabled">Disabled (No-think)</option>
+            <option value="adaptive">Adaptive</option>
           </Select>
         </ListItem>
       )}
@@ -302,11 +336,10 @@ export function ModelConfigList(props: {
           </ListItem>
         )}
 
-      {/* Thinking Toggle for Nvidia or Kimi 2.5 or LongCat 2.0 */}
+      {/* Thinking Toggle for Nvidia or Kimi 2.5 */}
       {(props.modelConfig.providerName === "Nvidia" ||
         (props.modelConfig.model.toLowerCase().includes("kimi") &&
-          props.modelConfig.model.includes("2.5")) ||
-        props.modelConfig.model.toLowerCase().includes("longcat-2.0")) && (
+          props.modelConfig.model.includes("2.5"))) && (
         <ListItem
           title={Locale.Settings.Thinking.Title} // Using a more generic title key if available, or falling back to reuse Kimi's if necessary, but "Enable Thinking" is better. Let's check locale keys. relying on existing keys.
           subTitle={Locale.Settings.Thinking.SubTitle}
@@ -418,16 +451,25 @@ export function ModelConfigList(props: {
       >
         <InputRange
           aria={Locale.Settings.HistoryCount.Title}
-          title={props.modelConfig.historyMessageCount.toString()}
-          value={props.modelConfig.historyMessageCount}
+          title={
+            props.modelConfig.historyMessageCount < 0
+              ? "无限制"
+              : props.modelConfig.historyMessageCount.toString()
+          }
+          value={
+            props.modelConfig.historyMessageCount < 0
+              ? 100
+              : props.modelConfig.historyMessageCount
+          }
           min="0"
           max="100"
           step="5"
-          onChange={(e) =>
+          onChange={(e) => {
+            const val = e.target.valueAsNumber;
             props.updateConfig(
-              (config) => (config.historyMessageCount = e.target.valueAsNumber),
-            )
-          }
+              (config) => (config.historyMessageCount = val >= 100 ? -1 : val),
+            );
+          }}
         ></InputRange>
       </ListItem>
 

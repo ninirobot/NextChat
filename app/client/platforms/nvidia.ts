@@ -89,10 +89,27 @@ export class NvidiaApi implements LLMApi {
 
     // Generic Thinking Logic for Nvidia
     if (enableThinking) {
-      requestPayload.chat_template_kwargs = {
-        thinking: true, // for DeepSeek, Kimi
-        enable_thinking: true, // for GLM
-      };
+      if (modelConfig.model === "nvidia/nemotron-3-ultra-550b-a55b") {
+        requestPayload.reasoning_effort =
+          modelConfig.reasoning_effort || "high";
+      } else if (modelConfig.model === "minimaxai/minimax-m3") {
+        requestPayload.reasoning = {
+          thinking_mode: modelConfig.thinking_mode || "enabled",
+        };
+      } else {
+        requestPayload.chat_template_kwargs = {
+          thinking: true, // for DeepSeek, Kimi
+          enable_thinking: true, // for GLM
+        };
+      }
+    } else {
+      if (modelConfig.model === "nvidia/nemotron-3-ultra-550b-a55b") {
+        requestPayload.reasoning_effort = "none";
+      } else if (modelConfig.model === "minimaxai/minimax-m3") {
+        requestPayload.reasoning = {
+          thinking_mode: "disabled",
+        };
+      }
     }
 
     console.log("[Request] nvidia payload: ", requestPayload);

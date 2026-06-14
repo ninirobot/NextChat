@@ -85,6 +85,7 @@ export const DEFAULT_CONFIG = {
     gemini_thinking_budget: -1,
     thinking_level: "high",
     reasoning_effort: "high" as "low" | "medium" | "high",
+    thinking_mode: "enabled" as "enabled" | "disabled" | "adaptive",
     include_thoughts: true,
     aspect_ratio: "1:1",
   },
@@ -177,6 +178,12 @@ export const ModalConfigValidator = {
   },
   aspect_ratio(x: string) {
     return x;
+  },
+  thinking_mode(x: string) {
+    if (["enabled", "disabled", "adaptive"].includes(x)) {
+      return x as "enabled" | "disabled" | "adaptive";
+    }
+    return undefined;
   },
 };
 

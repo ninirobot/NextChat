@@ -534,7 +534,8 @@ export function TokenCounter(props: {
 
   // Calculate the current context count
   const currentContextCount = props.session.messages.length;
-  const maxContextCount = modelConfig.historyMessageCount;
+  const maxContextCount =
+    modelConfig.historyMessageCount < 0 ? "∞" : modelConfig.historyMessageCount;
 
   // Calculate estimated token count (including user input)
   const userInputTokens = useMemo(() => {

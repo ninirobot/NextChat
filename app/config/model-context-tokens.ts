@@ -32,6 +32,8 @@ export const MODEL_CONTEXT_TOKENS: Record<string, ModelContextConfig> = {
 
   // Qwen
   "qwen/qwen3.5-397b-a17b": { contextTokens: 262144 },
+  "nvidia/nemotron-3-ultra-550b-a55b": { contextTokens: 1048576 },
+  "minimaxai/minimax-m3": { contextTokens: 1048576 },
 };
 
 export function getModelContextTokens(
