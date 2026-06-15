@@ -17,6 +17,8 @@ import BotIconHunyuan from "../icons/llm-icons/hunyuan.svg";
 import BotIconDoubao from "../icons/llm-icons/doubao.svg";
 import BotIconChatglm from "../icons/llm-icons/chatglm.svg";
 import BotIconLongcat from "../icons/llm-icons/longcat.svg";
+import BotIconNvidia from "../icons/llm-icons/nvidia.svg";
+import BotIconMinimax from "../icons/llm-icons/minimax.svg";
 
 export function getModelIcon(modelName?: string) {
   if (!modelName) return BotIconDefault;
@@ -79,6 +81,12 @@ export function getModelIcon(modelName?: string) {
   } else if (name.includes("longcat")) {
     // LongCat
     return BotIconLongcat;
+  } else if (name.startsWith("nvidia/") || name.includes("nvidia")) {
+    // Nvidia
+    return BotIconNvidia;
+  } else if (name.includes("minimax")) {
+    // MiniMax
+    return BotIconMinimax;
   }
 
   return BotIconDefault;

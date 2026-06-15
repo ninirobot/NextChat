@@ -292,17 +292,19 @@ export function ModelConfigList(props: {
       {/* Minimax M3 Thinking Mode */}
       {props.modelConfig.model === "minimaxai/minimax-m3" && (
         <ListItem
-          title="思维模式 (thinking_mode)"
-          subTitle="控制 Minimax M3 的思考模式"
+          title={Locale.Settings.Thinking.Title}
+          subTitle={Locale.Settings.Thinking.SubTitle}
         >
           <Select
             value={props.modelConfig.thinking_mode || "enabled"}
             onChange={(e) => {
+              const mode = e.currentTarget.value as
+                | "enabled"
+                | "disabled"
+                | "adaptive";
               props.updateConfig((config) => {
-                config.thinking_mode = e.currentTarget.value as
-                  | "enabled"
-                  | "disabled"
-                  | "adaptive";
+                config.thinking_mode = mode;
+                config.enable_thinking = mode !== "disabled";
               });
             }}
           >

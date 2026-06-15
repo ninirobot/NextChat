@@ -105,7 +105,6 @@ export async function preProcessImageContentBase(
   return result;
 }
 
-
 export async function preProcessImageContent(
   content: RequestMessage["content"],
 ) {
@@ -199,6 +198,7 @@ export function stream(
     toolCallResult: any[],
   ) => void,
   options: any,
+  timeoutMS?: number,
 ) {
   let responseText = "";
   let remainText = "";
@@ -329,7 +329,7 @@ export function stream(
     };
     const requestTimeoutId = setTimeout(
       () => controller.abort(),
-      REQUEST_TIMEOUT_MS,
+      timeoutMS ?? REQUEST_TIMEOUT_MS,
     );
     fetchEventSource(chatPath, {
       fetch: tauriFetch as any,
@@ -357,7 +357,7 @@ export function stream(
           try {
             const resJson = await res.clone().json();
             extraInfo = prettyObject(resJson);
-          } catch { }
+          } catch {}
 
           if (res.status === 401) {
             responseTexts.push(Locale.Error.Unauthorized);
@@ -425,6 +425,7 @@ export function streamWithThink(
     toolCallResult: any[],
   ) => void,
   options: any,
+  timeoutMS?: number,
 ) {
   let responseText = "";
   let remainText = "";
@@ -449,13 +450,20 @@ export function streamWithThink(
       if (remainReasoning.length > 0) {
         reasoningText += remainReasoning;
         remainReasoning = "";
-        const duration = thinkingStartTime > 0 ? parseFloat(((Date.now() - thinkingStartTime) / 1000).toFixed(1)) : 0;
+        const duration =
+          thinkingStartTime > 0
+            ? parseFloat(((Date.now() - thinkingStartTime) / 1000).toFixed(1))
+            : 0;
         options.onUpdateThinking?.(reasoningText, duration);
       }
       return;
     }
 
-    if (remainText.length > 0 || remainReasoning.length > 0 || (isInThinkingMode && finished === false)) {
+    if (
+      remainText.length > 0 ||
+      remainReasoning.length > 0 ||
+      (isInThinkingMode && finished === false)
+    ) {
       if (remainText.length > 0) {
         const fetchCount = Math.max(1, Math.round(remainText.length / 60));
         const fetchText = remainText.slice(0, fetchCount);
@@ -469,10 +477,16 @@ export function streamWithThink(
         const fetchText = remainReasoning.slice(0, fetchCount);
         reasoningText += fetchText;
         remainReasoning = remainReasoning.slice(fetchCount);
-        const duration = thinkingStartTime > 0 ? parseFloat(((Date.now() - thinkingStartTime) / 1000).toFixed(1)) : 0;
+        const duration =
+          thinkingStartTime > 0
+            ? parseFloat(((Date.now() - thinkingStartTime) / 1000).toFixed(1))
+            : 0;
         options.onUpdateThinking?.(reasoningText, duration);
       } else if (isInThinkingMode) {
-        const duration = thinkingStartTime > 0 ? parseFloat(((Date.now() - thinkingStartTime) / 1000).toFixed(1)) : 0;
+        const duration =
+          thinkingStartTime > 0
+            ? parseFloat(((Date.now() - thinkingStartTime) / 1000).toFixed(1))
+            : 0;
         options.onUpdateThinking?.(reasoningText, duration);
       }
       requestAnimationFrame(animateResponseText);
@@ -518,7 +532,7 @@ export function streamWithThink(
     };
     const requestTimeoutId = setTimeout(
       () => controller.abort(),
-      REQUEST_TIMEOUT_MS,
+      timeoutMS ?? REQUEST_TIMEOUT_MS,
     );
     fetchEventSource(chatPath, {
       fetch: tauriFetch as any,
@@ -546,7 +560,7 @@ export function streamWithThink(
           try {
             const resJson = await res.clone().json();
             extraInfo = prettyObject(resJson);
-          } catch { }
+          } catch {}
 
           if (res.status === 401) {
             responseTexts.push(Locale.Error.Unauthorized);

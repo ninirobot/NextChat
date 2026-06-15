@@ -11,6 +11,7 @@ import { ChatOptions, getHeaders, LLMApi, LLMModel, LLMUsage } from "../api";
 import { getClientConfig } from "@/app/config/client";
 import { fetch } from "@/app/utils/stream";
 import { preProcessImageContent, streamWithThink } from "@/app/utils/chat";
+import { getTimeoutMSByModel } from "@/app/utils";
 import { RequestPayload } from "./openai";
 
 export class NvidiaApi implements LLMApi {
@@ -93,7 +94,7 @@ export class NvidiaApi implements LLMApi {
         requestPayload.reasoning_effort =
           modelConfig.reasoning_effort || "high";
       } else if (modelConfig.model === "minimaxai/minimax-m3") {
-        requestPayload.reasoning = {
+        requestPayload.chat_template_kwargs = {
           thinking_mode: modelConfig.thinking_mode || "enabled",
         };
       } else {
@@ -106,7 +107,7 @@ export class NvidiaApi implements LLMApi {
       if (modelConfig.model === "nvidia/nemotron-3-ultra-550b-a55b") {
         requestPayload.reasoning_effort = "none";
       } else if (modelConfig.model === "minimaxai/minimax-m3") {
-        requestPayload.reasoning = {
+        requestPayload.chat_template_kwargs = {
           thinking_mode: "disabled",
         };
       }
@@ -197,6 +198,7 @@ export class NvidiaApi implements LLMApi {
             );
           },
           options,
+          getTimeoutMSByModel(modelConfig.model),
         );
       } else {
         const chatPayload = {
@@ -206,7 +208,10 @@ export class NvidiaApi implements LLMApi {
           headers: getHeaders(),
         };
 
-        const requestTimeoutId = setTimeout(() => controller.abort(), 60000);
+        const requestTimeoutId = setTimeout(
+          () => controller.abort(),
+          getTimeoutMSByModel(modelConfig.model),
+        );
 
         const res = await fetch(chatPath, chatPayload);
         clearTimeout(requestTimeoutId);
