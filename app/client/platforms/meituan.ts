@@ -87,9 +87,9 @@ export class MeituanApi implements LLMApi {
       },
     };
 
-    const isMeituanThinkingModel =
-      modelConfig.model.toLowerCase().includes("thinking") ||
-      modelConfig.model.toLowerCase().includes("longcat-2.0");
+    const isMeituanThinkingModel = modelConfig.model
+      .toLowerCase()
+      .includes("thinking");
 
     const requestPayload: any = {
       messages,
