@@ -42,7 +42,11 @@ export class NvidiaApi implements LLMApi {
   }
 
   async extractMessage(res: any) {
-    return res.choices?.at(0)?.message?.content ?? "";
+    const msg = res.choices?.at(0)?.message;
+    if (!msg) return "";
+    if (msg.content) return msg.content;
+    if (msg.reasoning_content) return msg.reasoning_content;
+    return "";
   }
 
   async speech(options: any): Promise<ArrayBuffer> {
@@ -65,7 +69,6 @@ export class NvidiaApi implements LLMApi {
     };
 
     const enableThinking = options.config.enable_thinking ?? true;
-    const isKimi = modelConfig.model.toLowerCase().includes("kimi");
 
     const requestPayload: any = {
       messages,
@@ -75,8 +78,11 @@ export class NvidiaApi implements LLMApi {
       presence_penalty: modelConfig.presence_penalty,
       frequency_penalty: modelConfig.frequency_penalty,
       top_p: modelConfig.top_p,
-      // Omit max_tokens to avoid compatibility issues
     };
+
+    if (modelConfig.model === "minimaxai/minimax-m3") {
+      requestPayload.max_tokens = modelConfig.max_tokens || 8192;
+    }
 
     // Special handling for qwen/qwen3.5-397b-a17b
     if (modelConfig.model === "qwen/qwen3.5-397b-a17b") {
@@ -143,17 +149,13 @@ export class NvidiaApi implements LLMApi {
               return { isThinking: false, content: "" };
             }
 
-            const choices = json.choices as Array<{
-              delta: {
-                content: string;
-                tool_calls: ChatMessageTool[];
-                reasoning_content: string | null;
-              };
-            }>;
-
+            const choices = json.choices as Array<any>;
             if (!choices?.length) return { isThinking: false, content: "" };
 
-            const tool_calls = choices[0]?.delta?.tool_calls;
+            const delta = choices[0]?.delta;
+            if (!delta) return { isThinking: false, content: "" };
+
+            const tool_calls = delta.tool_calls;
             if (tool_calls?.length > 0) {
               const id = tool_calls[0]?.id;
               const args = tool_calls[0]?.function?.arguments;
@@ -173,8 +175,12 @@ export class NvidiaApi implements LLMApi {
               }
             }
 
-            const reasoning = choices[0]?.delta?.reasoning_content;
-            const content = choices[0]?.delta?.content;
+            const reasoning =
+              delta.reasoning_content ??
+              delta.reasoning ??
+              delta.thinking ??
+              null;
+            const content = delta.content ?? null;
 
             return {
               reasoning: reasoning || undefined,
@@ -215,6 +221,15 @@ export class NvidiaApi implements LLMApi {
 
         const res = await fetch(chatPath, chatPayload);
         clearTimeout(requestTimeoutId);
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("[Nvidia] HTTP error", res.status, errorText);
+          options.onError?.(
+            new Error(`NVIDIA API error ${res.status}: ${errorText}`),
+          );
+          return;
+        }
 
         const resJson = await res.json();
         const message = await this.extractMessage(resJson);
