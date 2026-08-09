@@ -780,7 +780,7 @@ const longcatModels = [
   "LongCat-Flash-Lite",
   "LongCat-Flash-Omni-2603",
   "LongCat-Flash-Chat-2602-Exp",
-  "LongCat-2.0-Preview",
+  "LongCat-2.0",
 ];
 
 const openrouterModels = [
@@ -985,7 +985,7 @@ const nvidiaModels = [
   "yentinglin/llama-3-taiwan-70b-instruct",
   "z-ai/glm4.7",
   "z-ai/glm5",
-  "z-ai/glm-5.1",
+  "z-ai/glm-5.2",
   "nvidia/nemotron-3-ultra-550b-a55b",
   "minimaxai/minimax-m3",
 ];

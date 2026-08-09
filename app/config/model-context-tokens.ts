@@ -12,7 +12,7 @@ export const MODEL_CONTEXT_TOKENS: Record<string, ModelContextConfig> = {
 
   // GLM
   "z-ai/glm5": { contextTokens: 209920 },
-  "z-ai/glm-5.1": { contextTokens: 204800 },
+  "z-ai/glm-5.2": { contextTokens: 204800 },
 
   // Moonshot
   "moonshotai/kimi-k2.5": { contextTokens: 262144 },
@@ -25,7 +25,7 @@ export const MODEL_CONTEXT_TOKENS: Record<string, ModelContextConfig> = {
   "LongCat-Flash-Lite": { contextTokens: 327680 },
   "LongCat-Flash-Omni-2603": { contextTokens: 262144 },
   "LongCat-Flash-Chat-2602-Exp": { contextTokens: 262144 },
-  "LongCat-2.0-Preview": { contextTokens: 1048576 },
+  "LongCat-2.0": { contextTokens: 1048576 },
 
   // GPT OSS
   "gpt-oss-120b": { contextTokens: 131072 },
