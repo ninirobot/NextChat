@@ -593,6 +593,7 @@ const googleModels = [
   "gemini-3.5-flash",
   "gemini-3.5-flash-lite",
   "gemini-3.6-flash",
+  "google/gemma-4-31b-it",
 ];
 
 const anthropicModels = [
@@ -779,12 +780,12 @@ const ai302Models = [
 ];
 
 const longcatModels = [
-  "LongCat-Flash-Chat",
-  "LongCat-Flash-Thinking",
-  "LongCat-Flash-Thinking-2601",
-  "LongCat-Flash-Lite",
-  "LongCat-Flash-Omni-2603",
-  "LongCat-Flash-Chat-2602-Exp",
+  // "LongCat-Flash-Chat",
+  // "LongCat-Flash-Thinking",
+  // "LongCat-Flash-Thinking-2601",
+  // "LongCat-Flash-Lite",
+  // "LongCat-Flash-Omni-2603",
+  // "LongCat-Flash-Chat-2602-Exp",
   "LongCat-2.0",
 ];
 
@@ -796,6 +797,7 @@ const openrouterModels = [
   "openai/gpt-4o-mini",
   "anthropic/claude-3.5-sonnet",
   "meta-llama/llama-3.3-70b-instruct",
+  "z-ai/glm-5.2:free",
 ];
 
 const nvidiaModels = [
@@ -904,6 +906,7 @@ const nvidiaModels = [
   "moonshotai/kimi-k2-instruct-0905",
   "moonshotai/kimi-k2-thinking",
   "deepseek-ai/deepseek-v4-flash",
+  "deepseek-ai/deepseek-v4-flash-0731",
   "deepseek-ai/deepseek-v4-pro",
   "nvidia/bevformer",
   "nvidia/cosmos-predict1-7b",

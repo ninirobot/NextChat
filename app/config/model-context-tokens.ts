@@ -8,23 +8,19 @@ export const MODEL_CONTEXT_TOKENS: Record<string, ModelContextConfig> = {
   "deepseek/deepseek-r1-0528:free": { contextTokens: 163840 },
   "deepseek-ai/deepseek-v3.2": { contextTokens: 163840 },
   "deepseek-ai/deepseek-v4-flash": { contextTokens: 1048576 },
+  "deepseek-ai/deepseek-v4-flash-0731": { contextTokens: 1048576 },
   "deepseek-ai/deepseek-v4-pro": { contextTokens: 1048576 },
 
   // GLM
   "z-ai/glm5": { contextTokens: 209920 },
   "z-ai/glm-5.2": { contextTokens: 204800 },
+  "z-ai/glm-5.2:free": { contextTokens: 204800 },
 
   // Moonshot
   "moonshotai/kimi-k2.5": { contextTokens: 262144 },
   "moonshotai/kimi-k2.6": { contextTokens: 262144 },
 
   // LongCat
-  "LongCat-Flash-Chat": { contextTokens: 262144 },
-  "LongCat-Flash-Thinking": { contextTokens: 262144 },
-  "LongCat-Flash-Thinking-2601": { contextTokens: 262144 },
-  "LongCat-Flash-Lite": { contextTokens: 327680 },
-  "LongCat-Flash-Omni-2603": { contextTokens: 262144 },
-  "LongCat-Flash-Chat-2602-Exp": { contextTokens: 262144 },
   "LongCat-2.0": { contextTokens: 1048576 },
 
   // GPT OSS
@@ -34,6 +30,7 @@ export const MODEL_CONTEXT_TOKENS: Record<string, ModelContextConfig> = {
   "qwen/qwen3.5-397b-a17b": { contextTokens: 262144 },
   "nvidia/nemotron-3-ultra-550b-a55b": { contextTokens: 1048576 },
   "minimaxai/minimax-m3": { contextTokens: 1048576 },
+  "gemma-4-31b-it": { contextTokens: 262144 },
 };
 
 export function getModelContextTokens(

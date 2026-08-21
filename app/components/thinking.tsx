@@ -51,7 +51,9 @@ export function ThinkingBlock(props: {
       m === "o1" ||
       m === "o3" ||
       (m.includes("longcat") && m.includes("thinking")) ||
+      m.includes("longcat-2.0") ||
       m.includes("gemini") || // 包含所有 Gemini 模型
+      m.includes("gemma-4") || // Gemma 4 思考模型
       m.includes("thinking") ||
       m.includes("kimi") ||
       m.includes("gpt-oss") ||

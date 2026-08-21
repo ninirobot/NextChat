@@ -64,6 +64,7 @@ export class GeminiProApi implements LLMApi {
       if (!Array.isArray(parts)) return "";
 
       return parts
+        .filter((part) => !part?.thought)
         .map((part) => part?.text || "")
         .filter((text) => text.trim() !== "")
         .join("\n\n");
@@ -151,6 +152,7 @@ export class GeminiProApi implements LLMApi {
     const modelName = modelConfig.model.toLowerCase();
     const isGen3 =
       modelName.includes("gemini-3") || modelName.includes("gemini_3");
+    const isGemma4 = modelName.includes("gemma-4");
     const isThinkingVersion =
       modelName.includes("thinking") || modelName.includes("2.5");
 
@@ -159,8 +161,8 @@ export class GeminiProApi implements LLMApi {
     if (modelConfig.include_thoughts) {
       thinkingConfig = { includeThoughts: true };
 
-      if (isGen3) {
-        // Gemini 3 series: Uses thinkingLevel
+      if (isGen3 || isGemma4) {
+        // Gemini 3 series / Gemma 4: Uses thinkingLevel
         thinkingConfig.thinkingLevel = modelConfig.thinking_level;
       } else if (isThinkingVersion) {
         // Gemini 2.x Thinking or 2.5: Uses thinkingBudget

@@ -198,38 +198,51 @@ export function ModelConfigList(props: {
           </ListItem>
         )}
 
-      {/* Gemini 3 Thinking Level */}
-      {!isCurrentLiveModel && props.modelConfig.model.includes("3") && (
-        <ListItem
-          title={Locale.Settings.ThinkingLevel?.Title || "Thinking Level"}
-          subTitle={
-            Locale.Settings.ThinkingLevel?.SubTitle ||
-            "Control the depth of thought"
-          }
-        >
-          <Select
-            value={props.modelConfig.thinking_level || "high"}
-            onChange={(e) => {
-              props.updateConfig((config) => {
-                config.thinking_level = e.currentTarget.value;
-              });
-            }}
+      {/* Gemini 3 / Gemma 4 Thinking Level */}
+      {!isCurrentLiveModel &&
+        (props.modelConfig.model.includes("gemini-3") ||
+          props.modelConfig.model.includes("gemma-4")) && (
+          <ListItem
+            title={Locale.Settings.ThinkingLevel?.Title || "Thinking Level"}
+            subTitle={
+              Locale.Settings.ThinkingLevel?.SubTitle ||
+              "Control the depth of thought"
+            }
           >
-            {props.modelConfig.model.includes("flash") && (
-              <>
-                <option value="minimal">Minimal</option>
-                <option value="medium">Medium</option>
-              </>
-            )}
-            <option value="low">Low</option>
-            <option value="high">High</option>
-          </Select>
-        </ListItem>
-      )}
+            <Select
+              value={props.modelConfig.thinking_level || "high"}
+              onChange={(e) => {
+                props.updateConfig((config) => {
+                  config.thinking_level = e.currentTarget.value;
+                });
+              }}
+            >
+              {props.modelConfig.model.includes("gemma-4") ? (
+                <>
+                  <option value="minimal">Minimal</option>
+                  <option value="high">High</option>
+                </>
+              ) : props.modelConfig.model.includes("flash") ? (
+                <>
+                  <option value="minimal">Minimal</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                  <option value="high">High</option>
+                </>
+              ) : (
+                <>
+                  <option value="low">Low</option>
+                  <option value="high">High</option>
+                </>
+              )}
+            </Select>
+          </ListItem>
+        )}
 
       {/* LongCat and other Thinking models */}
       {(props.modelConfig.model.toLowerCase().includes("thinking") ||
-        props.modelConfig.model.includes("longcat")) &&
+        (props.modelConfig.model.includes("longcat") &&
+          !props.modelConfig.model.toLowerCase().includes("longcat-2.0"))) &&
         !props.modelConfig.model.includes("2.5") &&
         !props.modelConfig.model.includes("3") && (
           <ListItem
@@ -257,7 +270,8 @@ export function ModelConfigList(props: {
 
       {/* GPT-OSS and Nvidia Nemotron Reasoning Effort */}
       {(props.modelConfig.model.includes("gpt-oss") ||
-        props.modelConfig.model === "nvidia/nemotron-3-ultra-550b-a55b") && (
+        props.modelConfig.model === "nvidia/nemotron-3-ultra-550b-a55b" ||
+        props.modelConfig.model === "deepseek-ai/deepseek-v4-flash-0731") && (
         <ListItem
           title={Locale.Settings.ReasoningEffort.Title}
           subTitle={Locale.Settings.ReasoningEffort.SubTitle}
@@ -338,10 +352,11 @@ export function ModelConfigList(props: {
           </ListItem>
         )}
 
-      {/* Thinking Toggle for Nvidia or Kimi 2.5 */}
+      {/* Thinking Toggle for Nvidia, Kimi 2.5, or LongCat 2.0 */}
       {(props.modelConfig.providerName === "Nvidia" ||
         (props.modelConfig.model.toLowerCase().includes("kimi") &&
-          props.modelConfig.model.includes("2.5"))) && (
+          props.modelConfig.model.includes("2.5")) ||
+        props.modelConfig.model.toLowerCase().includes("longcat-2.0")) && (
         <ListItem
           title={Locale.Settings.Thinking.Title} // Using a more generic title key if available, or falling back to reuse Kimi's if necessary, but "Enable Thinking" is better. Let's check locale keys. relying on existing keys.
           subTitle={Locale.Settings.Thinking.SubTitle}
