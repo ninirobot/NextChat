@@ -90,6 +90,7 @@ export class MeituanApi implements LLMApi {
     const isMeituanThinkingModel = modelConfig.model
       .toLowerCase()
       .includes("thinking");
+    const isLongCat2 = modelConfig.model.toLowerCase().includes("longcat-2.0");
 
     const requestPayload: any = {
       messages,
@@ -104,6 +105,11 @@ export class MeituanApi implements LLMApi {
     if (isMeituanThinkingModel) {
       requestPayload.enable_thinking = options.config.enable_thinking ?? true;
       requestPayload.thinking_budget = options.config.thinking_budget || 1024;
+    } else if (isLongCat2) {
+      requestPayload.thinking =
+        (options.config.enable_thinking ?? true)
+          ? { type: "enabled" }
+          : { type: "disabled" };
     }
 
     // Omit max_tokens to avoid compatibility issues with large context window settings

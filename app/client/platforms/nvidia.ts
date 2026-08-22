@@ -103,6 +103,13 @@ export class NvidiaApi implements LLMApi {
         requestPayload.chat_template_kwargs = {
           thinking_mode: modelConfig.thinking_mode || "enabled",
         };
+      } else if (modelConfig.model === "deepseek-ai/deepseek-v4-flash-0731") {
+        requestPayload.chat_template_kwargs = {
+          thinking: true, // for DeepSeek, Kimi
+          enable_thinking: true, // for GLM
+        };
+        requestPayload.reasoning_effort =
+          modelConfig.reasoning_effort || "high";
       } else {
         requestPayload.chat_template_kwargs = {
           thinking: true, // for DeepSeek, Kimi
@@ -116,6 +123,12 @@ export class NvidiaApi implements LLMApi {
         requestPayload.chat_template_kwargs = {
           thinking_mode: "disabled",
         };
+      } else if (modelConfig.model === "deepseek-ai/deepseek-v4-flash-0731") {
+        requestPayload.chat_template_kwargs = {
+          thinking: false,
+          enable_thinking: false,
+        };
+        requestPayload.reasoning_effort = "none";
       }
     }
 
