@@ -591,6 +591,17 @@ const cn = {
           SubTitle: "样例：",
         },
       },
+      Rednote: {
+        ApiKey: {
+          Title: "接口密钥",
+          SubTitle: "使用自定义 Rednote API Key",
+          Placeholder: "Rednote API Key",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "样例：",
+        },
+      },
       GoogleLive: {
         ApiKey: {
           Title: "Google Live API Key",

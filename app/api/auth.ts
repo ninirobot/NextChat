@@ -107,6 +107,9 @@ export function auth(req: NextRequest, modelProvider: ModelProvider) {
       case ModelProvider.Nvidia:
         systemApiKey = serverConfig.nvidiaApiKey;
         break;
+      case ModelProvider.Rednote:
+        systemApiKey = serverConfig.rednoteApiKey;
+        break;
       case ModelProvider.OpenRouter:
         systemApiKey = serverConfig.openRouterApiKey;
         break;
@@ -121,7 +124,11 @@ export function auth(req: NextRequest, modelProvider: ModelProvider) {
 
     if (systemApiKey) {
       console.log("[Auth] use system api key");
-      req.headers.set("Authorization", `Bearer ${systemApiKey}`);
+      if (modelProvider === ModelProvider.Rednote) {
+        req.headers.set("api-key", systemApiKey);
+      } else {
+        req.headers.set("Authorization", `Bearer ${systemApiKey}`);
+      }
     } else {
       console.log("[Auth] admin did not provide an api key");
     }

@@ -28,6 +28,7 @@ import { Ai302Api } from "./platforms/ai302";
 import { MeituanApi } from "./platforms/meituan";
 import { NvidiaApi } from "./platforms/nvidia";
 import { OpenRouterApi } from "./platforms/openrouter";
+import { RednoteApi } from "./platforms/rednote";
 
 export const ROLES = ["system", "user", "assistant"] as const;
 export type MessageRole = (typeof ROLES)[number];
@@ -198,6 +199,9 @@ export class ClientApi {
       case ModelProvider.OpenRouter:
         this.llm = new OpenRouterApi();
         break;
+      case ModelProvider.Rednote:
+        this.llm = new RednoteApi();
+        break;
       default:
         this.llm = new ChatGPTApi();
     }
@@ -295,6 +299,7 @@ export function getHeaders(ignoreHeaders: boolean = false) {
     const isOpenRouter =
       modelConfig.providerName === ServiceProvider.OpenRouter;
     const isNvidia = modelConfig.providerName === ServiceProvider.Nvidia;
+    const isRednote = modelConfig.providerName === ServiceProvider.Rednote;
     const isEnabledAccessControl = accessStore.enabledAccessControl();
     const apiKey = isGoogle
       ? accessStore.googleApiKey
@@ -331,7 +336,9 @@ export function getHeaders(ignoreHeaders: boolean = false) {
                                 ? accessStore.openRouterApiKey
                                 : isNvidia
                                   ? accessStore.nvidiaApiKey
-                                  : accessStore.openaiApiKey;
+                                  : isRednote
+                                    ? accessStore.rednoteApiKey
+                                    : accessStore.openaiApiKey;
     return {
       isGoogle,
       isAzure,
@@ -349,6 +356,7 @@ export function getHeaders(ignoreHeaders: boolean = false) {
       isMeituan,
       isOpenRouter,
       isNvidia,
+      isRednote,
       apiKey,
       isEnabledAccessControl,
     };
@@ -361,7 +369,9 @@ export function getHeaders(ignoreHeaders: boolean = false) {
         ? "x-api-key"
         : isGoogle
           ? "x-goog-api-key"
-          : "Authorization";
+          : isRednote
+            ? "api-key"
+            : "Authorization";
   }
 
   const {
@@ -380,6 +390,7 @@ export function getHeaders(ignoreHeaders: boolean = false) {
     isMeituan,
     isOpenRouter,
     isNvidia,
+    isRednote,
     apiKey,
     isEnabledAccessControl,
   } = getConfig();
@@ -390,7 +401,7 @@ export function getHeaders(ignoreHeaders: boolean = false) {
 
   const bearerToken = getBearerToken(
     apiKey,
-    isAzure || isAnthropic || isGoogle,
+    isAzure || isAnthropic || isGoogle || isRednote,
   );
 
   if (bearerToken) {
@@ -438,6 +449,8 @@ export function getClientApi(provider: ServiceProvider): ClientApi {
       return new ClientApi(ModelProvider.OpenRouter);
     case ServiceProvider.Nvidia:
       return new ClientApi(ModelProvider.Nvidia);
+    case ServiceProvider.Rednote:
+      return new ClientApi(ModelProvider.Rednote);
     default:
       return new ClientApi(ModelProvider.GPT);
   }

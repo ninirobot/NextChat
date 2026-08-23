@@ -19,6 +19,7 @@ import BotIconNvidia from "../icons/llm-icons/nvidia.svg";
 import BotIconOpenAI from "../icons/llm-icons/openai.svg";
 import BotIconQwen from "../icons/llm-icons/qwen.svg";
 import BotIconWenxin from "../icons/llm-icons/wenxin.svg";
+import BotIconRednote from "../icons/llm-icons/rednote.svg";
 
 export function getModelIcon(modelName?: string) {
   if (!modelName) return BotIconDefault;
@@ -87,6 +88,9 @@ export function getModelIcon(modelName?: string) {
   } else if (name.startsWith("nvidia/")) {
     // Nvidia
     return BotIconNvidia;
+  } else if (name.includes("dots3")) {
+    // Rednote (小红书)
+    return BotIconRednote;
   }
 
   return BotIconDefault;

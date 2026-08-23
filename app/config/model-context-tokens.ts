@@ -23,6 +23,9 @@ export const MODEL_CONTEXT_TOKENS: Record<string, ModelContextConfig> = {
   // LongCat
   "LongCat-2.0": { contextTokens: 1048576 },
 
+  // Rednote (小红书) dots3-note-prev, 上下文窗口 512K = 524288 Token
+  "dots3-note-prev": { contextTokens: 524288 },
+
   // GPT OSS
   "gpt-oss-120b": { contextTokens: 131072 },
 
@@ -92,6 +95,11 @@ export function getModelContextTokens(
   // LongCat variants
   if (lowerName.toLowerCase().startsWith("longcat")) {
     return { contextTokens: 262144 };
+  }
+
+  // Rednote (小红书) dots3 series, 上下文窗口 512K
+  if (lowerName.includes("dots3")) {
+    return { contextTokens: 524288 };
   }
 
   // Moonshot Kimi variants (k2.x series)

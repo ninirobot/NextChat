@@ -22,6 +22,7 @@ import {
   AI302,
   Meituan,
   OPENROUTER_BASE_URL,
+  Rednote,
 } from "../../constant";
 
 export function ProviderConfig() {
@@ -883,6 +884,47 @@ export function ProviderConfig() {
     </>
   );
 
+  const rednoteConfigComponent = accessStore.provider ===
+    ServiceProvider.Rednote && (
+    <>
+      <ListItem
+        title={Locale.Settings.Access.Rednote.Endpoint.Title}
+        subTitle={
+          Locale.Settings.Access.Rednote.Endpoint.SubTitle +
+          Rednote.ExampleEndpoint
+        }
+      >
+        <input
+          aria-label={Locale.Settings.Access.Rednote.Endpoint.Title}
+          type="text"
+          value={accessStore.rednoteUrl}
+          placeholder={Rednote.ExampleEndpoint}
+          onChange={(e) =>
+            accessStore.update(
+              (access) => (access.rednoteUrl = e.currentTarget.value),
+            )
+          }
+        ></input>
+      </ListItem>
+      <ListItem
+        title={Locale.Settings.Access.Rednote.ApiKey.Title}
+        subTitle={Locale.Settings.Access.Rednote.ApiKey.SubTitle}
+      >
+        <PasswordInput
+          aria-label={Locale.Settings.Access.Rednote.ApiKey.Title}
+          value={accessStore.rednoteApiKey}
+          type="text"
+          placeholder={Locale.Settings.Access.Rednote.ApiKey.Placeholder}
+          onChange={(e) => {
+            accessStore.update(
+              (access) => (access.rednoteApiKey = e.currentTarget.value),
+            );
+          }}
+        />
+      </ListItem>
+    </>
+  );
+
   return (
     <>
       {openAIConfigComponent}
@@ -903,6 +945,7 @@ export function ProviderConfig() {
       {meituanConfigComponent}
       {openRouterConfigComponent}
       {nvidiaConfigComponent}
+      {rednoteConfigComponent}
     </>
   );
 }

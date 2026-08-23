@@ -352,8 +352,10 @@ export function ModelConfigList(props: {
           </ListItem>
         )}
 
-      {/* Thinking Toggle for Nvidia, Kimi 2.5, or LongCat 2.0 */}
-      {(props.modelConfig.providerName === "Nvidia" ||
+      {/* Thinking Toggle for Rednote (小红书) / Nvidia / Kimi 2.5 / LongCat 2.0 */}
+      {(props.modelConfig.providerName === "Rednote" ||
+        props.modelConfig.model.toLowerCase().includes("dots3") ||
+        props.modelConfig.providerName === "Nvidia" ||
         (props.modelConfig.model.toLowerCase().includes("kimi") &&
           props.modelConfig.model.includes("2.5")) ||
         props.modelConfig.model.toLowerCase().includes("longcat-2.0")) && (

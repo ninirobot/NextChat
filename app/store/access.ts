@@ -20,6 +20,7 @@ import {
   MEITUAN_BASE_URL,
   OPENROUTER_BASE_URL,
   NVIDIA_BASE_URL,
+  REDNOTE_BASE_URL,
 } from "../constant";
 
 import { getHeaders } from "../client/api";
@@ -69,6 +70,8 @@ const DEFAULT_MEITUAN_URL = isApp ? MEITUAN_BASE_URL : ApiPath.Meituan;
 const DEFAULT_OPENROUTER_URL = isApp ? OPENROUTER_BASE_URL : ApiPath.OpenRouter;
 
 const DEFAULT_NVIDIA_URL = isApp ? NVIDIA_BASE_URL : ApiPath.Nvidia;
+
+const DEFAULT_REDNOTE_URL = isApp ? REDNOTE_BASE_URL : ApiPath.Rednote;
 
 const DEFAULT_ACCESS_STATE = {
   accessCode: "",
@@ -153,6 +156,10 @@ const DEFAULT_ACCESS_STATE = {
   nvidiaUrl: DEFAULT_NVIDIA_URL,
 
   nvidiaApiKey: "",
+
+  rednoteUrl: DEFAULT_REDNOTE_URL,
+
+  rednoteApiKey: "",
 
   openRouterUrl: DEFAULT_OPENROUTER_URL,
   openRouterApiKey: "",
@@ -255,6 +262,10 @@ export const useAccessStore = createPersistStore(
       return ensure(get(), ["nvidiaApiKey"]);
     },
 
+    isValidRednote() {
+      return ensure(get(), ["rednoteApiKey"]);
+    },
+
     isAuthorized() {
       this.fetch();
 
@@ -276,6 +287,7 @@ export const useAccessStore = createPersistStore(
         this.isValidSiliconFlow() ||
         this.isValidMeituan() ||
         this.isValidNvidia() ||
+        this.isValidRednote() ||
         this.isValidOpenRouter() ||
         !this.enabledAccessControl() ||
         (this.enabledAccessControl() && ensure(get(), ["accessCode"]))
