@@ -40,6 +40,8 @@ export const MEITUAN_BASE_URL = "https://api.longcat.chat/openai";
 export const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 export const NVIDIA_BASE_URL = "https://integrate.api.nvidia.com";
 
+export const REDNOTE_BASE_URL = "https://note3-prev-api.askdiandian.com";
+
 export const CACHE_URL_PREFIX = "/api/cache";
 export const UPLOAD_URL = `${CACHE_URL_PREFIX}/upload`;
 
@@ -78,6 +80,7 @@ export enum ApiPath {
   Meituan = "/api/meituan",
   OpenRouter = "/api/openrouter",
   Nvidia = "/api/nvidia",
+  Rednote = "/api/rednote",
 }
 
 export enum SlotID {
@@ -139,6 +142,7 @@ export enum ServiceProvider {
   Meituan = "Meituan",
   OpenRouter = "OpenRouter",
   Nvidia = "Nvidia",
+  Rednote = "Rednote",
 }
 
 // Google API safety settings, see https://ai.google.dev/gemini-api/docs/safety-settings
@@ -169,6 +173,7 @@ export enum ModelProvider {
   Meituan = "Meituan",
   OpenRouter = "OpenRouter",
   Nvidia = "Nvidia",
+  Rednote = "Rednote",
 }
 
 export const Anthropic = {
@@ -293,6 +298,11 @@ export const OpenRouter = {
 
 export const Nvidia = {
   ExampleEndpoint: NVIDIA_BASE_URL,
+  ChatPath: "v1/chat/completions",
+};
+
+export const Rednote = {
+  ExampleEndpoint: REDNOTE_BASE_URL,
   ChatPath: "v1/chat/completions",
 };
 
@@ -518,6 +528,7 @@ export const VISION_MODEL_REGEXES = [
   /kimi/i,
   /llama/i,
   /longcat/i,
+  /dots3/i,
 ];
 
 export const EXCLUDE_VISION_MODEL_REGEXES = [/claude-3-5-haiku-20241022/];
@@ -998,6 +1009,8 @@ const nvidiaModels = [
   "minimaxai/minimax-m3",
 ];
 
+const rednoteModels = ["dots3-note-prev"];
+
 let seq = 1000; // 内置的模型序号生成器从1000开始
 export const DEFAULT_MODELS = [
   ...openaiModels.map((name) => ({
@@ -1196,6 +1209,17 @@ export const DEFAULT_MODELS = [
       providerName: "Nvidia",
       providerType: "nvidia",
       sorted: 100,
+    },
+  })),
+  ...rednoteModels.map((name) => ({
+    name,
+    available: true,
+    sorted: seq++,
+    provider: {
+      id: "rednote",
+      providerName: "Rednote",
+      providerType: "rednote",
+      sorted: 17,
     },
   })),
 ] as const;

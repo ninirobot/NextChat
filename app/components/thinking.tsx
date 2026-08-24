@@ -61,6 +61,7 @@ export function ThinkingBlock(props: {
       m.includes("qwen") ||
       m.includes("minimax") ||
       m.includes("nemotron") ||
+      m.includes("dots") ||
       customThinkingModels
         .split(",")
         .some(

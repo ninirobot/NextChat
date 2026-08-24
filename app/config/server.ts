@@ -107,6 +107,10 @@ declare global {
       NVIDIA_URL?: string;
       NVIDIA_API_KEY?: string;
 
+      // rednote (小红书) only
+      REDNOTE_URL?: string;
+      REDNOTE_API_KEY?: string;
+
       // custom template for preprocessing user input
       DEFAULT_INPUT_TEMPLATE?: string;
 
@@ -188,6 +192,7 @@ export const getServerSideConfig = () => {
   );
   const isOpenRouter = !!process.env.OPENROUTER_API_KEY;
   const isNvidia = !!process.env.NVIDIA_API_KEY;
+  const isRednote = !!process.env.REDNOTE_API_KEY;
 
   // const apiKeyEnvVar = process.env.OPENAI_API_KEY ?? "";
   // const apiKeys = apiKeyEnvVar.split(",").map((v) => v.trim());
@@ -288,6 +293,10 @@ export const getServerSideConfig = () => {
     isNvidia,
     nvidiaUrl: process.env.NVIDIA_URL,
     nvidiaApiKey: getApiKey(process.env.NVIDIA_API_KEY),
+
+    isRednote,
+    rednoteUrl: process.env.REDNOTE_URL,
+    rednoteApiKey: getApiKey(process.env.REDNOTE_API_KEY),
 
     gtmId: process.env.GTM_ID,
     gaId: process.env.GA_ID || DEFAULT_GA_ID,

@@ -593,6 +593,17 @@ const jp: PartialLocaleType = {
           SubTitle: "Example: ",
         },
       },
+      Rednote: {
+        ApiKey: {
+          Title: "Rednote API Key",
+          SubTitle: "Use a custom Rednote API Key",
+          Placeholder: "Rednote API Key",
+        },
+        Endpoint: {
+          Title: "Endpoint Address",
+          SubTitle: "Example: ",
+        },
+      },
       CustomModel: {
         Title: "カスタムモデル名",
         SubTitle: "カスタムモデルの選択肢を追加、英語のカンマで区切る",

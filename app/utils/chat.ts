@@ -404,6 +404,77 @@ export function stream(
   chatApi(chatPath, headers, requestPayload, tools); // call fetchEventSource
 }
 
+/**
+ * 解析 OpenAI 兼容接口（带 thinking / reasoning）的 SSE delta。
+ * 被 deepseek、rednote 等推理模型 provider 共用，避免每个 provider 重复粘贴一份。
+ */
+export function parseOpenAIThinkSSE(
+  text: string,
+  runTools: any[],
+): {
+  isThinking?: boolean;
+  content?: string;
+  reasoning?: string;
+} {
+  const json = JSON.parse(text);
+  if (json.error) {
+    return {
+      isThinking: false,
+      content: `\n\n> [!ERROR]\n> ${json.error.message || json.error.code || "Unknown Error"}`,
+    };
+  }
+  const choices = json.choices as Array<{
+    delta: {
+      content: string | null;
+      tool_calls: any[];
+      reasoning_content: string | null;
+      reasoning: string | null;
+    };
+  }>;
+  const toolCalls = choices[0]?.delta?.tool_calls;
+  if (toolCalls?.length > 0) {
+    const index = toolCalls[0]?.index;
+    const id = toolCalls[0]?.id;
+    const args = toolCalls[0]?.function?.arguments;
+    if (id) {
+      runTools.push({
+        id,
+        type: toolCalls[0]?.type,
+        function: {
+          name: toolCalls[0]?.function?.name as string,
+          arguments: args,
+        },
+      });
+    } else {
+      runTools[index]["function"]["arguments"] += args;
+    }
+  }
+  const reasoning =
+    choices[0]?.delta?.reasoning_content ?? choices[0]?.delta?.reasoning;
+  const content = choices[0]?.delta?.content;
+
+  return {
+    reasoning: reasoning || undefined,
+    content: content || undefined,
+  };
+}
+
+/**
+ * 多轮工具调用时，将工具调用消息与执行结果追加进请求体。
+ */
+export function appendToolMessages(
+  requestPayload: { messages?: any[] },
+  toolCallMessage: any,
+  toolCallResult: any[],
+) {
+  requestPayload?.messages?.splice(
+    requestPayload?.messages?.length,
+    0,
+    toolCallMessage,
+    ...toolCallResult,
+  );
+}
+
 export function streamWithThink(
   chatPath: string,
   requestPayload: any,

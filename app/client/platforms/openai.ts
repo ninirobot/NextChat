@@ -67,6 +67,9 @@ export interface RequestPayload {
   max_tokens?: number;
   max_completion_tokens?: number;
   include_reasoning?: boolean;
+  chat_template_kwargs?: {
+    enable_thinking?: boolean;
+  };
 }
 
 export interface DalleRequestPayload {

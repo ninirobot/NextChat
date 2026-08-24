@@ -1,6 +1,6 @@
 "use client";
-// azure and openai, using same models. so using same LLMApi.
-import { ApiPath, DEEPSEEK_BASE_URL, DeepSeek } from "@/app/constant";
+// Rednote (小红书) is OpenAI-compatible, using the same models logic as deepseek.
+import { ApiPath, REDNOTE_BASE_URL, Rednote } from "@/app/constant";
 import { useAccessStore, useAppConfig, useChatStore } from "@/app/store";
 import {
   appendToolMessages,
@@ -23,7 +23,7 @@ import {
 import { RequestPayload } from "./openai";
 import { fetch } from "@/app/utils/stream";
 
-export class DeepSeekApi implements LLMApi {
+export class RednoteApi implements LLMApi {
   private disableListModels = true;
 
   path(path: string): string {
@@ -32,19 +32,19 @@ export class DeepSeekApi implements LLMApi {
     let baseUrl = "";
 
     if (accessStore.useCustomConfig) {
-      baseUrl = accessStore.deepseekUrl;
+      baseUrl = accessStore.rednoteUrl;
     }
 
     if (baseUrl.length === 0) {
       const isApp = !!getClientConfig()?.isApp;
-      const apiPath = ApiPath.DeepSeek;
-      baseUrl = isApp ? DEEPSEEK_BASE_URL : apiPath;
+      const apiPath = ApiPath.Rednote;
+      baseUrl = isApp ? REDNOTE_BASE_URL : apiPath;
     }
 
     if (baseUrl.endsWith("/")) {
       baseUrl = baseUrl.slice(0, baseUrl.length - 1);
     }
-    if (!baseUrl.startsWith("http") && !baseUrl.startsWith(ApiPath.DeepSeek)) {
+    if (!baseUrl.startsWith("http") && !baseUrl.startsWith(ApiPath.Rednote)) {
       baseUrl = "https://" + baseUrl;
     }
 
@@ -54,7 +54,7 @@ export class DeepSeekApi implements LLMApi {
   }
 
   extractMessage(res: any) {
-    const reasoning = res.choices?.[0]?.message?.reasoning;
+    const reasoning = res.choices?.[0]?.message?.reasoning_content;
     const content = res.choices?.[0]?.message?.content ?? "";
     if (reasoning) {
       return `<think>\n${reasoning}\n</think>\n${content}`;
@@ -84,17 +84,13 @@ export class DeepSeekApi implements LLMApi {
 
     for (const msg of messages) {
       if (msg.role === "system") {
-        // Keep all system messages
         filteredMessages.push(msg);
       } else if (msg.role === "user") {
-        // User message directly added
         filteredMessages.push(msg);
         hasFoundFirstUser = true;
       } else if (hasFoundFirstUser) {
-        // After finding the first user message, all subsequent non-system messages are retained.
         filteredMessages.push(msg);
       }
-      // If hasFoundFirstUser is false and it is not a system message, it will be skipped.
     }
 
     const modelConfig = {
@@ -114,12 +110,13 @@ export class DeepSeekApi implements LLMApi {
       presence_penalty: modelConfig.presence_penalty,
       frequency_penalty: modelConfig.frequency_penalty,
       top_p: modelConfig.top_p,
-      include_reasoning: true,
-      // max_tokens: Math.max(modelConfig.max_tokens, 1024),
-      // Please do not ask me why not send max_tokens, no reason, this param is just shit, I dont want to explain anymore.
+      // 深度思考默认开启，可通过开关关闭
+      chat_template_kwargs: {
+        enable_thinking: modelConfig.enable_thinking ?? true,
+      },
     };
 
-    console.log("[Request] openai payload: ", requestPayload);
+    console.log("[Request] rednote payload: ", requestPayload);
 
     const shouldStream = !!options.config.stream;
     const controller = new AbortController();
@@ -128,7 +125,7 @@ export class DeepSeekApi implements LLMApi {
     const headers = getHeaders();
 
     try {
-      const chatPath = this.path(DeepSeek.ChatPath);
+      const chatPath = this.path(Rednote.ChatPath);
       const chatPayload = {
         method: "POST",
         body: JSON.stringify(requestPayload),

@@ -596,6 +596,17 @@ const en: LocaleType = {
           Placeholder: "Nvidia API Key",
         },
       },
+      Rednote: {
+        Endpoint: {
+          Title: "Endpoint Address",
+          SubTitle: "Example: ",
+        },
+        ApiKey: {
+          Title: "API Key",
+          SubTitle: "Use a custom Rednote API Key",
+          Placeholder: "Rednote API Key",
+        },
+      },
       GoogleLive: {
         ApiKey: {
           Title: "Google Live API Key",

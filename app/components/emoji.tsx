@@ -24,6 +24,7 @@ import BotIconNvidia from "../icons/llm-icons/nvidia.svg";
 import BotIconOpenAI from "../icons/llm-icons/openai.svg";
 import BotIconQwen from "../icons/llm-icons/qwen.svg";
 import BotIconWenxin from "../icons/llm-icons/wenxin.svg";
+import BotIconRednote from "../icons/llm-icons/rednote.svg";
 
 export function getEmojiUrl(unified: string, style: EmojiStyle) {
   // Whoever owns this Content Delivery Network (CDN), I am using your CDN to serve emojis
@@ -104,6 +105,9 @@ export function Avatar(props: { model?: ModelType; avatar?: string }) {
     } else if (modelName.startsWith("nvidia/")) {
       // Nvidia
       LlmIcon = BotIconNvidia;
+    } else if (modelName.includes("dots3")) {
+      // Rednote (小红书)
+      LlmIcon = BotIconRednote;
     }
 
     return (
