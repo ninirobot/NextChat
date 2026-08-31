@@ -102,6 +102,9 @@ const jp: PartialLocaleType = {
       SaveAs: "マスクとして保存",
     },
     IsContext: "プリセットプロンプト",
+    FollowUp: {
+      Loading: "フォローアップの提案を生成中…",
+    },
     ShortcutKey: {
       Title: "キーボードショートカット",
       newChat: "新しいチャットを開く",
@@ -621,6 +624,20 @@ const jp: PartialLocaleType = {
     CompressModel: {
       Title: "圧縮モデル",
       SubTitle: "履歴を圧縮するために使用されるモデル",
+    },
+    FollowUp: {
+      Enable: {
+        Title: "フォローアップ提案を有効化",
+        SubTitle: "回答後に自動でフォローアップ質問を生成します",
+      },
+      Count: {
+        Title: "フォローアップ数",
+        SubTitle: "1回の生成での質問数（1-5）",
+      },
+      Turns: {
+        Title: "参照する会話ターン数",
+        SubTitle: "生成時に参照する直近の会話ターン数（1-5）",
+      },
     },
     Temperature: {
       Title: "ランダム性 (temperature)",

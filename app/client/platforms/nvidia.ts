@@ -1,5 +1,10 @@
 "use strict";
-import { ApiPath, NVIDIA_BASE_URL, Nvidia } from "@/app/constant";
+import {
+  ApiPath,
+  NVIDIA_BASE_URL,
+  Nvidia,
+  getNvidiaModelConfig,
+} from "@/app/constant";
 import {
   useAccessStore,
   useAppConfig,
@@ -80,56 +85,45 @@ export class NvidiaApi implements LLMApi {
       top_p: modelConfig.top_p,
     };
 
-    if (modelConfig.model === "minimaxai/minimax-m3") {
-      requestPayload.max_tokens = modelConfig.max_tokens || 8192;
+    const modelFeatures = getNvidiaModelConfig(modelConfig.model);
+    if (modelFeatures.maxTokens) {
+      requestPayload.max_tokens =
+        modelConfig.max_tokens || modelFeatures.maxTokens;
+    }
+    if (modelFeatures.temperature != null) {
+      requestPayload.temperature = modelFeatures.temperature;
     }
 
-    // Special handling for qwen/qwen3.5-397b-a17b
-    if (modelConfig.model === "qwen/qwen3.5-397b-a17b") {
-      requestPayload.temperature = 0.6;
-    }
-
-    // Add reasoning_effort for gpt-oss models
-    if (modelConfig.model.includes("gpt-oss") && modelConfig.reasoning_effort) {
-      requestPayload.reasoning_effort = modelConfig.reasoning_effort;
-    }
-
-    // Generic Thinking Logic for Nvidia
-    if (enableThinking) {
-      if (modelConfig.model === "nvidia/nemotron-3-ultra-550b-a55b") {
-        requestPayload.reasoning_effort =
-          modelConfig.reasoning_effort || "high";
-      } else if (modelConfig.model === "minimaxai/minimax-m3") {
+    // Thinking logic driven by the per-model capability table (NVIDIA_MODEL_CONFIG)
+    const thinking = modelFeatures.thinking;
+    if (thinking) {
+      if (thinking.mechanism === "reasoning_effort") {
+        requestPayload.reasoning_effort = enableThinking
+          ? (modelConfig.reasoning_effort ?? thinking.default)
+          : (thinking.disabled ?? thinking.default);
+      } else if (thinking.mechanism === "chat_template_kwargs") {
+        const effort = enableThinking
+          ? (modelConfig.reasoning_effort ?? thinking.default)
+          : (thinking.disabled ?? thinking.default);
         requestPayload.chat_template_kwargs = {
-          thinking_mode: modelConfig.thinking_mode || "enabled",
+          thinking: enableThinking,
+          enable_thinking: enableThinking,
+          reasoning_effort: effort,
         };
-      } else if (modelConfig.model === "deepseek-ai/deepseek-v4-flash-0731") {
+        requestPayload.reasoning_effort = effort;
+      } else if (thinking.mechanism === "thinking_mode") {
         requestPayload.chat_template_kwargs = {
-          thinking: true, // for DeepSeek, Kimi
-          enable_thinking: true, // for GLM
-        };
-        requestPayload.reasoning_effort =
-          modelConfig.reasoning_effort || "high";
-      } else {
-        requestPayload.chat_template_kwargs = {
-          thinking: true, // for DeepSeek, Kimi
-          enable_thinking: true, // for GLM
+          thinking_mode: enableThinking
+            ? (modelConfig.thinking_mode ?? thinking.default)
+            : "disabled",
         };
       }
-    } else {
-      if (modelConfig.model === "nvidia/nemotron-3-ultra-550b-a55b") {
-        requestPayload.reasoning_effort = "none";
-      } else if (modelConfig.model === "minimaxai/minimax-m3") {
-        requestPayload.chat_template_kwargs = {
-          thinking_mode: "disabled",
-        };
-      } else if (modelConfig.model === "deepseek-ai/deepseek-v4-flash-0731") {
-        requestPayload.chat_template_kwargs = {
-          thinking: false,
-          enable_thinking: false,
-        };
-        requestPayload.reasoning_effort = "none";
-      }
+    } else if (enableThinking) {
+      // Models not listed in the table fall back to the generic Nvidia behavior
+      requestPayload.chat_template_kwargs = {
+        thinking: true,
+        enable_thinking: true,
+      };
     }
 
     console.log("[Request] nvidia payload: ", requestPayload);

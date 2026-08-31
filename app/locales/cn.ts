@@ -102,6 +102,9 @@ const cn = {
       SaveAs: "存为助手",
     },
     IsContext: "预设提示词",
+    FollowUp: {
+      Loading: "正在生成追问建议…",
+    },
     ShortcutKey: {
       Title: "键盘快捷方式",
       newChat: "打开新聊天",
@@ -615,6 +618,20 @@ const cn = {
     CompressModel: {
       Title: "对话摘要模型",
       SubTitle: "用于压缩历史记录、生成对话标题的模型",
+    },
+    FollowUp: {
+      Enable: {
+        Title: "开启上下文追问建议",
+        SubTitle: "助手回答完成后自动生成后续追问问题",
+      },
+      Count: {
+        Title: "追问数量",
+        SubTitle: "每次生成的后续问题个数（1-5）",
+      },
+      Turns: {
+        Title: "参考对话轮数",
+        SubTitle: "生成追问时参考的最近对话轮数（1-5）",
+      },
     },
     Temperature: {
       Title: "随机性 (temperature)",

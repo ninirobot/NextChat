@@ -103,6 +103,9 @@ const fr: PartialLocaleType = {
       SaveAs: "Enregistrer comme masque",
     },
     IsContext: "Prompt prédéfini",
+    FollowUp: {
+      Loading: "Génération de suggestions de suivi…",
+    },
     ShortcutKey: {
       Title: "Raccourcis clavier",
       newChat: "Ouvrir une nouvelle discussion",
@@ -637,6 +640,21 @@ const fr: PartialLocaleType = {
     CompressModel: {
       Title: "Modèle de compression",
       SubTitle: "Modèle utilisé pour compresser l'historique",
+    },
+    FollowUp: {
+      Enable: {
+        Title: "Activer les suggestions de suivi",
+        SubTitle:
+          "Générer automatiquement des questions de suivi après chaque réponse",
+      },
+      Count: {
+        Title: "Nombre de suggestions",
+        SubTitle: "Nombre de questions de suivi par génération (1-5)",
+      },
+      Turns: {
+        Title: "Tours de contexte",
+        SubTitle: "Tours de conversation récents utilisés (1-5)",
+      },
     },
     Temperature: {
       Title: "Aléatoire (temperature)",

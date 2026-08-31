@@ -2,6 +2,7 @@ import { getClientConfig } from "../config/client";
 import {
   ACCESS_CODE_PREFIX,
   ModelProvider,
+  ReasoningEffort,
   ServiceProvider,
 } from "../constant";
 import {
@@ -69,7 +70,9 @@ export interface LLMConfig {
   max_tokens?: number;
   enable_thinking?: boolean;
   thinking_budget?: number;
-  reasoning_effort?: "low" | "medium" | "high";
+  reasoning_effort?: ReasoningEffort;
+  include_thoughts?: boolean;
+  thinking_level?: string;
   size?: DalleRequestPayload["size"];
   quality?: DalleRequestPayload["quality"];
   style?: DalleRequestPayload["style"];
@@ -266,7 +269,10 @@ export function validString(x: string): boolean {
   return x?.length > 0;
 }
 
-export function getHeaders(ignoreHeaders: boolean = false) {
+export function getHeaders(
+  ignoreHeaders: boolean = false,
+  providerName?: ServiceProvider,
+) {
   const accessStore = useAccessStore.getState();
   const chatStore = useChatStore.getState();
   let headers: Record<string, string> = {};
@@ -280,26 +286,25 @@ export function getHeaders(ignoreHeaders: boolean = false) {
   const clientConfig = getClientConfig();
 
   function getConfig() {
-    const modelConfig = chatStore.currentSession().mask.modelConfig;
-    const isGoogle = modelConfig.providerName === ServiceProvider.Google;
-    const isAzure = modelConfig.providerName === ServiceProvider.Azure;
-    const isAnthropic = modelConfig.providerName === ServiceProvider.Anthropic;
-    const isBaidu = modelConfig.providerName == ServiceProvider.Baidu;
-    const isByteDance = modelConfig.providerName === ServiceProvider.ByteDance;
-    const isAlibaba = modelConfig.providerName === ServiceProvider.Alibaba;
-    const isMoonshot = modelConfig.providerName === ServiceProvider.Moonshot;
-    const isIflytek = modelConfig.providerName === ServiceProvider.Iflytek;
-    const isDeepSeek = modelConfig.providerName === ServiceProvider.DeepSeek;
-    const isXAI = modelConfig.providerName === ServiceProvider.XAI;
-    const isChatGLM = modelConfig.providerName === ServiceProvider.ChatGLM;
-    const isSiliconFlow =
-      modelConfig.providerName === ServiceProvider.SiliconFlow;
-    const isAI302 = modelConfig.providerName === ServiceProvider["302.AI"];
-    const isMeituan = modelConfig.providerName === ServiceProvider.Meituan;
-    const isOpenRouter =
-      modelConfig.providerName === ServiceProvider.OpenRouter;
-    const isNvidia = modelConfig.providerName === ServiceProvider.Nvidia;
-    const isRednote = modelConfig.providerName === ServiceProvider.Rednote;
+    const provider =
+      providerName ?? chatStore.currentSession().mask.modelConfig.providerName;
+    const isGoogle = provider === ServiceProvider.Google;
+    const isAzure = provider === ServiceProvider.Azure;
+    const isAnthropic = provider === ServiceProvider.Anthropic;
+    const isBaidu = provider == ServiceProvider.Baidu;
+    const isByteDance = provider === ServiceProvider.ByteDance;
+    const isAlibaba = provider === ServiceProvider.Alibaba;
+    const isMoonshot = provider === ServiceProvider.Moonshot;
+    const isIflytek = provider === ServiceProvider.Iflytek;
+    const isDeepSeek = provider === ServiceProvider.DeepSeek;
+    const isXAI = provider === ServiceProvider.XAI;
+    const isChatGLM = provider === ServiceProvider.ChatGLM;
+    const isSiliconFlow = provider === ServiceProvider.SiliconFlow;
+    const isAI302 = provider === ServiceProvider["302.AI"];
+    const isMeituan = provider === ServiceProvider.Meituan;
+    const isOpenRouter = provider === ServiceProvider.OpenRouter;
+    const isNvidia = provider === ServiceProvider.Nvidia;
+    const isRednote = provider === ServiceProvider.Rednote;
     const isEnabledAccessControl = accessStore.enabledAccessControl();
     const apiKey = isGoogle
       ? accessStore.googleApiKey

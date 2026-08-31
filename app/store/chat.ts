@@ -19,6 +19,9 @@ import { showToast } from "../components/ui-lib";
 import {
   DEFAULT_INPUT_TEMPLATE,
   DEFAULT_MODELS,
+  FOLLOW_UP_MODEL,
+  getFollowUpInstruction,
+  getFollowUpSystemPrompt,
   GEMINI_SUMMARIZE_MODEL,
   DEEPSEEK_SUMMARIZE_MODEL,
   KnowledgeCutOffDate,
@@ -72,6 +75,8 @@ export type ChatMessage = RequestMessage & {
     content: string;
     reasoning_content?: string;
     reasoning_duration?: number;
+    followUp?: string[];
+    followUpError?: boolean;
   }[];
   currentVersionIndex?: number;
   // Live 音频相关字段
@@ -82,7 +87,47 @@ export type ChatMessage = RequestMessage & {
     isPlaying?: boolean; // 是否正在播放
     _storedInDB?: boolean; // 标记数据是否已存储到 IndexedDB
   };
+  // 上下文追问建议（Follow-up）
+  followUp?: string[];
+  followUpLoading?: boolean;
+  followUpError?: boolean;
 };
+
+// 解析轻量模型返回的追问建议，兼容 JSON 数组或被 markdown/换行包裹的输出
+function parseFollowUpQuestions(text: string, count: number): string[] {
+  if (!text) return [];
+  let raw = text.trim();
+
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenced) raw = fenced[1].trim();
+
+  const arrMatch = raw.match(/\[[\s\S]*\]/);
+  if (arrMatch) raw = arrMatch[0];
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    parsed = raw
+      .split(/\n+/)
+      .map((l) =>
+        l
+          .replace(/^[\d\s.\-、，,。.）)\]】]*["'“「『]?/, "")
+          .replace(/["'”」』]?$/, ""),
+      )
+      .filter((l) => l.trim().length > 0);
+  }
+
+  if (!Array.isArray(parsed)) return [];
+  const seen = new Set<string>();
+  for (const item of parsed) {
+    if (typeof item !== "string") continue;
+    const q = item.trim();
+    if (q && !seen.has(q)) seen.add(q);
+    if (seen.size >= count) break;
+  }
+  return Array.from(seen).slice(0, count);
+}
 
 export function createMessage(override: Partial<ChatMessage>): ChatMessage {
   return {
@@ -495,6 +540,114 @@ export const useChatStore = createPersistStore(
         get().checkMcpJson(message);
 
         get().summarizeSession(false, targetSession);
+        get().generateFollowUp(message, targetSession);
+      },
+
+      generateFollowUp(targetMessage: ChatMessage, targetSession: ChatSession) {
+        // 仅对成功的助手消息生成追问；跳过 Live 模式会话
+        if (
+          targetMessage.role !== "assistant" ||
+          targetMessage.isError ||
+          get().liveSessions.some((s) => s.id === targetSession.id)
+        ) {
+          return;
+        }
+        const session = targetSession;
+        const modelConfig = session.mask.modelConfig;
+        // 旧配置 / 自定义 mask 可能缺少新字段，统一按默认值兜底
+        if (modelConfig.enableFollowUp === false) return;
+        // 未配置 Google Key 时跳过，避免无意义的失败请求
+        if (!useAccessStore.getState().googleApiKey) return;
+        const count = modelConfig.followUpCount ?? 3;
+        const turns = modelConfig.followUpTurns ?? 3;
+        // 追问跟随当前回答版本存储（与切换版本逻辑一致）
+        const vi = targetMessage.currentVersionIndex ?? 0;
+        const isVersioned = !!(
+          targetMessage.versions && vi < targetMessage.versions.length
+        );
+
+        // 取最近若干轮有效对话作为上下文（剥离 UI 字段，仅保留 role/content）
+        const contextMessages = session.messages
+          .filter((m) => !m.isError)
+          .slice(-turns * 2)
+          .map((m) => ({
+            role: m.role,
+            content: getMessageTextContent(m),
+          }));
+
+        const api = getClientApi(ServiceProvider.Google);
+
+        const writeFollowUp = (
+          updater: (prev?: string[]) => string[] | undefined,
+          errorUpdater: (prev?: boolean) => boolean,
+        ) => {
+          get().updateTargetSession(session, (s) => {
+            const msg = s.messages.find((m) => m.id === targetMessage.id);
+            if (!msg) return;
+            msg.followUpLoading = true;
+            if (msg.versions && vi < msg.versions.length) {
+              msg.versions[vi].followUp = updater(msg.versions[vi].followUp) as
+                | string[]
+                | undefined;
+              msg.versions[vi].followUpError = errorUpdater(
+                msg.versions[vi].followUpError,
+              );
+            } else {
+              msg.followUp = updater(msg.followUp) as string[] | undefined;
+              msg.followUpError = errorUpdater(msg.followUpError);
+            }
+          });
+        };
+
+        writeFollowUp(
+          () => undefined,
+          () => false,
+        );
+
+        api.llm.chat({
+          messages: [
+            { role: "system", content: getFollowUpSystemPrompt(count) },
+            ...contextMessages,
+            { role: "user", content: getFollowUpInstruction(count) },
+          ],
+          config: {
+            model: FOLLOW_UP_MODEL,
+            providerName: ServiceProvider.Google,
+            stream: false,
+            temperature: 0.9,
+            include_thoughts: true,
+            thinking_level: "minimal",
+          },
+          onFinish(text) {
+            const questions = parseFollowUpQuestions(text, count);
+            get().updateTargetSession(session, (s) => {
+              const msg = s.messages.find((m) => m.id === targetMessage.id);
+              if (!msg) return;
+              msg.followUpLoading = false;
+              if (msg.versions && vi < msg.versions.length) {
+                msg.versions[vi].followUp = questions;
+                msg.versions[vi].followUpError = questions.length === 0;
+              } else {
+                msg.followUp = questions;
+                msg.followUpError = questions.length === 0;
+              }
+            });
+          },
+          onError() {
+            get().updateTargetSession(session, (s) => {
+              const msg = s.messages.find((m) => m.id === targetMessage.id);
+              if (!msg) return;
+              msg.followUpLoading = false;
+              if (msg.versions && vi < msg.versions.length) {
+                msg.versions[vi].followUp = undefined;
+                msg.versions[vi].followUpError = true;
+              } else {
+                msg.followUp = undefined;
+                msg.followUpError = true;
+              }
+            });
+          },
+        });
       },
 
       async onUserInput(
@@ -626,6 +779,8 @@ export const useChatStore = createPersistStore(
             content: currentContent,
             reasoning_content: botMessage.reasoning_content,
             reasoning_duration: botMessage.reasoning_duration,
+            followUp: botMessage.followUp,
+            followUpError: botMessage.followUpError,
           });
         }
         // 设置索引指向即将生成的新版本
@@ -641,6 +796,10 @@ export const useChatStore = createPersistStore(
         botMessage.reasoning_content = undefined;
         botMessage.reasoning_duration = undefined;
         botMessage.tools = undefined;
+        // 清除上一轮的追问建议，避免重试时旧问题残留
+        botMessage.followUp = undefined;
+        botMessage.followUpLoading = false;
+        botMessage.followUpError = false;
 
         // update session to trigger re-render
         get().updateTargetSession(session, (session) => {
@@ -716,8 +875,14 @@ export const useChatStore = createPersistStore(
         const modelConfig = session.mask.modelConfig;
         const api: ClientApi = getClientApi(modelConfig.providerName);
 
+        // 剥离 UI 相关字段（追问建议等），避免它们被带进主对话请求
+        const cleanMessages = sendMessages.map((m) => {
+          const { followUp, followUpLoading, followUpError, ...rest } = m;
+          return rest;
+        });
+
         api.llm.chat({
-          messages: sendMessages,
+          messages: cleanMessages,
           config: { ...modelConfig, stream: true },
           onUpdate(message) {
             botMessage.streaming = true;

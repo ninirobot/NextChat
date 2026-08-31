@@ -11,6 +11,7 @@ import {
   DEFAULT_TTS_MODELS,
   DEFAULT_TTS_VOICE,
   DEFAULT_TTS_VOICES,
+  ReasoningEffort,
   StoreKey,
   ServiceProvider,
 } from "../constant";
@@ -84,10 +85,14 @@ export const DEFAULT_CONFIG = {
     thinking_budget: 8192,
     gemini_thinking_budget: -1,
     thinking_level: "high",
-    reasoning_effort: "high" as "low" | "medium" | "high",
+    reasoning_effort: "high" as ReasoningEffort,
     thinking_mode: "enabled" as "enabled" | "disabled" | "adaptive",
     include_thoughts: true,
     aspect_ratio: "1:1",
+
+    enableFollowUp: true, // 是否开启上下文追问建议
+    followUpCount: 3, // 每次生成的追问数量（1-5）
+    followUpTurns: 3, // 生成追问时参考的最近对话轮数（1-5）
   },
 
   ttsConfig: {
@@ -179,6 +184,12 @@ export const ModalConfigValidator = {
   aspect_ratio(x: string) {
     return x;
   },
+  followUpCount(x: number) {
+    return limitNumber(x, 1, 5, 3);
+  },
+  followUpTurns(x: number) {
+    return limitNumber(x, 1, 5, 3);
+  },
   thinking_mode(x: string) {
     if (["enabled", "disabled", "adaptive"].includes(x)) {
       return x as "enabled" | "disabled" | "adaptive";
@@ -221,7 +232,7 @@ export const useAppConfig = createPersistStore(
   }),
   {
     name: StoreKey.Config,
-    version: 4.1,
+    version: 4.2,
 
     merge(persistedState, currentState) {
       const state = persistedState as ChatConfig | undefined;
@@ -275,6 +286,12 @@ export const useAppConfig = createPersistStore(
           DEFAULT_CONFIG.modelConfig.compressModel;
         state.modelConfig.compressProviderName =
           DEFAULT_CONFIG.modelConfig.compressProviderName;
+      }
+
+      if (version < 4.2) {
+        state.modelConfig.enableFollowUp = true;
+        state.modelConfig.followUpCount = 3;
+        state.modelConfig.followUpTurns = 3;
       }
 
       return state as any;
