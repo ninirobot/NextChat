@@ -301,6 +301,87 @@ export const Nvidia = {
   ChatPath: "v1/chat/completions",
 };
 
+export type ReasoningEffort = "none" | "low" | "medium" | "high" | "max";
+
+export type NvidiaThinking =
+  | {
+      mechanism: "reasoning_effort";
+      levels: ReasoningEffort[];
+      default: ReasoningEffort;
+      disabled: ReasoningEffort | null;
+    }
+  | {
+      mechanism: "chat_template_kwargs";
+      levels: ReasoningEffort[];
+      default: ReasoningEffort;
+      disabled: ReasoningEffort | null;
+    }
+  | {
+      mechanism: "thinking_mode";
+      default: "enabled" | "disabled" | "adaptive";
+    };
+
+export interface NvidiaModelConfig {
+  thinking?: NvidiaThinking;
+  maxTokens?: number;
+  temperature?: number;
+}
+
+export const NVIDIA_MODEL_CONFIG: Record<string, NvidiaModelConfig> = {
+  "minimaxai/minimax-m3": {
+    thinking: { mechanism: "thinking_mode", default: "enabled" },
+    maxTokens: 8192,
+  },
+  "qwen/qwen3.5-397b-a17b": { temperature: 0.6 },
+  "moonshotai/kimi-k3": {
+    thinking: {
+      mechanism: "reasoning_effort",
+      levels: ["low", "high", "max"],
+      default: "max",
+      disabled: "low",
+    },
+  },
+  "deepseek-ai/deepseek-v4-flash-0731": {
+    thinking: {
+      mechanism: "chat_template_kwargs",
+      levels: ["none", "high", "max"],
+      default: "max",
+      disabled: "none",
+    },
+  },
+  "deepseek-ai/deepseek-v4-pro-0813": {
+    thinking: {
+      mechanism: "chat_template_kwargs",
+      levels: ["none", "high", "max"],
+      default: "max",
+      disabled: "none",
+    },
+  },
+  "nvidia/nemotron-3-ultra-550b-a55b": {
+    thinking: {
+      mechanism: "reasoning_effort",
+      levels: ["medium", "high"],
+      default: "high",
+      disabled: "none",
+    },
+  },
+};
+
+const GPT_OSS_THINKING: NvidiaModelConfig = {
+  thinking: {
+    mechanism: "reasoning_effort",
+    levels: ["low", "medium", "high"],
+    default: "high",
+    disabled: "none",
+  },
+};
+
+export function getNvidiaModelConfig(model: string): NvidiaModelConfig {
+  if (NVIDIA_MODEL_CONFIG[model]) return NVIDIA_MODEL_CONFIG[model];
+  if (model.includes("gpt-oss")) return GPT_OSS_THINKING;
+  return {};
+}
+
 export const Rednote = {
   ExampleEndpoint: REDNOTE_BASE_URL,
   ChatPath: "v1/chat/completions",
@@ -452,6 +533,21 @@ export const SUMMARIZE_MODEL = "gpt-4o-mini";
 export const GEMINI_SUMMARIZE_MODEL = "gemini-2.5-flash";
 export const DEEPSEEK_SUMMARIZE_MODEL = "deepseek-chat";
 
+// 上下文追问建议（Follow-up）配置：使用轻量模型旁路生成，不进入主对话
+export const FOLLOW_UP_MODEL = "gemma-4-31b-it";
+export function getFollowUpSystemPrompt(count: number) {
+  return `你是一个对话引导助手。请根据上面的对话历史，为用户生成接下来最可能想深入探索的后续问题。
+要求：
+1. 恰好生成 ${count} 条追问；
+2. 每条不超过 30 个字，简短且具体；
+3. 必须是用户视角的后续问题，不要重复对话中已出现过的内容；
+4. 使用与用户相同的语言；
+5. 只输出一个 JSON 数组，例如 ["问题一","问题二","问题三"]，不要输出任何额外文字、解释或 markdown 代码块。`;
+}
+export function getFollowUpInstruction(count: number) {
+  return `请基于以上对话，生成 ${count} 条后续追问。仅返回 JSON 数组，不要包含任何额外说明或 markdown。`;
+}
+
 export const KnowledgeCutOffDate: Record<string, string> = {
   default: "2021-09",
   "gpt-4-turbo": "2023-12",
@@ -524,7 +620,6 @@ export const VISION_MODEL_REGEXES = [
   /o4-mini/i,
   /grok-4/i,
   /gpt-5/i,
-  /deepseek/i,
   /kimi/i,
   /llama/i,
   /longcat/i,
@@ -916,9 +1011,11 @@ const nvidiaModels = [
   "moonshotai/kimi-k2-instruct",
   "moonshotai/kimi-k2-instruct-0905",
   "moonshotai/kimi-k2-thinking",
+  "moonshotai/kimi-k3",
   "deepseek-ai/deepseek-v4-flash",
   "deepseek-ai/deepseek-v4-flash-0731",
   "deepseek-ai/deepseek-v4-pro",
+  "deepseek-ai/deepseek-v4-pro-0813",
   "nvidia/bevformer",
   "nvidia/cosmos-predict1-7b",
   "nvidia/embed-qa-4",

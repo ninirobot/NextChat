@@ -103,6 +103,9 @@ const en: LocaleType = {
       SaveAs: "Save as Assistant",
     },
     IsContext: "Contextual Prompt",
+    FollowUp: {
+      Loading: "Generating follow-up suggestions…",
+    },
     ShortcutKey: {
       Title: "Keyboard Shortcuts",
       newChat: "Open New Chat",
@@ -620,6 +623,20 @@ const en: LocaleType = {
     CompressModel: {
       Title: "Summary Model",
       SubTitle: "Model used to compress history and generate title",
+    },
+    FollowUp: {
+      Enable: {
+        Title: "Enable Follow-up Suggestions",
+        SubTitle: "Automatically generate follow-up questions after each reply",
+      },
+      Count: {
+        Title: "Follow-up Count",
+        SubTitle: "Number of follow-up questions per generation (1-5)",
+      },
+      Turns: {
+        Title: "Context Turns",
+        SubTitle: "Recent conversation turns used to generate follow-ups (1-5)",
+      },
     },
     Temperature: {
       Title: "Temperature",

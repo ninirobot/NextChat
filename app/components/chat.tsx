@@ -2456,6 +2456,54 @@ function SessionChat(props: {
                               </div>
                             )}
 
+                          {(() => {
+                            const vi = message.currentVersionIndex ?? 0;
+                            const isVersioned =
+                              !!message.versions &&
+                              message.versions.length > 0 &&
+                              vi < message.versions.length;
+                            const followUp = isVersioned
+                              ? message.versions?.[vi]?.followUp
+                              : message.followUp;
+                            const followUpError = isVersioned
+                              ? message.versions?.[vi]?.followUpError
+                              : message.followUpError;
+
+                            return (
+                              <>
+                                {!isUser && followUp && followUp.length > 0 && (
+                                  <div
+                                    className={styles["follow-up-container"]}
+                                  >
+                                    {followUp.map((q, i) => (
+                                      <div
+                                        key={i}
+                                        className={styles["follow-up-item"]}
+                                        onClick={() => doSubmit(q)}
+                                      >
+                                        {q}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {!isUser &&
+                                  !isVersioned &&
+                                  message.followUpLoading && (
+                                    <div
+                                      className={styles["follow-up-container"]}
+                                    >
+                                      <div
+                                        className={`${styles["follow-up-item"]} ${styles["follow-up-loading"]}`}
+                                      >
+                                        {Locale.Chat.FollowUp.Loading}
+                                      </div>
+                                    </div>
+                                  )}
+                              </>
+                            );
+                          })()}
+
                           <div className={styles["chat-message-action-date"]}>
                             {isContext
                               ? Locale.Chat.IsContext

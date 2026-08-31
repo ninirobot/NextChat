@@ -10,6 +10,7 @@ export const MODEL_CONTEXT_TOKENS: Record<string, ModelContextConfig> = {
   "deepseek-ai/deepseek-v4-flash": { contextTokens: 1048576 },
   "deepseek-ai/deepseek-v4-flash-0731": { contextTokens: 1048576 },
   "deepseek-ai/deepseek-v4-pro": { contextTokens: 1048576 },
+  "deepseek-ai/deepseek-v4-pro-0813": { contextTokens: 1048576 },
 
   // GLM
   "z-ai/glm5": { contextTokens: 209920 },
@@ -19,6 +20,7 @@ export const MODEL_CONTEXT_TOKENS: Record<string, ModelContextConfig> = {
   // Moonshot
   "moonshotai/kimi-k2.5": { contextTokens: 262144 },
   "moonshotai/kimi-k2.6": { contextTokens: 262144 },
+  "moonshotai/kimi-k3": { contextTokens: 1048576 },
 
   // LongCat
   "LongCat-2.0": { contextTokens: 1048576 },

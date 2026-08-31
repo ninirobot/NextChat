@@ -1,4 +1,8 @@
-import { ServiceProvider } from "@/app/constant";
+import {
+  ServiceProvider,
+  getNvidiaModelConfig,
+  ReasoningEffort,
+} from "@/app/constant";
 import { ModalConfigValidator, ModelConfig } from "../store";
 
 import Locale from "../locales";
@@ -50,6 +54,14 @@ export function ModelConfigList(props: {
             props.updateConfig((config) => {
               config.model = ModalConfigValidator.model(model);
               config.providerName = providerName as ServiceProvider;
+              const thinking = getNvidiaModelConfig(model).thinking;
+              if (
+                thinking &&
+                (thinking.mechanism === "reasoning_effort" ||
+                  thinking.mechanism === "chat_template_kwargs")
+              ) {
+                config.reasoning_effort = thinking.default;
+              }
             });
           }}
         >
@@ -268,66 +280,65 @@ export function ModelConfigList(props: {
           </ListItem>
         )}
 
-      {/* GPT-OSS and Nvidia Nemotron Reasoning Effort */}
-      {(props.modelConfig.model.includes("gpt-oss") ||
-        props.modelConfig.model === "nvidia/nemotron-3-ultra-550b-a55b" ||
-        props.modelConfig.model === "deepseek-ai/deepseek-v4-flash-0731") && (
-        <ListItem
-          title={Locale.Settings.ReasoningEffort.Title}
-          subTitle={Locale.Settings.ReasoningEffort.SubTitle}
-        >
-          <Select
-            value={props.modelConfig.reasoning_effort || "high"}
-            onChange={(e) => {
-              props.updateConfig((config) => {
-                config.reasoning_effort = e.currentTarget.value as
-                  | "low"
-                  | "medium"
-                  | "high";
-              });
-            }}
-          >
-            {props.modelConfig.model === "nvidia/nemotron-3-ultra-550b-a55b" ? (
-              <>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </>
-            ) : (
-              <>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </>
-            )}
-          </Select>
-        </ListItem>
-      )}
+      {/* Per-model Thinking control, driven by NVIDIA_MODEL_CONFIG */}
+      {(() => {
+        const thinking = getNvidiaModelConfig(props.modelConfig.model).thinking;
+        if (!thinking) return null;
 
-      {/* Minimax M3 Thinking Mode */}
-      {props.modelConfig.model === "minimaxai/minimax-m3" && (
-        <ListItem
-          title={Locale.Settings.Thinking.Title}
-          subTitle={Locale.Settings.Thinking.SubTitle}
-        >
-          <Select
-            value={props.modelConfig.thinking_mode || "enabled"}
-            onChange={(e) => {
-              const mode = e.currentTarget.value as
-                | "enabled"
-                | "disabled"
-                | "adaptive";
-              props.updateConfig((config) => {
-                config.thinking_mode = mode;
-                config.enable_thinking = mode !== "disabled";
-              });
-            }}
+        if (
+          thinking.mechanism === "reasoning_effort" ||
+          thinking.mechanism === "chat_template_kwargs"
+        ) {
+          return (
+            <ListItem
+              title={Locale.Settings.ReasoningEffort.Title}
+              subTitle={Locale.Settings.ReasoningEffort.SubTitle}
+            >
+              <Select
+                value={props.modelConfig.reasoning_effort || thinking.default}
+                onChange={(e) => {
+                  props.updateConfig((config) => {
+                    config.reasoning_effort = e.currentTarget
+                      .value as ReasoningEffort;
+                  });
+                }}
+              >
+                {thinking.levels.map((lvl) => (
+                  <option key={lvl} value={lvl}>
+                    {lvl.charAt(0).toUpperCase() + lvl.slice(1)}
+                  </option>
+                ))}
+              </Select>
+            </ListItem>
+          );
+        }
+
+        // thinking_mode (e.g. Minimax M3)
+        return (
+          <ListItem
+            title={Locale.Settings.Thinking.Title}
+            subTitle={Locale.Settings.Thinking.SubTitle}
           >
-            <option value="enabled">Enabled (Think)</option>
-            <option value="disabled">Disabled (No-think)</option>
-            <option value="adaptive">Adaptive</option>
-          </Select>
-        </ListItem>
-      )}
+            <Select
+              value={props.modelConfig.thinking_mode || thinking.default}
+              onChange={(e) => {
+                const mode = e.currentTarget.value as
+                  | "enabled"
+                  | "disabled"
+                  | "adaptive";
+                props.updateConfig((config) => {
+                  config.thinking_mode = mode;
+                  config.enable_thinking = mode !== "disabled";
+                });
+              }}
+            >
+              <option value="enabled">Enabled (Think)</option>
+              <option value="disabled">Disabled (No-think)</option>
+              <option value="adaptive">Adaptive</option>
+            </Select>
+          </ListItem>
+        );
+      })()}
 
       {/* Thought Summary Toggle - Only for Gemini 2.5 and 3 */}
       {!isCurrentLiveModel &&
@@ -550,6 +561,66 @@ export function ModelConfigList(props: {
             ))}
         </Select>
       </ListItem>
+
+      <ListItem
+        title={Locale.Settings.FollowUp.Enable.Title}
+        subTitle={Locale.Settings.FollowUp.Enable.SubTitle}
+      >
+        <input
+          aria-label={Locale.Settings.FollowUp.Enable.Title}
+          type="checkbox"
+          checked={props.modelConfig.enableFollowUp ?? true}
+          onChange={(e) =>
+            props.updateConfig(
+              (config) => (config.enableFollowUp = e.currentTarget.checked),
+            )
+          }
+        ></input>
+      </ListItem>
+      {props.modelConfig.enableFollowUp !== false && (
+        <>
+          <ListItem
+            title={Locale.Settings.FollowUp.Count.Title}
+            subTitle={Locale.Settings.FollowUp.Count.SubTitle}
+          >
+            <InputRange
+              aria={Locale.Settings.FollowUp.Count.Title}
+              value={(props.modelConfig.followUpCount ?? 3).toString()}
+              min="1"
+              max="5"
+              step="1"
+              onChange={(e) => {
+                props.updateConfig(
+                  (config) =>
+                    (config.followUpCount = ModalConfigValidator.followUpCount(
+                      e.currentTarget.valueAsNumber,
+                    )),
+                );
+              }}
+            ></InputRange>
+          </ListItem>
+          <ListItem
+            title={Locale.Settings.FollowUp.Turns.Title}
+            subTitle={Locale.Settings.FollowUp.Turns.SubTitle}
+          >
+            <InputRange
+              aria={Locale.Settings.FollowUp.Turns.Title}
+              value={(props.modelConfig.followUpTurns ?? 3).toString()}
+              min="1"
+              max="5"
+              step="1"
+              onChange={(e) => {
+                props.updateConfig(
+                  (config) =>
+                    (config.followUpTurns = ModalConfigValidator.followUpTurns(
+                      e.currentTarget.valueAsNumber,
+                    )),
+                );
+              }}
+            ></InputRange>
+          </ListItem>
+        </>
+      )}
     </>
   );
 }

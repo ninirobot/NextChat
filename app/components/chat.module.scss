@@ -1225,3 +1225,70 @@
     }
   }
 }
+
+/* ==========================================================================
+   上下文追问建议（Follow-up）样式
+   与对话气泡保持一致的卡片风格，一条追问一个框
+   ========================================================================== */
+.follow-up-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  width: 100%;
+  max-width: var(--message-max-width);
+}
+
+.follow-up-item {
+  box-sizing: border-box;
+  max-width: 100%;
+  border-radius: 10px;
+  background-color: rgba(0, 0, 0, 0.05);
+  border: var(--border-in-light);
+  padding: 8px 12px 8px 28px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--black);
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+  word-break: break-word;
+  transition: all ease 0.2s;
+
+  &::before {
+    content: "▶";
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: var(--primary);
+  }
+
+  &:hover {
+    border-color: var(--primary);
+    background-color: var(--white);
+  }
+}
+
+.follow-up-loading {
+  cursor: default;
+  opacity: 0.75;
+  animation: follow-up-pulse 1.2s ease-in-out infinite;
+
+  &::before {
+    content: "🪄";
+    font-size: 12px;
+  }
+}
+
+@keyframes follow-up-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}

@@ -1,4 +1,4 @@
-import { ApiPath, Google } from "@/app/constant";
+import { ApiPath, Google, ServiceProvider } from "@/app/constant";
 import {
   ChatOptions,
   getHeaders,
@@ -144,6 +144,13 @@ export class GeminiProApi implements LLMApi {
       ...{
         model: options.config.model,
       },
+      // 允许单次请求覆盖思考参数（追问等旁路调用需固定为 minimal）
+      ...(options.config.include_thoughts !== undefined
+        ? { include_thoughts: options.config.include_thoughts }
+        : {}),
+      ...(options.config.thinking_level !== undefined
+        ? { thinking_level: options.config.thinking_level }
+        : {}),
     };
     const isFlashModel = modelConfig.model.includes("flash");
     const isProModel = modelConfig.model.includes("pro");
@@ -216,7 +223,7 @@ export class GeminiProApi implements LLMApi {
         method: "POST",
         body: JSON.stringify(requestPayload),
         signal: controller.signal,
-        headers: getHeaders(),
+        headers: getHeaders(false, ServiceProvider.Google),
       };
 
       const requestTimeoutId = setTimeout(
@@ -230,7 +237,7 @@ export class GeminiProApi implements LLMApi {
         return streamWithThink(
           chatPath,
           requestPayload,
-          getHeaders(),
+          getHeaders(false, ServiceProvider.Google),
           // @ts-ignore
           tools.length > 0
             ? // @ts-ignore
