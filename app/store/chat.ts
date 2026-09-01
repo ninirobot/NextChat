@@ -556,8 +556,9 @@ export const useChatStore = createPersistStore(
         const modelConfig = session.mask.modelConfig;
         // 旧配置 / 自定义 mask 可能缺少新字段，统一按默认值兜底
         if (modelConfig.enableFollowUp === false) return;
-        // 未配置 Google Key 时跳过，避免无意义的失败请求
-        if (!useAccessStore.getState().googleApiKey) return;
+        // 不在客户端判断 Google Key 是否存在：Vercel 等环境下 Key 由服务端环境变量注入，
+        // 请求经 /api/google 代理会自动回退到服务端 key；若始终无 key 则服务端返回 401，
+        // 由 onError 静默处理，不展示追问即可。
         const count = modelConfig.followUpCount ?? 3;
         const turns = modelConfig.followUpTurns ?? 3;
         // 追问跟随当前回答版本存储（与切换版本逻辑一致）
