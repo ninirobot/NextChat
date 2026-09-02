@@ -258,8 +258,9 @@ export function isModelNotavailableInServer(
 }
 
 export function getLiveModels(liveModelsStr: string): string[] {
-  const cleanStr = (liveModelsStr || "").replace(/,/g, "").trim();
-  if (cleanStr === "") {
+  // 纯空白/纯逗号视为未配置，回退到默认 Live 模型列表
+  const hasTokens = (liveModelsStr || "").replace(/[\s,]+/g, "").length > 0;
+  if (!hasTokens) {
     return [
       "gemini-2.5-flash-native-audio-preview-12-2025",
       "gemini-3.1-flash-live-preview",
@@ -283,4 +284,24 @@ export function getLiveModels(liveModelsStr: string): string[] {
  */
 export function isLiveModel(modelName: string, liveModels: string[]): boolean {
   return liveModels.some((liveModel) => modelName.includes(liveModel));
+}
+
+/**
+ * Gemini 2.5 系列支持 thinkingBudget（0–24576，-1 为自动）
+ */
+export function supportsThinkingBudget(modelName: string): boolean {
+  return !!modelName && modelName.toLowerCase().includes("gemini-2.5");
+}
+
+/**
+ * Gemini 3.x 系列支持 thinkingLevel（none/low/medium/high）
+ */
+export function supportsThinkingLevel(modelName: string): boolean {
+  if (!modelName) return false;
+  const lower = modelName.toLowerCase();
+  return (
+    lower.includes("-3.") ||
+    lower.includes("-3-") ||
+    /gemini-3\d/i.test(modelName)
+  );
 }

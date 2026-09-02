@@ -840,6 +840,40 @@ const cn = {
         SubTitle: "生成此助手的直达链接",
         Action: "复制链接",
       },
+      Live: {
+        Title: "Gemini Live",
+        Model: {
+          Title: "模型",
+          SubTitle: "选择 Gemini Live 模型",
+        },
+        Voice: {
+          Title: "语音角色",
+          SubTitle: "选择 Gemini Live 的语音",
+        },
+        Speed: {
+          Title: "语音语速",
+          SubTitle: (v: number) => `${v}x 播放速度`,
+        },
+        Thinking: {
+          Title: "显示思考过程",
+          SubTitle: "在聊天气泡中显示 AI 的思考过程",
+        },
+        Budget: {
+          Title: "思考预算 (tokens)",
+          SubTitle: (v: number) =>
+            v === -1 ? "自动 (Dynamic)" : `${v} tokens (0–24576，-1 为自动)`,
+        },
+        ThinkingLevel: {
+          Title: "思考等级",
+          SubTitle: "控制模型的思考深度，越高越慢但质量更好",
+          Options: {
+            none: "无思考",
+            low: "低",
+            medium: "中",
+            high: "高",
+          },
+        },
+      },
     },
   },
 

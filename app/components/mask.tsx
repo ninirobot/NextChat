@@ -23,7 +23,12 @@ import {
   useChatStore,
   useAccessStore,
 } from "../store";
-import { isLiveModel, getLiveModels } from "../utils/model";
+import {
+  isLiveModel,
+  getLiveModels,
+  supportsThinkingBudget,
+  supportsThinkingLevel,
+} from "../utils/model";
 import { VOICES } from "../lib/gemini/types";
 import { MultimodalContent, ROLES } from "../client/api";
 import {
@@ -184,7 +189,7 @@ export function MaskConfig(props: {
             <input
               aria-label={Locale.Mask.Config.Artifacts.Title}
               type="checkbox"
-              checked={props.mask.enableArtifacts !== false}
+              checked={props.mask.enableArtifacts ?? true}
               onChange={(e) => {
                 props.updateMask((mask) => {
                   mask.enableArtifacts = e.currentTarget.checked;
@@ -201,7 +206,7 @@ export function MaskConfig(props: {
             <input
               aria-label={Locale.Mask.Config.CodeFold.Title}
               type="checkbox"
-              checked={props.mask.enableCodeFold !== false}
+              checked={props.mask.enableCodeFold ?? true}
               onChange={(e) => {
                 props.updateMask((mask) => {
                   mask.enableCodeFold = e.currentTarget.checked;
@@ -266,7 +271,7 @@ export function MaskConfig(props: {
         {isLiveModel(props.mask.modelConfig.model, liveModels) && (
           <>
             {/* 语音角色 */}
-            <ListItem title="Gemini Live 语音">
+            <ListItem title={Locale.Mask.Config.Live.Voice.Title}>
               <Select
                 value={props.mask.liveConfig?.voice || "Zephyr"}
                 onChange={(e) => {
@@ -288,11 +293,13 @@ export function MaskConfig(props: {
 
             {/* 语速 */}
             <ListItem
-              title="语音语速"
-              subTitle={`${props.mask.liveConfig?.speed ?? 1.0}x`}
+              title={Locale.Mask.Config.Live.Speed.Title}
+              subTitle={Locale.Mask.Config.Live.Speed.SubTitle(
+                props.mask.liveConfig?.speed ?? 1.0,
+              )}
             >
               <InputRange
-                aria="语音语速"
+                aria={Locale.Mask.Config.Live.Speed.Title}
                 value={props.mask.liveConfig?.speed ?? 1.0}
                 min="0.25"
                 max="4.0"
@@ -307,11 +314,11 @@ export function MaskConfig(props: {
             </ListItem>
 
             {/* Gemini 2.5 系列：Thinking Budget 滑块 */}
-            {props.mask.modelConfig.model.includes("2.5") && (
+            {supportsThinkingBudget(props.mask.modelConfig.model) && (
               <>
                 <ListItem
-                  title="显示思考过程"
-                  subTitle="是否在气泡中显示 AI 的思考过程"
+                  title={Locale.Mask.Config.Live.Thinking.Title}
+                  subTitle={Locale.Mask.Config.Live.Thinking.SubTitle}
                 >
                   <input
                     type="checkbox"
@@ -328,15 +335,13 @@ export function MaskConfig(props: {
                 </ListItem>
                 {props.mask.liveConfig?.includeThoughts !== false && (
                   <ListItem
-                    title="思考预算 (tokens)"
-                    subTitle={
-                      (props.mask.liveConfig?.thinkingBudget ?? -1) === -1
-                        ? "自动 (Dynamic)"
-                        : `${props.mask.liveConfig?.thinkingBudget} tokens (0–24576，-1 为自动)`
-                    }
+                    title={Locale.Mask.Config.Live.Budget.Title}
+                    subTitle={Locale.Mask.Config.Live.Budget.SubTitle(
+                      props.mask.liveConfig?.thinkingBudget ?? -1,
+                    )}
                   >
                     <InputRange
-                      aria="思考预算 (tokens)"
+                      aria={Locale.Mask.Config.Live.Budget.Title}
                       value={props.mask.liveConfig?.thinkingBudget ?? -1}
                       min="-1"
                       max="24576"
@@ -357,12 +362,10 @@ export function MaskConfig(props: {
             )}
 
             {/* Gemini 3.x 系列：Thinking Level 下拉 */}
-            {(props.mask.modelConfig.model.toLowerCase().includes("-3.") ||
-              props.mask.modelConfig.model.toLowerCase().includes("-3-") ||
-              /gemini-3\d/i.test(props.mask.modelConfig.model)) && (
+            {supportsThinkingLevel(props.mask.modelConfig.model) && (
               <ListItem
-                title="思考等级 (Thinking Level)"
-                subTitle="控制模型的思考深度，越高越慢但质量更好"
+                title={Locale.Mask.Config.Live.ThinkingLevel.Title}
+                subTitle={Locale.Mask.Config.Live.ThinkingLevel.SubTitle}
               >
                 <Select
                   value={props.mask.liveConfig?.thinkingLevel ?? "low"}
@@ -375,10 +378,18 @@ export function MaskConfig(props: {
                     });
                   }}
                 >
-                  <option value="none">无思考 (No Thinking)</option>
-                  <option value="low">低 (Low)</option>
-                  <option value="medium">中 (Medium)</option>
-                  <option value="high">高 (High)</option>
+                  <option value="none">
+                    {Locale.Mask.Config.Live.ThinkingLevel.Options.none}
+                  </option>
+                  <option value="low">
+                    {Locale.Mask.Config.Live.ThinkingLevel.Options.low}
+                  </option>
+                  <option value="medium">
+                    {Locale.Mask.Config.Live.ThinkingLevel.Options.medium}
+                  </option>
+                  <option value="high">
+                    {Locale.Mask.Config.Live.ThinkingLevel.Options.high}
+                  </option>
                 </Select>
               </ListItem>
             )}

@@ -851,6 +851,41 @@ const en: LocaleType = {
         SubTitle: "Generate a link to this mask",
         Action: "Copy Link",
       },
+      Live: {
+        Title: "Gemini Live",
+        Model: {
+          Title: "Model",
+          SubTitle: "Choose a Gemini Live model",
+        },
+        Voice: {
+          Title: "Voice",
+          SubTitle: "Choose a Gemini Live voice",
+        },
+        Speed: {
+          Title: "Speech Speed",
+          SubTitle: (v: number) => `${v}x playback speed`,
+        },
+        Thinking: {
+          Title: "Show Thinking Process",
+          SubTitle: "Display the AI's reasoning in the chat bubble",
+        },
+        Budget: {
+          Title: "Thinking Budget (tokens)",
+          SubTitle: (v: number) =>
+            v === -1 ? "Auto (Dynamic)" : `${v} tokens (0–24576, -1 for auto)`,
+        },
+        ThinkingLevel: {
+          Title: "Thinking Level",
+          SubTitle:
+            "Controls thinking depth; higher is slower but better quality",
+          Options: {
+            none: "None",
+            low: "Low",
+            medium: "Medium",
+            high: "High",
+          },
+        },
+      },
     },
   },
   NewChat: {
