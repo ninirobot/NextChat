@@ -74,7 +74,7 @@ import { useMaskStore } from "../store/mask";
 import { ProviderType } from "../utils/cloud";
 import { TTSConfigList } from "./tts-config";
 import { ProviderConfig } from "./settings/provider-config";
-import { getLiveModels } from "../utils/model";
+import { getLiveModels, supportsThinkingLevel } from "../utils/model";
 
 enum SettingsTab {
   General = "general",
@@ -1242,11 +1242,13 @@ export function Settings() {
                 />
               </List>
 
-              <div className="settings-title">Gemini Live 配置</div>
+              <div className="settings-title">
+                {Locale.Mask.Config.Live.Title}
+              </div>
               <List>
-                <ListItem title="模型">
+                <ListItem title={Locale.Mask.Config.Live.Model.Title}>
                   <Select
-                    aria-label="Gemini Live 模型"
+                    aria-label={Locale.Mask.Config.Live.Model.Title}
                     value={
                       config.geminiLiveConfig?.model ||
                       "gemini-2.5-flash-native-audio-preview-12-2025"
@@ -1270,7 +1272,7 @@ export function Settings() {
                     ))}
                   </Select>
                 </ListItem>
-                <ListItem title="语音人物">
+                <ListItem title={Locale.Mask.Config.Live.Voice.Title}>
                   <Select
                     value={config.geminiLiveConfig?.voice || "Zephyr"}
                     onChange={(e) => {
@@ -1286,10 +1288,13 @@ export function Settings() {
                     ))}
                   </Select>
                 </ListItem>
-                <ListItem title="显示思考过程" subTitle="是否显示AI的思考过程">
+                <ListItem
+                  title={Locale.Mask.Config.Live.Thinking.Title}
+                  subTitle={Locale.Mask.Config.Live.Thinking.SubTitle}
+                >
                   <input
                     type="checkbox"
-                    checked={config.geminiLiveConfig?.includeThoughts !== false}
+                    checked={config.geminiLiveConfig?.includeThoughts ?? true}
                     onChange={(e) => {
                       config.update((c) => {
                         c.geminiLiveConfig.includeThoughts = e.target.checked;
@@ -1299,15 +1304,13 @@ export function Settings() {
                 </ListItem>
                 {config.geminiLiveConfig?.includeThoughts !== false && (
                   <ListItem
-                    title="思考预算 (tokens)"
-                    subTitle={
-                      (config.geminiLiveConfig?.thinkingBudget ?? -1) === -1
-                        ? "自动 (Dynamic)"
-                        : `${config.geminiLiveConfig?.thinkingBudget} tokens (0-24576 or -1 for auto)`
-                    }
+                    title={Locale.Mask.Config.Live.Budget.Title}
+                    subTitle={Locale.Mask.Config.Live.Budget.SubTitle(
+                      config.geminiLiveConfig?.thinkingBudget ?? -1,
+                    )}
                   >
                     <InputRange
-                      aria="思考预算 (tokens)"
+                      aria={Locale.Mask.Config.Live.Budget.Title}
                       value={config.geminiLiveConfig?.thinkingBudget ?? -1}
                       min="-1"
                       max="24576"
@@ -1322,16 +1325,12 @@ export function Settings() {
                   </ListItem>
                 )}
                 {/* Gemini 3.x 系列：Thinking Level 下拉 */}
-                {(config.geminiLiveConfig?.model
-                  .toLowerCase()
-                  .includes("-3.") ||
-                  config.geminiLiveConfig?.model
-                    .toLowerCase()
-                    .includes("-3-") ||
-                  /gemini-3\d/i.test(config.geminiLiveConfig?.model || "")) && (
+                {supportsThinkingLevel(
+                  config.geminiLiveConfig?.model || "",
+                ) && (
                   <ListItem
-                    title="思考等级 (Thinking Level)"
-                    subTitle="控制模型的思考深度，越高越慢但质量更好"
+                    title={Locale.Mask.Config.Live.ThinkingLevel.Title}
+                    subTitle={Locale.Mask.Config.Live.ThinkingLevel.SubTitle}
                   >
                     <Select
                       value={config.geminiLiveConfig?.thinkingLevel ?? "low"}
@@ -1342,19 +1341,29 @@ export function Settings() {
                         });
                       }}
                     >
-                      <option value="none">无思考 (No Thinking)</option>
-                      <option value="low">低 (Low)</option>
-                      <option value="medium">中 (Medium)</option>
-                      <option value="high">高 (High)</option>
+                      <option value="none">
+                        {Locale.Mask.Config.Live.ThinkingLevel.Options.none}
+                      </option>
+                      <option value="low">
+                        {Locale.Mask.Config.Live.ThinkingLevel.Options.low}
+                      </option>
+                      <option value="medium">
+                        {Locale.Mask.Config.Live.ThinkingLevel.Options.medium}
+                      </option>
+                      <option value="high">
+                        {Locale.Mask.Config.Live.ThinkingLevel.Options.high}
+                      </option>
                     </Select>
                   </ListItem>
                 )}
                 <ListItem
-                  title="语音语速"
-                  subTitle={`${config.geminiLiveConfig?.speed ?? 1.0}x`}
+                  title={Locale.Mask.Config.Live.Speed.Title}
+                  subTitle={Locale.Mask.Config.Live.Speed.SubTitle(
+                    config.geminiLiveConfig?.speed ?? 1.0,
+                  )}
                 >
                   <InputRange
-                    aria="语音语速"
+                    aria={Locale.Mask.Config.Live.Speed.Title}
                     value={config.geminiLiveConfig?.speed ?? 1.0}
                     min="0.25"
                     max="4.0"

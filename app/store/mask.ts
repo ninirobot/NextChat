@@ -99,7 +99,8 @@ export const useMaskStore = createPersistStore(
     },
 
     get(id?: string) {
-      return get().masks[id ?? 1145141919810];
+      if (!id) return undefined;
+      return get().masks[id];
     },
     getAll() {
       const userMasks = Object.values(get().masks).sort(
@@ -118,9 +119,6 @@ export const useMaskStore = createPersistStore(
           }) as Mask,
       );
       return userMasks.concat(buildinMasks);
-    },
-    search(text: string) {
-      return Object.values(get().masks);
     },
     setLanguage(language: Lang | undefined) {
       set({
