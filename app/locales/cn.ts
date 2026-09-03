@@ -84,9 +84,18 @@ const cn = {
       Settings: "对话设置",
       UploadImage: "上传图片",
       UploadFile: "上传文件",
+      WebSearch: "联网",
     },
     Rename: "重命名对话",
     Typing: "正在输入…",
+    WebSearch: {
+      Enabled: "联网已开启",
+      Disabled: "联网已关闭",
+      Searching: "正在联网搜索…",
+      Completed: (count: number) => `已找到 ${count} 个相关结果`,
+      Empty: "搜索完成，未找到相关结果",
+      Failed: (error: string) => `联网搜索失败：${error}`,
+    },
     Input: (submitKey: string) => {
       var inputHints = `${submitKey} 发送`;
       if (submitKey === String(SubmitKey.Enter)) {

@@ -248,6 +248,7 @@ export function getMessageByVersion(message: RequestMessage): RequestMessage {
       content: version.content,
       reasoning_content: version.reasoning_content,
       reasoning_duration: version.reasoning_duration,
+      webSearch: version.webSearch,
     };
   }
 

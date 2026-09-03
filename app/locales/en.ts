@@ -85,9 +85,18 @@ const en: LocaleType = {
       Settings: "Settings",
       UploadImage: "Upload Images",
       UploadFile: "Upload File",
+      WebSearch: "Web Search",
     },
     Rename: "Rename Chat",
     Typing: "Typing…",
+    WebSearch: {
+      Enabled: "Web search enabled",
+      Disabled: "Web search disabled",
+      Searching: "Searching the web…",
+      Completed: (count: number) => `Found ${count} relevant results`,
+      Empty: "Search complete, no relevant results found",
+      Failed: (error: string) => `Web search failed: ${error}`,
+    },
     Input: (submitKey: string) => {
       var inputHints = `${submitKey} to send`;
       if (submitKey === String(SubmitKey.Enter)) {

@@ -84,9 +84,18 @@ const jp: PartialLocaleType = {
       Settings: "チャット設定",
       UploadImage: "画像をアップロード",
       UploadFile: "ファイルをアップロード",
+      WebSearch: "ウェブ検索",
     },
     Rename: "チャットの名前を変更",
     Typing: "入力中…",
+    WebSearch: {
+      Enabled: "ウェブ検索を有効にしました",
+      Disabled: "ウェブ検索を無効にしました",
+      Searching: "ウェブを検索中…",
+      Completed: (count: number) => `${count} 件の関連結果を取得しました`,
+      Empty: "検索が完了しましたが、関連結果はありません",
+      Failed: (error: string) => `ウェブ検索に失敗しました：${error}`,
+    },
     Input: (submitKey: string) => {
       var inputHints = `${submitKey}で送信`;
       if (submitKey === String(SubmitKey.Enter)) {

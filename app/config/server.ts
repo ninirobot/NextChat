@@ -111,6 +111,9 @@ declare global {
       REDNOTE_URL?: string;
       REDNOTE_API_KEY?: string;
 
+      // Brave Search (server-only)
+      BRAVE_API_KEY?: string;
+
       // custom template for preprocessing user input
       DEFAULT_INPUT_TEMPLATE?: string;
 
@@ -137,14 +140,6 @@ function getApiKey(keys?: string) {
   const apiKeys = apiKeyEnvVar.split(",").map((v) => v.trim());
   const randomIndex = Math.floor(Math.random() * apiKeys.length);
   const apiKey = apiKeys[randomIndex];
-  if (apiKey) {
-    console.log(
-      `[Server Config] using ${randomIndex + 1} of ${
-        apiKeys.length
-      } api key - ${apiKey}`,
-    );
-  }
-
   return apiKey;
 }
 
@@ -193,6 +188,7 @@ export const getServerSideConfig = () => {
   const isOpenRouter = !!process.env.OPENROUTER_API_KEY;
   const isNvidia = !!process.env.NVIDIA_API_KEY;
   const isRednote = !!process.env.REDNOTE_API_KEY;
+  const isBraveSearch = !!process.env.BRAVE_API_KEY;
 
   // const apiKeyEnvVar = process.env.OPENAI_API_KEY ?? "";
   // const apiKeys = apiKeyEnvVar.split(",").map((v) => v.trim());
@@ -297,6 +293,9 @@ export const getServerSideConfig = () => {
     isRednote,
     rednoteUrl: process.env.REDNOTE_URL,
     rednoteApiKey: getApiKey(process.env.REDNOTE_API_KEY),
+
+    isBraveSearch,
+    braveApiKey: getApiKey(process.env.BRAVE_API_KEY),
 
     gtmId: process.env.GTM_ID,
     gaId: process.env.GA_ID || DEFAULT_GA_ID,

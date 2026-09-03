@@ -85,9 +85,18 @@ const fr: PartialLocaleType = {
       Settings: "Paramètres de la discussion",
       UploadImage: "Télécharger une image",
       UploadFile: "Télécharger un fichier",
+      WebSearch: "Recherche web",
     },
     Rename: "Renommer la discussion",
     Typing: "En train d'écrire…",
+    WebSearch: {
+      Enabled: "Recherche web activée",
+      Disabled: "Recherche web désactivée",
+      Searching: "Recherche sur le web…",
+      Completed: (count: number) => `${count} résultats pertinents trouvés`,
+      Empty: "Recherche terminée, aucun résultat pertinent",
+      Failed: (error: string) => `Échec de la recherche web : ${error}`,
+    },
     Input: (submitKey: string) => {
       var inputHints = `${submitKey} pour envoyer`;
       if (submitKey === String(SubmitKey.Enter)) {

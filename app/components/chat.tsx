@@ -105,6 +105,7 @@ import ConfirmIcon from "../icons/confirm.svg";
 import CopyIcon from "../icons/copy.svg";
 import DarkIcon from "../icons/dark.svg";
 import DeleteIcon from "../icons/clear.svg";
+import DiscoveryIcon from "../icons/discovery.svg";
 import EditIcon from "../icons/rename.svg";
 import ExportIcon from "../icons/share.svg";
 import { ProviderIcon } from "./provider-icon";
@@ -421,11 +422,50 @@ export function ChatAction(props: {
   text: string;
   icon: JSX.Element;
   onClick: () => void;
+  active?: boolean;
 }) {
   return (
-    <div className={styles["chat-input-action"]} onClick={props.onClick}>
+    <div
+      className={clsx(styles["chat-input-action"], {
+        [styles.active]: props.active,
+      })}
+      onClick={props.onClick}
+    >
       <div className={styles["icon"]}>{props.icon}</div>
       <div className={styles["text"]}>{props.text}</div>
+    </div>
+  );
+}
+
+function WebSearchStatus(props: { webSearch?: ChatMessage["webSearch"] }) {
+  if (!props.webSearch) return null;
+
+  const { activity } = props.webSearch;
+  const text =
+    activity.status === "searching"
+      ? Locale.Chat.WebSearch.Searching
+      : activity.status === "completed"
+        ? activity.resultCount
+          ? Locale.Chat.WebSearch.Completed(activity.resultCount)
+          : Locale.Chat.WebSearch.Empty
+        : Locale.Chat.WebSearch.Failed(activity.error || "Unknown error");
+  const icon =
+    activity.status === "searching" ? (
+      <LoadingButtonIcon />
+    ) : activity.status === "completed" ? (
+      <ConfirmIcon />
+    ) : (
+      <CloseIcon />
+    );
+
+  return (
+    <div
+      className={clsx(styles["web-search-activity"], {
+        [styles.error]: activity.status === "error",
+      })}
+    >
+      {icon}
+      <span>{text}</span>
     </div>
   );
 }
@@ -633,6 +673,7 @@ export function ChatActions(props: {
   const chatStore = useChatStore();
 
   const session = chatStore.currentSession(props.isLiveMode);
+  const webSearchEnabled = !!session.webSearchEnabled;
 
   // switch themes
   const theme = config.theme;
@@ -784,6 +825,24 @@ export function ChatActions(props: {
           text={Locale.Chat.InputActions.UploadFile || "Upload File"}
           icon={props.uploading ? <LoadingButtonIcon /> : <UploadIcon />}
         />
+        {!props.isLiveMode && !isDalle3(currentModel) && (
+          <ChatAction
+            onClick={() => {
+              const nextEnabled = !webSearchEnabled;
+              chatStore.updateTargetSession(session, (targetSession) => {
+                targetSession.webSearchEnabled = nextEnabled;
+              });
+              showToast(
+                nextEnabled
+                  ? Locale.Chat.WebSearch.Enabled
+                  : Locale.Chat.WebSearch.Disabled,
+              );
+            }}
+            text={Locale.Chat.InputActions.WebSearch}
+            icon={<DiscoveryIcon />}
+            active={webSearchEnabled}
+          />
+        )}
         <ChatAction
           onClick={nextTheme}
           text={Locale.Chat.InputActions.Theme[theme]}
@@ -2273,6 +2332,14 @@ function SessionChat(props: {
                               </div>
                             )}
                           </div>
+                          {!isUser && (
+                            <WebSearchStatus
+                              webSearch={
+                                (getMessageByVersion(message) as ChatMessage)
+                                  .webSearch
+                              }
+                            />
+                          )}
                           {message?.tools?.length == 0 && showTyping && (
                             <div className={styles["chat-message-status"]}>
                               {Locale.Chat.Typing}

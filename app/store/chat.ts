@@ -41,6 +41,13 @@ import { collectModelsWithDefaultModel } from "../utils/model";
 import { createEmptyMask, Mask } from "./mask";
 import { executeMcpAction, getAllTools, isMcpEnabled } from "../mcp/actions";
 import { extractMcpJson, isMcpJson } from "../mcp/utils";
+import { searchWeb } from "../client/web-search";
+import type { WebSearchActivity, WebSearchSource } from "../web-search/types";
+import {
+  appendWebSources,
+  buildUnavailableWebSearchContext,
+  buildWebSearchContext,
+} from "../web-search/context";
 
 const localStorage = safeLocalStorage();
 
@@ -77,6 +84,10 @@ export type ChatMessage = RequestMessage & {
     reasoning_duration?: number;
     followUp?: string[];
     followUpError?: boolean;
+    webSearch?: {
+      activity: WebSearchActivity;
+      sources: WebSearchSource[];
+    };
   }[];
   currentVersionIndex?: number;
   // Live 音频相关字段
@@ -91,6 +102,14 @@ export type ChatMessage = RequestMessage & {
   followUp?: string[];
   followUpLoading?: boolean;
   followUpError?: boolean;
+  // The user-controlled mode captured at send time. Retry must use this value,
+  // never the current composer toggle.
+  webSearchEnabled?: boolean;
+  // Program-owned search activity, kept separate from model tools/thinking.
+  webSearch?: {
+    activity: WebSearchActivity;
+    sources: WebSearchSource[];
+  };
 };
 
 // 解析轻量模型返回的追问建议，兼容 JSON 数组或被 markdown/换行包裹的输出
@@ -139,6 +158,13 @@ export function createMessage(override: Partial<ChatMessage>): ChatMessage {
   };
 }
 
+function getWebSearchQuery(message: ChatMessage): string {
+  return getMessageTextContent(message)
+    .split("\n\nProcessed files:")[0]
+    .trim()
+    .slice(0, 400);
+}
+
 export interface ChatStat {
   tokenCount: number;
   wordCount: number;
@@ -155,6 +181,7 @@ export interface ChatSession {
   lastUpdate: number;
   lastSummarizeIndex: number;
   clearContextIndex?: number;
+  webSearchEnabled: boolean;
 
   mask: Mask;
 }
@@ -188,6 +215,7 @@ function createEmptySession(isLiveMode = false): ChatSession {
     },
     lastUpdate: Date.now(),
     lastSummarizeIndex: 0,
+    webSearchEnabled: false,
 
     mask,
   };
@@ -324,6 +352,7 @@ export const useChatStore = createPersistStore(
         const newSession = createEmptySession(isLiveMode);
 
         newSession.topic = currentSession.topic;
+        newSession.webSearchEnabled = currentSession.webSearchEnabled ?? false;
         // 深拷贝消息
         newSession.messages = currentSession.messages.map((msg) => ({
           ...msg,
@@ -724,6 +753,7 @@ export const useChatStore = createPersistStore(
           content: mContent,
           isMcpResponse,
           attachFiles,
+          webSearchEnabled: !isLiveMode && !!session.webSearchEnabled,
         });
 
         const botMessage: ChatMessage = createMessage({
@@ -782,6 +812,7 @@ export const useChatStore = createPersistStore(
             reasoning_duration: botMessage.reasoning_duration,
             followUp: botMessage.followUp,
             followUpError: botMessage.followUpError,
+            webSearch: botMessage.webSearch,
           });
         }
         // 设置索引指向即将生成的新版本
@@ -797,6 +828,7 @@ export const useChatStore = createPersistStore(
         botMessage.reasoning_content = undefined;
         botMessage.reasoning_duration = undefined;
         botMessage.tools = undefined;
+        botMessage.webSearch = undefined;
         // 清除上一轮的追问建议，避免重试时旧问题残留
         botMessage.followUp = undefined;
         botMessage.followUpLoading = false;
@@ -878,12 +910,99 @@ export const useChatStore = createPersistStore(
 
         // 剥离 UI 相关字段（追问建议等），避免它们被带进主对话请求
         const cleanMessages = sendMessages.map((m) => {
-          const { followUp, followUpLoading, followUpError, ...rest } = m;
+          const {
+            followUp,
+            followUpLoading,
+            followUpError,
+            webSearchEnabled,
+            webSearch,
+            ...rest
+          } = m;
           return rest;
         });
+        const requestMessages = cleanMessages.map(({ role, content }) => ({
+          role,
+          content,
+        }));
+        const latestUserMessage = [...sendMessages]
+          .reverse()
+          .find((message) => message.role === "user");
+
+        const updateWebSearch = (
+          activity: WebSearchActivity,
+          sources: WebSearchSource[] = [],
+        ) => {
+          botMessage.webSearch = { activity, sources };
+          get().updateTargetSession(session, (targetSession) => {
+            targetSession.messages = targetSession.messages.map((message) =>
+              message.id === botMessage.id ? { ...botMessage } : message,
+            );
+          });
+        };
+
+        if (latestUserMessage?.webSearchEnabled) {
+          updateWebSearch({ status: "searching" });
+          const searchController = new AbortController();
+          ChatControllerPool.addController(
+            session.id,
+            botMessage.id ?? messageIndex,
+            searchController,
+          );
+
+          try {
+            const result = await searchWeb(
+              getWebSearchQuery(latestUserMessage),
+              searchController.signal,
+            );
+            if (searchController.signal.aborted) {
+              botMessage.streaming = false;
+              updateWebSearch({ status: "error", error: "Search cancelled" });
+              ChatControllerPool.remove(
+                session.id,
+                botMessage.id ?? messageIndex,
+              );
+              return;
+            }
+
+            updateWebSearch(
+              { status: "completed", resultCount: result.sources.length },
+              result.sources,
+            );
+            const lastUserIndex = requestMessages
+              .map((message) => message.role)
+              .lastIndexOf("user");
+            requestMessages.splice(lastUserIndex, 0, {
+              role: "system",
+              content:
+                result.sources.length > 0
+                  ? buildWebSearchContext(result.sources)
+                  : buildUnavailableWebSearchContext(),
+            });
+          } catch (error) {
+            if (searchController.signal.aborted) {
+              botMessage.streaming = false;
+              updateWebSearch({ status: "error", error: "Search cancelled" });
+              ChatControllerPool.remove(
+                session.id,
+                botMessage.id ?? messageIndex,
+              );
+              return;
+            }
+            const message =
+              error instanceof Error ? error.message : "Web search failed";
+            updateWebSearch({ status: "error", error: message });
+            const lastUserIndex = requestMessages
+              .map((requestMessage) => requestMessage.role)
+              .lastIndexOf("user");
+            requestMessages.splice(lastUserIndex, 0, {
+              role: "system",
+              content: buildUnavailableWebSearchContext(),
+            });
+          }
+        }
 
         api.llm.chat({
-          messages: cleanMessages,
+          messages: requestMessages,
           config: { ...modelConfig, stream: true },
           onUpdate(message) {
             botMessage.streaming = true;
@@ -912,7 +1031,10 @@ export const useChatStore = createPersistStore(
             botMessage.streaming = false;
             botMessage.isThinking = false;
             if (message) {
-              botMessage.content = message;
+              botMessage.content = appendWebSources(
+                message,
+                botMessage.webSearch?.sources ?? [],
+              );
               botMessage.date = new Date().toLocaleString();
             }
 

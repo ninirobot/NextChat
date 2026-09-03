@@ -155,6 +155,14 @@
         opacity: 1;
       }
     }
+
+    &.active {
+      color: var(--primary);
+      border-color: var(--primary);
+      box-shadow:
+        0 0 0 2px var(--primary),
+        var(--card-shadow);
+    }
   }
 }
 
@@ -181,8 +189,6 @@
   &:hover {
     background-color: var(--hover-color);
   }
-
-
   .model-name {
     max-width: 150px;
     overflow: hidden;
@@ -687,6 +693,28 @@
   }
 }
 
+.web-search-activity {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 10px 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: var(--border-in-light);
+  background: var(--hover-color);
+  color: var(--primary);
+  font-size: 12px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  &.error {
+    color: #dc2626;
+  }
+}
+
 /* ==========================================================================
    输入面板区域
    Input Panel Area
@@ -800,8 +828,6 @@
   box-sizing: border-box;
   min-height: 68px;
 }
-
-
 .chat-input-send {
   background-color: var(--primary);
   color: white;
