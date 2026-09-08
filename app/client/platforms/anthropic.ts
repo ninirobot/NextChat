@@ -10,6 +10,7 @@ import { getClientConfig } from "@/app/config/client";
 import { ANTHROPIC_BASE_URL } from "@/app/constant";
 import { getMessageTextContent, isVisionModel } from "@/app/utils";
 import { preProcessImageContent, stream } from "@/app/utils/chat";
+import { webSearchTools } from "@/app/websearch/tools";
 import { cloudflareAIGatewayUrl } from "@/app/utils/cloudflare";
 import { RequestPayload } from "./openai";
 import { fetch } from "@/app/utils/stream";
@@ -198,8 +199,8 @@ export class ClaudeApi implements LLMApi {
 
     if (shouldStream) {
       let index = -1;
-      const tools: any[] = [];
-      const funcs = {};
+      // 联网搜索：取 OpenAI 形状工具，下方会映射成 Anthropic 的 input_schema
+      const { tools, funcs } = webSearchTools(controller);
       return stream(
         path,
         requestBody,

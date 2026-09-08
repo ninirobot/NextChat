@@ -16,6 +16,7 @@ import { isEmpty } from "lodash-es";
 import {
   BOT_HELLO,
   ChatMessage,
+  ChatMessageTool,
   ChatSession,
   createMessage,
   DEFAULT_TOPIC,
@@ -44,6 +45,12 @@ import {
   supportsCustomSize,
   useMobileScreen,
 } from "../utils";
+import {
+  decorateMessageContent,
+  stripCitationMarkers,
+} from "@/app/websearch/citation";
+import { DEFAULT_SEARCH_PROVIDER } from "@/app/websearch/constants";
+import { describeToolCall } from "@/app/websearch/tools";
 import {
   formatTokenCount,
   getModelContextTokens,
@@ -133,6 +140,7 @@ import SpeakStopIcon from "../icons/speak-stop.svg";
 import StopIcon from "../icons/pause.svg";
 import StyleIcon from "../icons/palette.svg";
 import UploadIcon from "../icons/upload.svg";
+import GlobeIcon from "../icons/globe.svg";
 
 const localStorage = safeLocalStorage();
 
@@ -421,9 +429,15 @@ export function ChatAction(props: {
   text: string;
   icon: JSX.Element;
   onClick: () => void;
+  active?: boolean;
 }) {
   return (
-    <div className={styles["chat-input-action"]} onClick={props.onClick}>
+    <div
+      className={clsx(styles["chat-input-action"], {
+        [styles["active"]]: props.active,
+      })}
+      onClick={props.onClick}
+    >
       <div className={styles["icon"]}>{props.icon}</div>
       <div className={styles["text"]}>{props.text}</div>
     </div>
@@ -634,6 +648,35 @@ export function ChatActions(props: {
 
   const session = chatStore.currentSession(props.isLiveMode);
 
+  // 联网搜索开关（Key 在服务端 .env，前端只收到「有没有配」的布尔）
+  const webSearchEnabled = config.webSearch?.enabled ?? false;
+  const toggleWebSearch = () => {
+    const next = !webSearchEnabled;
+    config.update((c) => {
+      if (c.webSearch) c.webSearch.enabled = next;
+    });
+
+    // 开启时先提醒：所选服务商没配 Key 的话，模型只会收到一条「搜索不可用」。
+    // 与其让它静默失败，不如当场告诉用户该去配什么。
+    const provider =
+      config.webSearch?.searchProvider ?? DEFAULT_SEARCH_PROVIDER;
+    const hasKey = getClientConfig()?.webSearch?.[provider] ?? false;
+    if (next && !hasKey) {
+      showToast(
+        provider === "jina"
+          ? Locale.Settings.WebSearch.NoKey.Jina
+          : Locale.Settings.WebSearch.NoKey.Brave,
+      );
+      return;
+    }
+
+    showToast(
+      next
+        ? Locale.Chat.InputActions.WebSearchOn
+        : Locale.Chat.InputActions.WebSearchOff,
+    );
+  };
+
   // switch themes
   const theme = config.theme;
 
@@ -783,6 +826,12 @@ export function ChatActions(props: {
           onClick={props.uploadFile}
           text={Locale.Chat.InputActions.UploadFile || "Upload File"}
           icon={props.uploading ? <LoadingButtonIcon /> : <UploadIcon />}
+        />
+        <ChatAction
+          onClick={toggleWebSearch}
+          text={Locale.Chat.InputActions.WebSearch}
+          icon={<GlobeIcon />}
+          active={webSearchEnabled}
         />
         <ChatAction
           onClick={nextTheme}
@@ -1627,9 +1676,30 @@ function SessionChat(props: {
     });
   };
 
+  // 获取当前显示版本的联网工具结果。
+  //
+  // Sources 与 [n] 引用由 tools 派生，所以必须按「当前查看的版本」取，
+  // 否则未联网回答会被套上联网回答的 Sources（反过来联网回答也会莫名丢失）。
+  // 查看历史版本时绝不回落到消息级 tools —— 回落就等于串版本。
+  const getCurrentMessageTools = (
+    message: ChatMessage,
+  ): ChatMessageTool[] | undefined => {
+    const versions = message.versions;
+    const index = message.currentVersionIndex ?? 0;
+    if (versions?.length && index >= 0 && index < versions.length) {
+      return versions[index]?.tools;
+    }
+    return message.tools; // 最新版本
+  };
+
   // 获取当前显示的消息内容
   const getCurrentMessageContent = (message: ChatMessage): string => {
-    return getMessageTextContent(message);
+    const base = getMessageTextContent(message);
+    // 联网搜索：把 [cite:id] 转上标链接，并在结尾追加 Sources 清单
+    return decorateMessageContent(
+      { ...message, content: base, tools: getCurrentMessageTools(message) },
+      !message.streaming,
+    );
   };
 
   // 获取当前显示的思考内容
@@ -1637,7 +1707,11 @@ function SessionChat(props: {
     message: ChatMessage,
   ): string | undefined => {
     const msg = getMessageByVersion(message) as ChatMessage;
-    return msg.reasoning_content;
+    // 推理链里也可能出现 [cite:id]。编号属于正文顺序，这里再解析一遍会与正文
+    // 冲突（要么从 1 重排、要么出现重复数字），所以直接把标记剥掉。
+    return msg.reasoning_content
+      ? stripCitationMarkers(msg.reasoning_content)
+      : msg.reasoning_content;
   };
 
   // 获取当前显示的思考时长
@@ -2158,6 +2232,8 @@ function SessionChat(props: {
                     ) &&
                     !isContext;
                   const showTyping = message.preview || message.streaming;
+                  // 工具行与 Sources 一样，必须跟随当前查看的版本
+                  const displayTools = getCurrentMessageTools(message);
 
                   const shouldShowClearContextDivider =
                     i === clearContextIndex - 1;
@@ -2242,7 +2318,9 @@ function SessionChat(props: {
                                         icon={<CopyIcon />}
                                         onClick={() =>
                                           copyToClipboard(
-                                            getMessageTextContent(message),
+                                            // 复制带走的是转换后的 [1] + Sources；
+                                            // 内部 cite id 不该出现在剪贴板里
+                                            getCurrentMessageContent(message),
                                           )
                                         }
                                       />
@@ -2262,7 +2340,11 @@ function SessionChat(props: {
                                           }
                                           onClick={() =>
                                             openaiSpeech(
-                                              getMessageTextContent(message),
+                                              // 朗读只剥掉标记：Sources 里的 URL
+                                              // 和方括号念出来毫无意义
+                                              stripCitationMarkers(
+                                                getMessageTextContent(message),
+                                              ),
                                             )
                                           }
                                         />
@@ -2273,15 +2355,15 @@ function SessionChat(props: {
                               </div>
                             )}
                           </div>
-                          {message?.tools?.length == 0 && showTyping && (
+                          {displayTools?.length == 0 && showTyping && (
                             <div className={styles["chat-message-status"]}>
                               {Locale.Chat.Typing}
                             </div>
                           )}
                           {/*@ts-ignore*/}
-                          {message?.tools?.length > 0 && (
+                          {displayTools && displayTools.length > 0 && (
                             <div className={styles["chat-message-tools"]}>
-                              {message?.tools?.map((tool) => (
+                              {displayTools.map((tool) => (
                                 <div
                                   key={tool.id}
                                   title={tool?.errorMsg}
@@ -2294,7 +2376,7 @@ function SessionChat(props: {
                                   ) : (
                                     <LoadingButtonIcon />
                                   )}
-                                  <span>{tool?.function?.name}</span>
+                                  <span>{describeToolCall(tool)}</span>
                                 </div>
                               ))}
                             </div>

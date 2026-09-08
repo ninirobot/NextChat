@@ -7,6 +7,7 @@ import {
   ChatMessageTool,
 } from "@/app/store";
 import { stream } from "@/app/utils/chat";
+import { webSearchTools } from "@/app/websearch/tools";
 import {
   ChatOptions,
   getHeaders,
@@ -205,8 +206,7 @@ export class ChatGLMApi implements LLMApi {
 
       const shouldStream = !!options.config.stream;
       if (shouldStream) {
-        const tools: any[] = [];
-        const funcs = {};
+        const { tools, funcs } = webSearchTools(controller);
         return stream(
           path,
           requestPayload,

@@ -16,6 +16,7 @@ import { ChatOptions, getHeaders, LLMApi, LLMModel, LLMUsage } from "../api";
 import { getClientConfig } from "@/app/config/client";
 import { fetch } from "@/app/utils/stream";
 import { preProcessImageContent, streamWithThink } from "@/app/utils/chat";
+import { webSearchTools } from "@/app/websearch/tools";
 import { getTimeoutMSByModel } from "@/app/utils";
 import { RequestPayload } from "./openai";
 
@@ -137,8 +138,7 @@ export class NvidiaApi implements LLMApi {
 
       if (shouldStream) {
         let index = -1;
-        const tools: any[] = [];
-        const funcs = {};
+        const { tools, funcs } = webSearchTools(controller);
 
         streamWithThink(
           chatPath,

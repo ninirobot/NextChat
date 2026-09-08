@@ -25,6 +25,7 @@ import {
   getTimeoutMSByModel,
 } from "@/app/utils";
 import { preProcessImageContent } from "@/app/utils/chat";
+import { webSearchTools } from "@/app/websearch/tools";
 import { RequestPayload } from "./openai";
 import { fetch } from "@/app/utils/stream";
 
@@ -79,7 +80,7 @@ export class GeminiProApi implements LLMApi {
 
     return (
       getTextFromParts(res?.candidates?.at(0)?.content?.parts) ||
-      content || //getTextFromParts(res?.at(0)?.candidates?.at(0)?.content?.parts) ||
+      content ||
       res?.error?.message ||
       ""
     );
@@ -232,43 +233,92 @@ export class GeminiProApi implements LLMApi {
       );
 
       if (shouldStream) {
-        const tools: any[] = [];
-        const funcs = {};
+        const { tools, funcs } = webSearchTools(
+          controller,
+          ServiceProvider.Google,
+        );
+        // Gemini 会把 thought signature 放在 functionCall part 或紧随其后的
+        // 独立空 part 里（流式），需要在同一轮里跨 chunk 缓存，供回写历史用。
+        let pendingGoogleThoughtSignature:
+          | { key: "thoughtSignature" | "thought_signature"; value: string }
+          | undefined;
         return streamWithThink(
           chatPath,
           requestPayload,
           getHeaders(false, ServiceProvider.Google),
           // @ts-ignore
-          tools.length > 0
-            ? // @ts-ignore
-              [{ functionDeclarations: tools.map((tool) => tool.function) }]
-            : [],
+          tools.length > 0 ? [{ functionDeclarations: tools }] : [],
           funcs,
           controller,
           (text: string, runTools: ChatMessageTool[]) => {
             const chunkJson = JSON.parse(text);
 
-            const functionCall = chunkJson?.candidates
-              ?.at(0)
-              ?.content.parts.at(0)?.functionCall;
-            if (functionCall) {
-              const { name, args } = functionCall;
-              runTools.push({
-                id: nanoid(),
-                type: "function",
-                function: {
-                  name,
-                  arguments: JSON.stringify(args), // utils.chat call function, using JSON.parse
-                },
-              });
+            // Gemini 的报错常以 200 + 流内 JSON 错误对象的形式返回（典型：
+            // functionCall 缺 thought_signature 导致 400）。不处理的话解析不到
+            // parts，整轮静默无输出，界面就表现为「一直加载、也不报错」。
+            if (chunkJson?.error) {
+              return {
+                reasoning: undefined,
+                content: `\n\n> [!ERROR]\n> ${chunkJson.error.message || chunkJson.error.status || "Unknown Error"}`,
+              };
             }
-            const parts = chunkJson?.candidates?.at(0)?.content.parts || [];
+
+            const parts = chunkJson?.candidates?.at(0)?.content?.parts || [];
             let reasoning = "";
             let content = "";
+
             for (const part of parts) {
-              if (part.thought) {
-                reasoning += part.text;
-              } else {
+              // Gemini 3：thought_signature 可能同 functionCall 一起返回，
+              // 也可能在随后的独立空 part（仅 thoughtSignature）里返回。
+              const hasCamel =
+                typeof part?.thoughtSignature === "string" &&
+                part.thoughtSignature.length > 0;
+              const hasSnake =
+                typeof part?.thought_signature === "string" &&
+                part.thought_signature.length > 0;
+              const sigKey: "thoughtSignature" | "thought_signature" | null =
+                hasCamel
+                  ? "thoughtSignature"
+                  : hasSnake
+                    ? "thought_signature"
+                    : null;
+
+              if (part?.functionCall) {
+                const { name, args } = part.functionCall;
+                runTools.push({
+                  id: nanoid(),
+                  type: "function",
+                  function: {
+                    name,
+                    arguments: JSON.stringify(args),
+                  },
+                  // @ts-ignore 由 processToolMessage 原样回传
+                  thought_signature: sigKey
+                    ? part[sigKey]
+                    : pendingGoogleThoughtSignature?.value,
+                });
+                pendingGoogleThoughtSignature = undefined;
+              } else if (sigKey && !part?.text) {
+                const sigValue = part[sigKey] as string;
+                pendingGoogleThoughtSignature = {
+                  key: sigKey,
+                  value: sigValue,
+                };
+                // 流式场景常见顺序：先到 functionCall part，随后才补 thoughtSignature。
+                // 把迟到的签名补挂到最近一个还没签名、且本次已收到的工具调用上。
+                for (let i = runTools.length - 1; i >= 0; i -= 1) {
+                  const t = runTools[i] as any;
+                  if (t?.type === "function" && !t.thought_signature) {
+                    t.thought_signature = sigValue;
+                    pendingGoogleThoughtSignature = undefined;
+                    break;
+                  }
+                }
+              }
+
+              if (part?.thought) {
+                reasoning += part.text ?? "";
+              } else if (part?.text) {
                 content += part.text;
               }
             }
@@ -283,6 +333,9 @@ export class GeminiProApi implements LLMApi {
             toolCallMessage: any,
             toolCallResult: any[],
           ) => {
+            // 注意：模型名只存在于 chatPath 里，requestPayload 没有 model 字段，
+            // 必须用外层从 modelConfig 算好的 isGen3，否则这里永远是 false，
+            // Gemini 3 会因缺少 thought_signature 直接 400。
             // @ts-ignore
             requestPayload?.contents?.splice(
               // @ts-ignore
@@ -296,24 +349,34 @@ export class GeminiProApi implements LLMApi {
                       name: tool?.function?.name,
                       args: JSON.parse(tool?.function?.arguments as string),
                     },
+                    // Gemini 3 强制要求回传 functionCall 的 thought_signature
+                    // （原样回传；key 固定用 snake_case，见 Google thought-signatures 文档）。
+                    // 若本轮确未捕获到签名，用官方 dummy 值跳过校验，避免 400。
+                    ...(tool?.thought_signature
+                      ? { thought_signature: tool.thought_signature }
+                      : isGen3
+                        ? {
+                            thought_signature:
+                              "skip_thought_signature_validator",
+                          }
+                        : {}),
                   }),
                 ),
               },
-              // @ts-ignore
-              ...toolCallResult.map((result) => ({
-                role: "function",
-                parts: [
-                  {
-                    functionResponse: {
+              // Gemini 不支持 "function" 角色：工具结果必须放在单个
+              // "user" 角色 turn 内，用 functionResponse parts 承载。
+              {
+                role: "user",
+                parts: toolCallResult.map((result) => ({
+                  functionResponse: {
+                    name: result.name,
+                    response: {
                       name: result.name,
-                      response: {
-                        name: result.name,
-                        content: result.content, // TODO just text content...
-                      },
+                      content: result.content,
                     },
                   },
-                ],
-              })),
+                })),
+              },
             );
           },
           options,

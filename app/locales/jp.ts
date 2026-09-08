@@ -84,6 +84,9 @@ const jp: PartialLocaleType = {
       Settings: "チャット設定",
       UploadImage: "画像をアップロード",
       UploadFile: "ファイルをアップロード",
+      WebSearch: "ウェブ検索",
+      WebSearchOn: "ウェブ検索を有効にしました",
+      WebSearchOff: "ウェブ検索を無効にしました",
     },
     Rename: "チャットの名前を変更",
     Typing: "入力中…",
@@ -180,6 +183,12 @@ const jp: PartialLocaleType = {
     Title: "設定",
     SubTitle: "すべての設定オプション",
     ShowPassword: "パスワードを表示",
+    Unsaved: {
+      Title: "設定が変更されています",
+      Content: "設定の変更を保存しますか？",
+      Save: "保存して離れる",
+      Discard: "保存せずに離れる",
+    },
     Tab: {
       General: "一般",
       Sync: "同期",
@@ -748,6 +757,41 @@ const jp: PartialLocaleType = {
       Temperature: {
         Title: "Randomness (temperature)",
         SubTitle: "Higher values result in more random responses",
+      },
+    },
+    WebSearch: {
+      Title: "ウェブ検索",
+      SubTitle:
+        "モデルが自律的にウェブ検索と取得を呼び出し、引用付きの回答を生成します",
+      Enable: {
+        Title: "ウェブ検索を有効にする",
+        SubTitle:
+          "有効にすると、モデルが自律的にウェブ検索とページの読み取りを行います",
+      },
+      Provider: {
+        Title: "検索プロバイダー",
+        SubTitle: "キーワード検索に使うプロバイダー",
+        Brave: "Brave Search",
+        Jina: "Jina",
+      },
+      NoKey: {
+        Title: "API キーが未設定",
+        Brave:
+          "サーバーに BRAVE_API_KEY が設定されていないため、ウェブ検索は失敗します。サーバーの環境変数に設定して再起動してください。",
+        Jina: "サーバーに JINA_API_KEY が設定されていません。Jina 検索にはキーが必要です。取得は匿名でも利用できますが 20 RPM に制限されます。",
+      },
+      MaxResults: {
+        Title: "検索あたりの最大結果数",
+        SubTitle: "1 回の検索で返る件数、1-20、既定 5",
+      },
+      SnippetMaxChars: {
+        Title: "検索結果の文字数上限",
+        SubTitle: "1 件あたりの内容の上限、超えた分は切り捨て、既定 800",
+      },
+      FetchMaxChars: {
+        Title: "ページ本文の文字数上限",
+        SubTitle:
+          "1 ページ取得あたりの内容の上限、超えた分は切り捨て、既定 5000",
       },
     },
   },

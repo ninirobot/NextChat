@@ -11,13 +11,12 @@ import {
 import { useChatStore } from "../store";
 
 import Locale from "../locales";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { Path } from "../constant";
 import { MaskAvatar } from "./mask";
 import { Mask } from "../store/mask";
 import { useRef, useEffect } from "react";
-import { showConfirm } from "./ui-lib";
-import { useMobileScreen } from "../utils";
+import { showConfirm, useSafeNavigate } from "./ui-lib";
 import clsx from "clsx";
 
 export function ChatItem(props: {
@@ -125,8 +124,7 @@ export function ChatList(props: { narrow?: boolean; isLiveMode?: boolean }) {
     : selectedIndex;
 
   const chatStore = useChatStore();
-  const navigate = useNavigate();
-  const isMobileScreen = useMobileScreen();
+  const navigate = useSafeNavigate();
 
   const onDragEnd: OnDragEndResponder = (result) => {
     const { destination, source } = result;
@@ -162,20 +160,15 @@ export function ChatList(props: { narrow?: boolean; isLiveMode?: boolean }) {
                 id={item.id}
                 index={i}
                 selected={i === activeSelectedIndex}
-                onClick={() => {
-                  if (!props.isLiveMode) {
-                    navigate(Path.Chat);
-                  } else {
-                    // Do nothing, already in live chat, or explicitly navigate
-                    navigate(Path.GeminiLive);
-                  }
+                onClick={async () => {
+                  const navigated = await navigate(
+                    props.isLiveMode ? Path.GeminiLive : Path.Chat,
+                  );
+                  if (!navigated) return;
                   selectSession(i, props.isLiveMode);
                 }}
                 onDelete={async () => {
-                  if (
-                    (!props.narrow && !isMobileScreen) ||
-                    (await showConfirm(Locale.Home.DeleteChat))
-                  ) {
+                  if (await showConfirm(Locale.Home.DeleteChat)) {
                     chatStore.deleteSession(i, props.isLiveMode);
                   }
                 }}

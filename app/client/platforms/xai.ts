@@ -18,6 +18,7 @@ import {
 import { getClientConfig } from "@/app/config/client";
 import { getTimeoutMSByModel } from "@/app/utils";
 import { preProcessImageContent } from "@/app/utils/chat";
+import { webSearchTools } from "@/app/websearch/tools";
 import { RequestPayload } from "./openai";
 import { fetch } from "@/app/utils/stream";
 
@@ -107,8 +108,7 @@ export class XAIApi implements LLMApi {
       );
 
       if (shouldStream) {
-        const tools: any[] = [];
-        const funcs = {};
+        const { tools, funcs } = webSearchTools(controller);
         return stream(
           chatPath,
           requestPayload,

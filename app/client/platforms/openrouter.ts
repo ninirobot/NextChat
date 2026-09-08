@@ -7,6 +7,7 @@ import {
   ChatMessageTool,
 } from "@/app/store";
 import { streamWithThink, preProcessImageContent } from "@/app/utils/chat";
+import { webSearchTools } from "@/app/websearch/tools";
 import {
   ChatOptions,
   getHeaders,
@@ -129,8 +130,7 @@ export class OpenRouterApi implements LLMApi {
       };
 
       if (shouldStream) {
-        const tools: any[] = [];
-        const funcs = {};
+        const { tools, funcs } = webSearchTools(controller);
         return streamWithThink(
           chatPath,
           requestPayload,

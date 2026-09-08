@@ -122,6 +122,20 @@
     height: 16px;
     position: relative;
 
+    &.active {
+      color: var(--primary);
+      border-color: var(--primary);
+      background-color: var(--second);
+      /* 内圈+外阴影，与 token/模型选择按钮的高亮观感一致 */
+      box-shadow:
+        inset 0 0 0 1px var(--primary),
+        var(--card-shadow);
+
+      .icon {
+        color: var(--primary);
+      }
+    }
+
     .icon {
       display: flex;
       align-items: center;

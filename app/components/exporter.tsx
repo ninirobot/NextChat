@@ -38,6 +38,10 @@ import { EXPORT_MESSAGE_CLASS_NAME } from "../constant";
 import { getClientConfig } from "../config/client";
 import { type ClientApi, getClientApi } from "../client/api";
 import { getMessageTextContent } from "../utils";
+import {
+  decorateMessageContent,
+  stripCitationMarkers,
+} from "@/app/websearch/citation";
 import { MaskAvatar } from "./mask";
 import clsx from "clsx";
 import { ThinkingBlock } from "./thinking";
@@ -278,7 +282,7 @@ export function RenderExport(props: {
       return {
         id: i.toString(),
         role: role as any,
-        content: role === "user" ? v.textContent ?? "" : v.innerHTML,
+        content: role === "user" ? (v.textContent ?? "") : v.innerHTML,
         date: "",
       };
     });
@@ -297,13 +301,13 @@ export function RenderExport(props: {
         >
           <ThinkingBlock
             model={m.model}
-            thinking={m.reasoning_content ?? ""}
+            thinking={stripCitationMarkers(m.reasoning_content ?? "")}
             duration={m.reasoning_duration}
             streaming={false}
             isThinking={false}
             defaultExpand={true}
           />
-          <Markdown content={getMessageTextContent(m)} defaultShow />
+          <Markdown content={decorateMessageContent(m)} defaultShow />
         </div>
       ))}
     </div>
@@ -584,14 +588,14 @@ export function ImagePreviewer(props: {
               <div className={styles["body"]}>
                 <ThinkingBlock
                   model={m.model}
-                  thinking={m.reasoning_content ?? ""}
+                  thinking={stripCitationMarkers(m.reasoning_content ?? "")}
                   duration={m.reasoning_duration}
                   streaming={false}
                   isThinking={false}
                   defaultExpand={true}
                 />
                 <Markdown
-                  content={getMessageTextContent(m)}
+                  content={decorateMessageContent(m)}
                   fontSize={config.fontSize}
                   fontFamily={config.fontFamily}
                   defaultShow
@@ -640,12 +644,18 @@ export function MarkdownPreviewer(props: {
     `# ${props.topic}\n\n` +
     props.messages
       .map((m) => {
-        return m.role === "user"
-          ? `## ${Locale.Export.MessageFromYou}:\n${getMessageTextContent(m)}`
-          : `## ${Locale.Export.MessageFromChatGPT}:\n${m.reasoning_content
-            ? `<think>\n${m.reasoning_content}\n</think>\n\n`
-            : ""
-          }${getMessageTextContent(m).trim()}`;
+        if (m.role === "user") {
+          return `## ${Locale.Export.MessageFromYou}:\n${getMessageTextContent(m)}`;
+        }
+        // 导出正文走 decorateMessageContent：引用标记换成 [1] 并附 Sources，
+        // 未解析的标记直接丢弃 —— 内部 cite id 绝不能出现在导出文本里。
+        // 推理链同样剥掉标记（编号属于正文，这里重排会与之冲突）。
+        const think = m.reasoning_content
+          ? `<think>\n${stripCitationMarkers(m.reasoning_content)}\n</think>\n\n`
+          : "";
+        return `## ${Locale.Export.MessageFromChatGPT}:\n${think}${decorateMessageContent(
+          m,
+        ).trim()}`;
       })
       .join("\n\n");
 

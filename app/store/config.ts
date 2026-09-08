@@ -16,6 +16,10 @@ import {
   ServiceProvider,
 } from "../constant";
 import { createPersistStore } from "../utils/store";
+import {
+  DEFAULT_SEARCH_PROVIDER,
+  DEFAULT_WEB_SEARCH_CONFIG,
+} from "@/app/websearch/constants";
 
 export type ModelType = (typeof DEFAULT_MODELS)[number]["name"];
 export type TTSModelType = (typeof DEFAULT_TTS_MODELS)[number];
@@ -114,6 +118,8 @@ export const DEFAULT_CONFIG = {
     includeThoughts: true,
     thinkingLevel: "low",
   },
+
+  webSearch: { ...DEFAULT_WEB_SEARCH_CONFIG },
 };
 
 export type ChatConfig = typeof DEFAULT_CONFIG;
@@ -232,7 +238,7 @@ export const useAppConfig = createPersistStore(
   }),
   {
     name: StoreKey.Config,
-    version: 4.2,
+    version: 4.3,
 
     merge(persistedState, currentState) {
       const state = persistedState as ChatConfig | undefined;
@@ -292,6 +298,18 @@ export const useAppConfig = createPersistStore(
         state.modelConfig.enableFollowUp = true;
         state.modelConfig.followUpCount = 3;
         state.modelConfig.followUpTurns = 3;
+      }
+
+      if (version < 4.3) {
+        // 老用户没有 webSearch 配置，补默认值，否则开启开关会读到 undefined
+        state.webSearch = DEFAULT_WEB_SEARCH_CONFIG;
+      }
+
+      if (version < 4.4) {
+        // 新增 searchProvider：老数据没有这个字段，补默认值
+        if (state.webSearch && !state.webSearch.searchProvider) {
+          state.webSearch.searchProvider = DEFAULT_SEARCH_PROVIDER;
+        }
       }
 
       return state as any;

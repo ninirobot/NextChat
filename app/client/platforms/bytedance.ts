@@ -19,6 +19,7 @@ import {
 import { streamWithThink } from "@/app/utils/chat";
 import { getClientConfig } from "@/app/config/client";
 import { preProcessImageContent } from "@/app/utils/chat";
+import { webSearchTools } from "@/app/websearch/tools";
 import {
   getMessageTextContentWithoutThinking,
   getTimeoutMSByModel,
@@ -125,8 +126,7 @@ export class DoubaoApi implements LLMApi {
       };
 
       if (shouldStream) {
-        const tools: any[] = [];
-        const funcs = {};
+        const { tools, funcs } = webSearchTools(controller);
         return streamWithThink(
           chatPath,
           requestPayload,

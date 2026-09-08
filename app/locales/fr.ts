@@ -85,6 +85,9 @@ const fr: PartialLocaleType = {
       Settings: "Paramètres de la discussion",
       UploadImage: "Télécharger une image",
       UploadFile: "Télécharger un fichier",
+      WebSearch: "Recherche web",
+      WebSearchOn: "Recherche web activée",
+      WebSearchOff: "Recherche web désactivée",
     },
     Rename: "Renommer la discussion",
     Typing: "En train d'écrire…",
@@ -182,6 +185,12 @@ const fr: PartialLocaleType = {
     Title: "Paramètres",
     SubTitle: "Toutes les options de configuration",
     ShowPassword: "Afficher le mot de passe",
+    Unsaved: {
+      Title: "Paramètres modifiés",
+      Content: "Voulez-vous enregistrer les modifications des paramètres ?",
+      Save: "Enregistrer et quitter",
+      Discard: "Ne pas enregistrer et quitter",
+    },
     Tab: {
       General: "Général",
       Sync: "Synchronisation",
@@ -768,6 +777,42 @@ const fr: PartialLocaleType = {
       Temperature: {
         Title: "Randomness (temperature)",
         SubTitle: "Higher values result in more random responses",
+      },
+    },
+    WebSearch: {
+      Title: "Recherche web",
+      SubTitle:
+        "Permet au modèle d'appeler la recherche et la récupération web pour produire des réponses avec sources citées",
+      Enable: {
+        Title: "Activer la recherche web",
+        SubTitle:
+          "Une fois activé, le modèle peut chercher sur le web et lire des pages de lui-même",
+      },
+      Provider: {
+        Title: "Fournisseur de recherche",
+        SubTitle: "Fournisseur utilisé pour rechercher des mots-clés",
+        Brave: "Brave Search",
+        Jina: "Jina",
+      },
+      NoKey: {
+        Title: "Clé API non configurée",
+        Brave:
+          "BRAVE_API_KEY n'est pas défini côté serveur : la recherche web échouera. Configurez-le dans les variables d'environnement du serveur puis redémarrez.",
+        Jina: "JINA_API_KEY n'est pas défini côté serveur : la recherche Jina exige une clé. La récupération fonctionne anonymement mais est limitée à 20 RPM.",
+      },
+      MaxResults: {
+        Title: "Résultats max par recherche",
+        SubTitle: "Nombre de résultats renvoyés par recherche, 1-20, défaut 5",
+      },
+      SnippetMaxChars: {
+        Title: "Longueur max par résultat",
+        SubTitle:
+          "Contenu max d'un résultat ; le surplus est coupé, défaut 800",
+      },
+      FetchMaxChars: {
+        Title: "Longueur max des pages",
+        SubTitle:
+          "Contenu max lors de la récupération d'une page ; le surplus est coupé, défaut 5000",
       },
     },
   },

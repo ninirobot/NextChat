@@ -28,8 +28,11 @@ import {
   PasswordInput,
   Popover,
   Select,
+  setLeaveGuard,
   showConfirm,
   showToast,
+  showUnsavedConfirm,
+  useSafeNavigate,
 } from "./ui-lib";
 import { ModelConfigList } from "./model-config";
 
@@ -65,7 +68,6 @@ import { Prompt, SearchService, usePromptStore } from "../store/prompt";
 import { ErrorBoundary } from "./error";
 import { InputRange } from "./input-range";
 import { VOICES } from "../lib/gemini/types";
-import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarPicker } from "./emoji";
 import { getClientConfig } from "../config/client";
 import { useSyncStore } from "../store/sync";
@@ -594,8 +596,99 @@ function SyncItems() {
   );
 }
 
+// ===== 设置改动守卫 =====
+// 设置项都是即时生效的，所以「不保存」需要靠进设置页时拍的快照回滚。
+// 下面这些字段会被程序自动写入（模型列表合并、服务端下发的公开配置、同步时间戳等），
+// 必须从快照里排除，否则没动过设置也会误报「已修改」。
+const VOLATILE_CONFIG_KEYS = [
+  "lastUpdate",
+  "lastUpdateTime",
+  "_hasHydrated",
+  "models",
+];
+
+const VOLATILE_ACCESS_KEYS = [
+  "lastUpdateTime",
+  "_hasHydrated",
+  "needCode",
+  "hideUserApiKey",
+  "hideBalanceQuery",
+  "disableGPT4",
+  "disableFastLink",
+  "customModels",
+  "liveModels",
+  "defaultModel",
+  "visionModels",
+  "isGoogleLive",
+  "googleLiveApiKey",
+  "edgeTTSVoiceName",
+];
+
+const VOLATILE_SYNC_KEYS = [
+  "lastSyncTime",
+  "lastProvider",
+  "lastUpdateTime",
+  "_hasHydrated",
+];
+
+type SettingsSnapshot = {
+  config: string;
+  access: string;
+  prompt: string;
+  sync: string;
+};
+
+// 模块级：跨重挂载保留，保证「取消离开」后再点出去仍然会提示
+let settingsSnapshot: SettingsSnapshot | null = null;
+
+function pickPersistState(state: object, excludeKeys: string[]) {
+  const picked: Record<string, unknown> = {};
+  Object.keys(state).forEach((key) => {
+    if (excludeKeys.includes(key)) return;
+    const value = (state as any)[key];
+    if (typeof value === "function") return;
+    picked[key] = value;
+  });
+  return picked;
+}
+
+function takeSettingsSnapshot(): SettingsSnapshot {
+  return {
+    config: JSON.stringify(
+      pickPersistState(useAppConfig.getState(), VOLATILE_CONFIG_KEYS),
+    ),
+    access: JSON.stringify(
+      pickPersistState(useAccessStore.getState(), VOLATILE_ACCESS_KEYS),
+    ),
+    prompt: JSON.stringify(usePromptStore.getState().prompts ?? {}),
+    sync: JSON.stringify(
+      pickPersistState(useSyncStore.getState(), VOLATILE_SYNC_KEYS),
+    ),
+  };
+}
+
+function isSettingsDirty(): boolean {
+  if (!settingsSnapshot) return false;
+  const current = takeSettingsSnapshot();
+  const baseline = settingsSnapshot;
+  return (Object.keys(current) as Array<keyof SettingsSnapshot>).some(
+    (key) => current[key] !== baseline[key],
+  );
+}
+
+function restoreSettingsSnapshot(snapshot: SettingsSnapshot) {
+  useAppConfig.setState(JSON.parse(snapshot.config));
+  useAccessStore.setState(JSON.parse(snapshot.access));
+  useSyncStore.setState(JSON.parse(snapshot.sync));
+
+  const prompts = JSON.parse(snapshot.prompt) as Record<string, Prompt>;
+  usePromptStore.setState({ prompts });
+  // 同步一下搜索索引，否则回滚掉的自定义提示词仍会出现在输入补全里
+  SearchService.userEngine.setCollection(Object.values(prompts));
+}
+
 export function Settings() {
-  const navigate = useNavigate();
+  const navigate = useSafeNavigate();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [currentTab, setCurrentTab] = useState<SettingsTab>(
     SettingsTab.General,
@@ -672,9 +765,10 @@ export function Settings() {
 
   useEffect(() => {
     const keydownEvent = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        navigate(Path.Home);
-      }
+      if (e.key !== "Escape") return;
+      // 有弹窗打开时，Esc 只用来关弹窗，不要顺带退出设置页
+      if (document.querySelector(".modal-mask")) return;
+      navigate(Path.Home);
     };
     if (clientConfig?.isApp) {
       // Force to set custom endpoint to true if it's app
@@ -687,6 +781,28 @@ export function Settings() {
       document.removeEventListener("keydown", keydownEvent);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 注册离开守卫：只有设置真的被改动过才拦截
+  useEffect(() => {
+    if (settingsSnapshot === null) {
+      settingsSnapshot = takeSettingsSnapshot();
+    }
+
+    setLeaveGuard(async () => {
+      if (!isSettingsDirty()) return true;
+
+      const choice = await showUnsavedConfirm();
+      if (choice === "cancel") return false;
+      if (choice === "discard" && settingsSnapshot) {
+        restoreSettingsSnapshot(settingsSnapshot);
+      }
+      // 离开已成定局，清掉快照，下次进设置重新拍
+      settingsSnapshot = null;
+      return true;
+    });
+
+    return () => setLeaveGuard(null);
   }, []);
 
   const clientConfig = useMemo(() => getClientConfig(), []);
