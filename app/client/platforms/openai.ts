@@ -22,6 +22,7 @@ import {
   base64Image2Blob,
   streamWithThink,
 } from "@/app/utils/chat";
+import { webSearchTools } from "@/app/websearch/tools";
 import { cloudflareAIGatewayUrl } from "@/app/utils/cloudflare";
 import { ModelSize, DalleQuality, DalleStyle } from "@/app/typing";
 
@@ -313,8 +314,7 @@ export class ChatGPTApi implements LLMApi {
       }
       if (shouldStream) {
         let index = -1;
-        const tools: any[] = [];
-        const funcs = {};
+        const { tools, funcs } = webSearchTools(controller);
         // console.log("getAsTools", tools, funcs);
         streamWithThink(
           chatPath,

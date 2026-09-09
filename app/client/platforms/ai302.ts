@@ -8,6 +8,7 @@ import {
   ChatMessageTool,
 } from "@/app/store";
 import { preProcessImageContent, streamWithThink } from "@/app/utils/chat";
+import { webSearchTools } from "@/app/websearch/tools";
 import {
   ChatOptions,
   getHeaders,
@@ -132,8 +133,7 @@ export class Ai302Api implements LLMApi {
       );
 
       if (shouldStream) {
-        const tools: any[] = [];
-        const funcs = {};
+        const { tools, funcs } = webSearchTools(controller);
         return streamWithThink(
           chatPath,
           requestPayload,

@@ -85,6 +85,9 @@ const en: LocaleType = {
       Settings: "Settings",
       UploadImage: "Upload Images",
       UploadFile: "Upload File",
+      WebSearch: "Web Search",
+      WebSearchOn: "Web search enabled",
+      WebSearchOff: "Web search disabled",
     },
     Rename: "Rename Chat",
     Typing: "Typing…",
@@ -182,6 +185,12 @@ const en: LocaleType = {
     Title: "Settings",
     SubTitle: "All Settings",
     ShowPassword: "ShowPassword",
+    Unsaved: {
+      Title: "Settings Changed",
+      Content: "Do you want to save the changes to your settings?",
+      Save: "Save and Leave",
+      Discard: "Discard and Leave",
+    },
     Tab: {
       General: "General",
       Sync: "Sync",
@@ -749,6 +758,42 @@ const en: LocaleType = {
       Temperature: {
         Title: "Randomness (temperature)",
         SubTitle: "Higher values result in more random responses",
+      },
+    },
+    WebSearch: {
+      Title: "Web Search",
+      SubTitle:
+        "Let the model autonomously call web search and fetch, producing answers with cited sources",
+      Enable: {
+        Title: "Enable Web Search",
+        SubTitle:
+          "When enabled, the model can search the web and read pages on its own",
+      },
+      Provider: {
+        Title: "Search Provider",
+        SubTitle: "Provider used to search for keywords",
+        Brave: "Brave Search",
+        Jina: "Jina",
+      },
+      NoKey: {
+        Title: "API key not configured",
+        Brave:
+          "BRAVE_API_KEY is not set on the server, so web search will fail. Set it in the server environment and restart.",
+        Jina: "JINA_API_KEY is not set on the server: Jina search requires a key. Fetching works anonymously but is limited to 20 RPM.",
+      },
+      MaxResults: {
+        Title: "Max Results Per Search",
+        SubTitle: "How many results one search returns, 1-20, default 5",
+      },
+      SnippetMaxChars: {
+        Title: "Result Length Limit",
+        SubTitle:
+          "Max characters per search result; extra content is cut off, default 800",
+      },
+      FetchMaxChars: {
+        Title: "Page Length Limit",
+        SubTitle:
+          "Max characters when fetching one page; extra content is cut off, default 5000",
       },
     },
   },

@@ -25,6 +25,8 @@ import React, {
 import { IconButton } from "./button";
 import { Avatar } from "./emoji";
 import clsx from "clsx";
+import { useNavigate } from "react-router-dom";
+import type { NavigateOptions, To } from "react-router-dom";
 
 // 一个通用的气泡弹出层组件
 export function Popover(props: {
@@ -379,6 +381,99 @@ export function showConfirm(content: any) {
   });
 }
 
+// 离开当前页面前的守卫：由页面（如设置页）注册，导航前统一询问
+type LeaveGuard = () => Promise<boolean>;
+
+let leaveGuard: LeaveGuard | null = null;
+
+export function setLeaveGuard(guard: LeaveGuard | null) {
+  leaveGuard = guard;
+}
+
+// 没有注册守卫时恒为 true，非守卫页面的导航行为完全不变
+export async function canLeave(): Promise<boolean> {
+  if (!leaveGuard) return true;
+  return await leaveGuard();
+}
+
+// useNavigate 的守卫版本：跳转前先询问，守卫拒绝则放弃跳转
+// 返回值表示是否真的发生了跳转，方便调用方决定是否继续执行跳转后的逻辑
+export function useSafeNavigate() {
+  const navigate = useNavigate();
+  return useCallback(
+    async (to: To, options?: NavigateOptions) => {
+      if (!(await canLeave())) return false;
+      navigate(to, options);
+      return true;
+    },
+    [navigate],
+  );
+}
+
+// 三选一：保存并离开 / 不保存并离开 / 取消（Esc 与点遮罩等同于取消）
+export function showUnsavedConfirm(): Promise<"save" | "discard" | "cancel"> {
+  const div = document.createElement("div");
+  div.className = "modal-mask";
+  document.body.appendChild(div);
+
+  const root = createRoot(div);
+
+  return new Promise<"save" | "discard" | "cancel">((resolve) => {
+    let settled = false;
+    const finish = (result: "save" | "discard" | "cancel") => {
+      if (settled) return;
+      settled = true;
+      resolve(result);
+      root.unmount();
+      div.remove();
+    };
+
+    div.onclick = (e) => {
+      if (e.target === div) finish("cancel");
+    };
+
+    root.render(
+      <Modal
+        title={Locale.Settings.Unsaved.Title}
+        actions={[
+          <IconButton
+            key="cancel"
+            text={Locale.UI.Cancel}
+            onClick={() => finish("cancel")}
+            icon={<CancelIcon />}
+            tabIndex={0}
+            bordered
+            shadow
+          ></IconButton>,
+          <IconButton
+            key="discard"
+            text={Locale.Settings.Unsaved.Discard}
+            onClick={() => finish("discard")}
+            icon={<CancelIcon />}
+            tabIndex={0}
+            bordered
+            shadow
+          ></IconButton>,
+          <IconButton
+            key="save"
+            text={Locale.Settings.Unsaved.Save}
+            type="primary"
+            onClick={() => finish("save")}
+            icon={<ConfirmIcon />}
+            tabIndex={0}
+            autoFocus
+            bordered
+            shadow
+          ></IconButton>,
+        ]}
+        onClose={() => finish("cancel")}
+      >
+        {Locale.Settings.Unsaved.Content}
+      </Modal>,
+    );
+  });
+}
+
 function PromptInput(props: {
   value: string;
   onChange: (value: string) => void;
@@ -497,8 +592,8 @@ export function Selector<T>(props: {
     Array.isArray(props.defaultSelectedValue)
       ? props.defaultSelectedValue
       : props.defaultSelectedValue !== undefined
-      ? [props.defaultSelectedValue]
-      : [],
+        ? [props.defaultSelectedValue]
+        : [],
   );
 
   const handleSelection = (e: MouseEvent, value: T) => {

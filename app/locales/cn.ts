@@ -84,6 +84,9 @@ const cn = {
       Settings: "对话设置",
       UploadImage: "上传图片",
       UploadFile: "上传文件",
+      WebSearch: "联网搜索",
+      WebSearchOn: "联网搜索已开启",
+      WebSearchOff: "联网搜索已关闭",
     },
     Rename: "重命名对话",
     Typing: "正在输入…",
@@ -180,6 +183,12 @@ const cn = {
     Title: "设置",
     SubTitle: "所有设置选项",
     ShowPassword: "显示密码",
+    Unsaved: {
+      Title: "设置已修改",
+      Content: "要保存对设置的修改吗？",
+      Save: "保存并离开",
+      Discard: "不保存并离开",
+    },
     Tab: {
       General: "通用",
       Sync: "云同步",
@@ -740,6 +749,38 @@ const cn = {
       Temperature: {
         Title: "随机性 (temperature)",
         SubTitle: "值越大，回复越随机",
+      },
+    },
+    WebSearch: {
+      Title: "联网搜索",
+      SubTitle: "让模型自主调用网页搜索与抓取，生成带来源引用的回答",
+      Enable: {
+        Title: "启用联网搜索",
+        SubTitle: "开启后模型可自主搜索并读取网页",
+      },
+      Provider: {
+        Title: "搜索服务商",
+        SubTitle: "用于搜索关键词的服务商",
+        Brave: "Brave Search",
+        Jina: "Jina",
+      },
+      NoKey: {
+        Title: "未配置 API Key",
+        Brave:
+          "服务端未设置 BRAVE_API_KEY，联网搜索会直接失败。请在服务端环境变量配置后重启。",
+        Jina: "服务端未设置 JINA_API_KEY：Jina 搜索必须带 Key；抓取网页匿名可用，但只有 20 RPM。",
+      },
+      MaxResults: {
+        Title: "单次搜索结果条数",
+        SubTitle: "每次搜索返回几条结果，1-20，默认 5",
+      },
+      SnippetMaxChars: {
+        Title: "搜索结果字数上限",
+        SubTitle: "单条结果的内容上限，超出部分砍掉；默认 800",
+      },
+      FetchMaxChars: {
+        Title: "网页正文字数上限",
+        SubTitle: "抓取单个网页的内容上限，超出部分砍掉；默认 5000",
       },
     },
   },

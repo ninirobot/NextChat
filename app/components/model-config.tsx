@@ -7,12 +7,163 @@ import { ModalConfigValidator, ModelConfig } from "../store";
 
 import Locale from "../locales";
 import { InputRange } from "./input-range";
-import { ListItem, Select } from "./ui-lib";
+import { ListItem, Select, showToast } from "./ui-lib";
 import { useAllModels } from "../utils/hooks";
+import { getClientConfig } from "../config/client";
+import { DEFAULT_SEARCH_PROVIDER } from "@/app/websearch/constants";
+import type { WebSearchProviderName } from "@/app/websearch/types";
 import { useAppConfig, useAccessStore } from "../store";
 import { groupBy } from "lodash-es";
 import styles from "./model-config.module.scss";
 import { getModelProvider, isLiveModel, getLiveModels } from "../utils/model";
+import { useEffect, useState } from "react";
+import { useDebouncedCallback } from "use-debounce";
+
+/**
+ * 滑块用局部 state 承接拖动、停止 120ms 后才写 store。
+ *
+ * 直接逐像素写 store 会明显卡顿：`store.update` 深拷贝整个配置对象，
+ * 并触发所有 `useAppConfig` 订阅者（含 Chat 这类大组件）重渲染。
+ */
+function WebSearchRange(props: {
+  title: string;
+  subTitle: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  fallback: number;
+  onChange: (value: number) => void;
+}) {
+  const [local, setLocal] = useState(props.value);
+  const commit = useDebouncedCallback(props.onChange, 120);
+
+  // 外部改动（如输入框开关）时同步回本地
+  useEffect(() => setLocal(props.value), [props.value]);
+
+  return (
+    <ListItem title={props.title} subTitle={props.subTitle}>
+      <InputRange
+        aria={props.title}
+        value={String(local)}
+        min={String(props.min)}
+        max={String(props.max)}
+        step={String(props.step)}
+        onChange={(e) => {
+          const v = e.currentTarget.valueAsNumber;
+          const next = Number.isFinite(v)
+            ? Math.max(props.min, Math.min(props.max, v))
+            : props.fallback;
+          setLocal(next);
+          commit(next);
+        }}
+      />
+    </ListItem>
+  );
+}
+
+/** 联网搜索设置（开关 + 服务商 + 条数 + 摘要长度），只订阅 webSearch 切片。 */
+function WebSearchSettings() {
+  const webSearch = useAppConfig((s) => s.webSearch);
+  const set = (updater: (ws: any) => void) =>
+    useAppConfig.getState().update((c) => {
+      if (c.webSearch) updater(c.webSearch);
+    });
+
+  // 服务端只下发「有没有配 Key」的布尔（meta 标签里，不含 Key 本身），
+  // 读一次就够 —— meta 在页面生命周期内不会变。
+  const [hasKey] = useState(
+    () => getClientConfig()?.webSearch ?? { brave: false, jina: false },
+  );
+  const provider: WebSearchProviderName =
+    webSearch?.searchProvider ?? DEFAULT_SEARCH_PROVIDER;
+
+  return (
+    <>
+      <ListItem
+        title={Locale.Settings.WebSearch.Enable.Title}
+        subTitle={Locale.Settings.WebSearch.Enable.SubTitle}
+      >
+        <input
+          type="checkbox"
+          checked={!!webSearch?.enabled}
+          onChange={(e) => {
+            const next = e.currentTarget.checked;
+            set((ws) => (ws.enabled = next));
+            // 与对话页 toggleWebSearch 对齐：无 Key 开启时当场提示，
+            // 避免用户在设置里静默打开后，到对话里才看到模型只回一段“搜索不可用”。
+            if (next && !hasKey[provider]) {
+              showToast(
+                provider === "jina"
+                  ? Locale.Settings.WebSearch.NoKey.Jina
+                  : Locale.Settings.WebSearch.NoKey.Brave,
+              );
+            }
+          }}
+        />
+      </ListItem>
+      <ListItem
+        title={Locale.Settings.WebSearch.Provider.Title}
+        subTitle={Locale.Settings.WebSearch.Provider.SubTitle}
+      >
+        <Select
+          aria-label={Locale.Settings.WebSearch.Provider.Title}
+          value={provider}
+          onChange={(e) =>
+            set((ws) => (ws.searchProvider = e.currentTarget.value))
+          }
+        >
+          <option value="brave">
+            {Locale.Settings.WebSearch.Provider.Brave}
+          </option>
+          <option value="jina">
+            {Locale.Settings.WebSearch.Provider.Jina}
+          </option>
+        </Select>
+      </ListItem>
+      {!hasKey[provider] && (
+        <ListItem
+          title={Locale.Settings.WebSearch.NoKey.Title}
+          subTitle={
+            provider === "jina"
+              ? Locale.Settings.WebSearch.NoKey.Jina
+              : Locale.Settings.WebSearch.NoKey.Brave
+          }
+        />
+      )}
+      <WebSearchRange
+        title={Locale.Settings.WebSearch.MaxResults.Title}
+        subTitle={Locale.Settings.WebSearch.MaxResults.SubTitle}
+        value={webSearch?.maxResults ?? 5}
+        min={1}
+        max={20}
+        step={1}
+        fallback={5}
+        onChange={(v) => set((ws) => (ws.maxResults = v))}
+      />
+      <WebSearchRange
+        title={Locale.Settings.WebSearch.SnippetMaxChars.Title}
+        subTitle={Locale.Settings.WebSearch.SnippetMaxChars.SubTitle}
+        value={webSearch?.snippetMaxChars ?? 800}
+        min={200}
+        max={4000}
+        step={200}
+        fallback={800}
+        onChange={(v) => set((ws) => (ws.snippetMaxChars = v))}
+      />
+      <WebSearchRange
+        title={Locale.Settings.WebSearch.FetchMaxChars.Title}
+        subTitle={Locale.Settings.WebSearch.FetchMaxChars.SubTitle}
+        value={webSearch?.fetchMaxChars ?? 5000}
+        min={1000}
+        max={200000}
+        step={1000}
+        fallback={5000}
+        onChange={(v) => set((ws) => (ws.fetchMaxChars = v))}
+      />
+    </>
+  );
+}
 
 export function ModelConfigList(props: {
   modelConfig: ModelConfig;
@@ -621,6 +772,9 @@ export function ModelConfigList(props: {
           </ListItem>
         </>
       )}
+
+      {/* 联网搜索：开关 + 单次条数/摘要长度滑块（API Key 统一走服务端 .env） */}
+      <WebSearchSettings />
     </>
   );
 }

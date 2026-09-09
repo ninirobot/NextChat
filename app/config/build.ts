@@ -41,8 +41,13 @@ export const getBuildConfig = () => {
     isApp,
     template: process.env.DEFAULT_INPUT_TEMPLATE ?? DEFAULT_INPUT_TEMPLATE,
     thinkingModels: process.env.THINKING_MODELS,
+    // 联网搜索：只下发「有没有配 Key」的布尔，供设置页提示用。
+    // Key 本身绝不进 HTML —— 这个对象会被 JSON.stringify 进 meta 标签。
+    webSearch: {
+      brave: !!process.env.BRAVE_API_KEY?.trim(),
+      jina: !!process.env.JINA_API_KEY?.trim(),
+    },
   };
-
 };
 
 export type BuildConfig = ReturnType<typeof getBuildConfig>;

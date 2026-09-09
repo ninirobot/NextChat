@@ -13,6 +13,7 @@ import {
   ChatMessageTool,
 } from "@/app/store";
 import { stream } from "@/app/utils/chat";
+import { webSearchTools } from "@/app/websearch/tools";
 import {
   ChatOptions,
   getHeaders,
@@ -113,8 +114,7 @@ export class MoonshotApi implements LLMApi {
       );
 
       if (shouldStream) {
-        const tools: any[] = [];
-        const funcs = {};
+        const { tools, funcs } = webSearchTools(controller);
         return stream(
           chatPath,
           requestPayload,

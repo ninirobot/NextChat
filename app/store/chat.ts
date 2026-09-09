@@ -55,7 +55,25 @@ export type ChatMessageTool = {
   content?: string;
   isError?: boolean;
   errorMsg?: string;
+  // Gemini 3 强制回传的 thought_signature（snake_case 原样回传；camelCase 为采集别名）
+  thoughtSignature?: string;
+  thought_signature?: string;
 };
+
+/**
+ * 剔除模型兜底输出的“伪函数调用”文本（如 `<dots_function_call><invoke …>`），
+ * 这类文本是部分模型在工具被移除后仍试图“假装调用”时写进正文的，不应展示给用户。
+ */
+function sanitizeAssistantContent(text: string): string {
+  if (!text) return text;
+  // 注意：不做整体 trim —— 流式输出中每条 content 快照都可能只是句子中间，
+  // 去掉首尾空白会导致两个分块被错误地拼在一起。
+  return text
+    .replace(/<dots_function_call>[\s\S]*?<\/dots_function_call>/gi, "")
+    .replace(/<function_call>[\s\S]*?<\/function_call>/gi, "")
+    .replace(/<invoke\b[\s\S]*?<\/invoke>/gi, "")
+    .replace(/^\s*\n/gm, "");
+}
 
 export type ChatMessage = RequestMessage & {
   date: string;
@@ -70,13 +88,18 @@ export type ChatMessage = RequestMessage & {
   reasoning_content?: string;
   reasoning_duration?: number;
   isThinking?: boolean;
-  // 版本历史：每个版本包含内容和思考内容
+  // 版本历史：每个版本包含内容、思考内容与「该次回答自己的」联网工具结果
+  //
+  // tools 必须随版本一起快照：Sources 清单与 [n] 引用是从 tools 幂等派生的，
+  // 若只存在消息级，重试/切换版本时不同回答之间会互相串用（未联网回答被套上
+  // 联网回答的 Sources，或反过来全部丢失只剩 [citation:1] 纯文本）。
   versions?: {
     content: string;
     reasoning_content?: string;
     reasoning_duration?: number;
     followUp?: string[];
     followUpError?: boolean;
+    tools?: ChatMessageTool[];
   }[];
   currentVersionIndex?: number;
   // Live 音频相关字段
@@ -774,6 +797,15 @@ export const useChatStore = createPersistStore(
           botMessage.versions = [];
         }
         const currentContent = getMessageTextContent(botMessage);
+        // 归档的是「当前正在查看的那个版本」的工具结果：
+        // 直接在最新版本上重试 → 归档 botMessage.tools；
+        // 停在某个历史版本上重试 → 归档该历史版本自己的 tools（content 同理，
+        // 上面的 getMessageTextContent 走 getMessageByVersion 取的也是版本内容）。
+        const viewingIndex = botMessage.currentVersionIndex ?? 0;
+        const archivedTools =
+          viewingIndex >= 0 && viewingIndex < botMessage.versions.length
+            ? botMessage.versions[viewingIndex]?.tools
+            : botMessage.tools;
         // 只有当有实际内容时才保存版本，避免保存空字符串
         if (currentContent && currentContent.trim().length > 0) {
           botMessage.versions.push({
@@ -782,6 +814,7 @@ export const useChatStore = createPersistStore(
             reasoning_duration: botMessage.reasoning_duration,
             followUp: botMessage.followUp,
             followUpError: botMessage.followUpError,
+            tools: archivedTools,
           });
         }
         // 设置索引指向即将生成的新版本
@@ -887,9 +920,13 @@ export const useChatStore = createPersistStore(
           config: { ...modelConfig, stream: true },
           onUpdate(message) {
             botMessage.streaming = true;
-            botMessage.isThinking = false;
             if (message) {
-              botMessage.content = message;
+              botMessage.content = sanitizeAssistantContent(message);
+              // 只有真正出现可见文字才算“思考结束”；纯空白分块（模型发工具
+              // 调用前常见）不应打断思考计时
+              if (message.trim().length > 0) {
+                botMessage.isThinking = false;
+              }
             }
             get().updateTargetSession(session, (session) => {
               session.messages = session.messages.concat();
@@ -912,27 +949,27 @@ export const useChatStore = createPersistStore(
             botMessage.streaming = false;
             botMessage.isThinking = false;
             if (message) {
-              botMessage.content = message;
+              botMessage.content = sanitizeAssistantContent(message);
               botMessage.date = new Date().toLocaleString();
             }
 
-            // Create new message object to trigger React re-render
+            // 只换「数组」的引用触发重渲染，不要复制消息对象（原因见 onBeforeTool）
             get().updateTargetSession(session, (session) => {
-              session.messages = session.messages.map((m) =>
-                m.id === botMessage.id
-                  ? { ...botMessage } // Create new object reference
-                  : m,
-              );
+              session.messages = session.messages.concat();
             });
             get().onNewMessage(botMessage, session);
             ChatControllerPool.remove(session.id, botMessage.id);
           },
           onBeforeTool(tool: ChatMessageTool) {
             (botMessage.tools = botMessage?.tools || []).push(tool);
+            // 关键：绝不能把数组里的消息换成 { ...botMessage } 副本。
+            // doRequest 闭包里的 botMessage 与数组中的消息必须是同一个对象 ——
+            // onUpdate / onUpdateThinking 都是「就地改 botMessage + 换数组引用」
+            // 来驱动重渲染的。一旦这里复制，两者分家，之后所有正文、思考内容与
+            // 思考时长的更新都对 React 不可见，表现为工具调用后「正文整段刷出、
+            // 计时静止」，直到 onFinish 再复制一次时才一次性出现。
             get().updateTargetSession(session, (session) => {
-              session.messages = session.messages.map((m) =>
-                m.id === botMessage.id ? { ...botMessage } : m,
-              );
+              session.messages = session.messages.concat();
             });
           },
           onAfterTool(tool: ChatMessageTool) {
@@ -942,9 +979,7 @@ export const useChatStore = createPersistStore(
               }
             });
             get().updateTargetSession(session, (session) => {
-              session.messages = session.messages.map((m) =>
-                m.id === botMessage.id ? { ...botMessage } : m,
-              );
+              session.messages = session.messages.concat();
             });
           },
           onError(error) {
@@ -959,11 +994,8 @@ export const useChatStore = createPersistStore(
             botMessage.isThinking = false;
             botMessage.isError = !isAborted;
 
-            // Create new message object to trigger React re-render
             get().updateTargetSession(session, (session) => {
-              session.messages = session.messages.map((m) =>
-                m.id === botMessage.id ? { ...botMessage } : m,
-              );
+              session.messages = session.messages.concat();
             });
             ChatControllerPool.remove(
               session.id,

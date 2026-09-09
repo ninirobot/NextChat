@@ -28,10 +28,10 @@ import {
   REPO_URL,
 } from "../constant";
 
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { isIOS, useMobileScreen } from "../utils";
 import dynamic from "next/dynamic";
-import { showConfirm } from "./ui-lib";
+import { showConfirm, useSafeNavigate } from "./ui-lib";
 import clsx from "clsx";
 import { isMcpEnabled } from "../mcp/actions";
 
@@ -224,7 +224,7 @@ export function SideBar(props: { className?: string }) {
   useHotKey();
   const { onDragStart, shouldNarrow } = useDragSideBar();
 
-  const navigate = useNavigate();
+  const navigate = useSafeNavigate();
   const location = useLocation();
   const isLiveMode = location.pathname === Path.GeminiLive;
   const config = useAppConfig();
@@ -358,11 +358,15 @@ export function SideBar(props: { className?: string }) {
           <IconButton
             icon={<AddIcon />}
             text={shouldNarrow ? undefined : Locale.Home.NewChat}
-            onClick={() => {
+            onClick={async () => {
               if (config.dontShowMaskSplashScreen) {
-                chatStore.newSession(undefined, isLiveMode);
-                if (!isLiveMode) {
-                  navigate(Path.Chat);
+                if (isLiveMode) {
+                  chatStore.newSession(undefined, true);
+                  return;
+                }
+                // 先跳转（可能被设置页守卫拦下），再建会话
+                if (await navigate(Path.Chat)) {
+                  chatStore.newSession(undefined, false);
                 }
               } else {
                 navigate(Path.NewChat, { state: { isLiveMode } });

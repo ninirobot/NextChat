@@ -26,6 +26,12 @@ declare global {
       DEFAULT_MODEL?: string; // to control default model in every new chat window
       VISION_MODELS?: string; // to control vision models
 
+      // web search — 服务端专用，只把「是否配置」的布尔下发给前端，Key 绝不出网
+      BRAVE_API_KEY?: string; // Brave Search
+      JINA_API_KEY?: string; // Jina Reader / Search
+      JINA_API_HOST?: string; // 覆盖 Jina 域名（默认走国内镜像）
+      JINA_OFFICIAL_HOST?: string; // "1" 时改用官方域名 r.jina.ai / s.jina.ai
+
       // azure only
       AZURE_URL?: string; // https://{azure-url}/openai/deployments/{deploy-name}
       AZURE_API_KEY?: string;

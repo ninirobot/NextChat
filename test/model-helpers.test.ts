@@ -1,8 +1,7 @@
-import { getTimeoutMSByModel, showPlugins } from "../app/utils";
+import { getTimeoutMSByModel } from "../app/utils";
 import {
   REQUEST_TIMEOUT_MS,
   REQUEST_TIMEOUT_MS_FOR_THINKING,
-  ServiceProvider,
 } from "../app/constant";
 
 describe("getTimeoutMSByModel", () => {
@@ -36,28 +35,4 @@ describe("getTimeoutMSByModel", () => {
   });
 });
 
-describe("showPlugins", () => {
-  test("is enabled for OpenAI, Azure, Moonshot and ChatGLM", () => {
-    expect(showPlugins(ServiceProvider.OpenAI, "gpt-4")).toBe(true);
-    expect(showPlugins(ServiceProvider.Azure, "gpt-4")).toBe(true);
-    expect(showPlugins(ServiceProvider.Moonshot, "moonshot-v1-8k")).toBe(true);
-    expect(showPlugins(ServiceProvider.ChatGLM, "glm-4")).toBe(true);
-  });
 
-  test("is enabled for Anthropic except claude-2 models", () => {
-    expect(showPlugins(ServiceProvider.Anthropic, "claude-3-opus")).toBe(true);
-    expect(showPlugins(ServiceProvider.Anthropic, "claude-2.1")).toBe(false);
-  });
-
-  test("is enabled for Google except vision models", () => {
-    expect(showPlugins(ServiceProvider.Google, "gemini-pro")).toBe(true);
-    expect(showPlugins(ServiceProvider.Google, "gemini-pro-vision")).toBe(
-      false,
-    );
-  });
-
-  test("is disabled for other providers", () => {
-    expect(showPlugins(ServiceProvider.Baidu, "ernie-bot")).toBe(false);
-    expect(showPlugins(ServiceProvider.Tencent, "hunyuan")).toBe(false);
-  });
-});

@@ -81,6 +81,7 @@ export enum ApiPath {
   OpenRouter = "/api/openrouter",
   Nvidia = "/api/nvidia",
   Rednote = "/api/rednote",
+  WebSearch = "/api/websearch",
 }
 
 export enum SlotID {
